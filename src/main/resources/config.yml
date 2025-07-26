@@ -1,0 +1,13 @@
+database:
+  host: 'localhost'
+  port: 3306
+  databaseName: ''
+  username: ''
+  password: ''
+economy:
+  currencySymbol: '$'
+  startingBalance: 250
+messages:
+  prefix: '[Gardens]'
+  mainColor: '<green>'
+  errorColor: '<red>'

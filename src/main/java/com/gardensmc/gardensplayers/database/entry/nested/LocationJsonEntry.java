@@ -1,0 +1,38 @@
+package com.gardensmc.gardensplayers.database.entry.nested;
+
+import com.google.gson.Gson;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+
+import java.util.UUID;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@Accessors(chain = true)
+public class LocationJsonEntry extends JsonEntry {
+    private double x, y, z;
+    private float yaw, pitch;
+    private UUID world;
+
+    public static LocationJsonEntry fromJson(String json) {
+        Gson gson = new Gson();
+        return gson.fromJson(json, LocationJsonEntry.class);
+    }
+
+    public static LocationJsonEntry fromLocation(Location location) {
+        return new LocationJsonEntry()
+                .setX(location.getX())
+                .setY(location.getY())
+                .setZ(location.getZ())
+                .setYaw(location.getYaw())
+                .setPitch(location.getPitch())
+                .setWorld(location.getWorld().getUID());
+    }
+
+    public Location toLocation() {
+        return new Location(Bukkit.getWorld(world), x, y, z, yaw, pitch);
+    }
+}

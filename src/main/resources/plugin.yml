@@ -1,0 +1,57 @@
+main: com.gardensmc.gardensplayers.GardensPlayers
+name: GardensPlayers
+version: 1.0.0
+author: Bright_Steel
+api-version: 1.20
+depend:
+  - Vault
+commands:
+  balance:
+    description: View yours or another players balance
+    usage: /<command> [player]
+    aliases:
+      - bal
+  pay:
+    description: Send money to another player
+    usage: /<command> <player> <amount>
+#  nickname:
+#    description: Set yours or another players nickname
+#    usage: /<command> <nick> [player]
+#    aliases:
+#      - nick
+  feed:
+    description: Feed yourself or others
+    usage: /<command> [player]
+  repair:
+    description: Repair the item you are holding
+    usage: /<command>
+    aliases:
+      - fix
+  fly:
+    description: Enable or disable flight for yourself or others
+    usage: /<command> [on|off] [player]
+  rename:
+    description: Rename an item's name
+    usage: /<command> <name>
+    aliases:
+      - itemname
+  craft:
+    description: Open crafting table
+    usage: /<command>
+    aliases:
+      - workbench
+  top:
+    description: Teleport to top-most block at current position
+    usage: /<command>
+  afk:
+    description: Mark yourself as AFK
+    usage: /<command>
+  rtp:
+    description: Randomly teleport
+    usage: /<command>
+  farmshop:
+    description: Open farm shop
+    usage: /<command>
+  gardensplayers:
+    description: Gardens Players command
+    usage: /<command>
