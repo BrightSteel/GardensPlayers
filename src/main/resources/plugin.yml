@@ -55,3 +55,11 @@ commands:
   gardensplayers:
     description: Gardens Players command
     usage: /<command>
+  warp:
+    description: Warp command
+    aliases:
+      - warps
+      - pw
+      - playerwarp
+      - playerwarps
+    usage: /<command>

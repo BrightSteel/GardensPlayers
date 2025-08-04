@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Getter
 @Setter
@@ -26,6 +27,7 @@ public class OnlinePlayerData {
     private int rtpCooldown;
     @Nullable
     private List<Entity> nearbyEntities;
+    private Consumer<String> textCapture;
 
     public void tick(Player player, int ticksPassed) {
         afkTick += ticksPassed;

@@ -19,20 +19,22 @@ public class FurnitureListener implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onFurnitureInteract(FurnitureInteractEvent e) {
         if (e.getHand() == EquipmentSlot.HAND) {
-            openFurnitureShopIfApplicable(e.getPlayer(), e.getFurniture().customItem());
-            e.setCancelled(true);
+            if (openFurnitureShopIfApplicable(e.getPlayer(), e.getFurniture().customItem())) {
+                e.setCancelled(true);
+            }
         }
     }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onCustomBlockInteract(CustomBlockInteractEvent e) {
         if (e.getHand() == EquipmentSlot.HAND) {
-            openFurnitureShopIfApplicable(e.getPlayer(), e.getCustomItem());
-            e.setCancelled(true);
+            if (openFurnitureShopIfApplicable(e.getPlayer(), e.getCustomItem())) {
+                e.setCancelled(true);
+            }
         }
     }
 
-    private void openFurnitureShopIfApplicable(Player player, CustomItem customItem) {
+    private boolean openFurnitureShopIfApplicable(Player player, CustomItem customItem) {
         var regionSet = WorldGuardUtil.getRegionsAt(player.getLocation());
         if (regionSet != null) {
             var shop = regionSet.getRegions().stream().filter(rg -> rg.getId().contains("shop")).findFirst().orElse(null);
@@ -47,8 +49,10 @@ public class FurnitureListener implements Listener {
                             TransactionMode.BUY,
                             null
                     ).open();
+                    return true;
                 }
             }
         }
+        return false;
     }
 }

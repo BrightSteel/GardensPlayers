@@ -9,7 +9,9 @@ import com.gardensmc.gardensplayers.shop.FurnitureShops;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.WorldGuardUtil;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Entity;
@@ -80,6 +82,7 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
                 }
                 yield "Shop";
             }
+            case "region" -> MessageUtil.readableId(PlaceholderAPI.setPlaceholders(player, "%worldguard_region_name_capitalized%"));
             default -> null;
         };
     }

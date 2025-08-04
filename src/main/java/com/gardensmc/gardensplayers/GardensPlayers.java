@@ -9,6 +9,7 @@ import com.gardensmc.gardensplayers.listener.Listeners;
 import com.gardensmc.gardensplayers.placeholder.GardensPlayersPlaceholder;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
@@ -61,7 +62,7 @@ public class GardensPlayers extends JavaPlugin {
         verifyVaultInstalled();
 //        economy = getServiceProvider(Economy.class);
 //        chat = getServiceProvider(Chat.class);
-//        permission = getServiceProvider(Permission.class);
+        permission = getServiceProvider(Permission.class);
 
         int tickEvery = 2;
         Bukkit.getScheduler().runTaskTimer(
@@ -71,6 +72,8 @@ public class GardensPlayers extends JavaPlugin {
                 tickEvery
         );
         Bukkit.getScheduler().runTaskTimer(this, RtpHandler.INSTANCE::queueLocations, 20, 60);
+        // update cache periodically to update visits in case cache hasn't updated for other reasons
+        Bukkit.getScheduler().runTaskTimer(this, WarpsHandler.INSTANCE::clearCachedWarps, 20, 6000);
     }
 
     private void tickPlayer(Player player, int ticksPassed) {

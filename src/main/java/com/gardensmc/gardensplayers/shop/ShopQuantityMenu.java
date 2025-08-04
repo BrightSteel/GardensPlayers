@@ -50,8 +50,8 @@ public class ShopQuantityMenu extends Menu {
     private void initElements() {
         gui.addElements(List.of(
                 createSetQuantityButton('a', 1),
-                createQuantityButton('b', -1),
-                createQuantityButton('c', -10),
+                createQuantityButton('b', -10),
+                createQuantityButton('c', -1),
                 createQuantityButton('e', 1),
                 createQuantityButton('f', 10),
                 createSetQuantityButton('g', 64),
@@ -113,7 +113,7 @@ public class ShopQuantityMenu extends Menu {
                 shopItemName,
                 "<gray>Quantity: <#82CD47>" + item.getAmount(),
                 " ",
-                (mode == TransactionMode.BUY ? " <#82CD47>▸ <gray>ʙᴜʏ ᴘʀɪᴄᴇ <#82CD47>$" : " <#82CD47>▸ <gray>ѕᴇʟʟ ᴘʀɪᴄᴇ:  <#639bff>$") + basePrice,
+                (mode == TransactionMode.BUY ? " <#82CD47>▸ <gray>ʙᴜʏ ᴘʀɪᴄᴇ <#82CD47>$" : " <#82CD47>▸ <gray>ѕᴇʟʟ ᴘʀɪᴄᴇ:  <#639bff>$") + (basePrice * item.getAmount()),
                 (mode == TransactionMode.SELL) ? " <#82CD47>▸ <gray>ꜱᴛᴏᴄᴋ: " + (shopLimitHandler.getAmountLeft() == 0 ? "<red>" : "<#639bff>") + shopLimitHandler.getAmountLeft() : "",
                 canSell(item.getAmount()) ? "" : "<red>Cannot sell past stock limit"
         ));

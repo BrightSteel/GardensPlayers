@@ -18,7 +18,7 @@ import java.util.UUID;
 public class PlayerEntry extends MySQLEntry {
 
     private UUID uuid;
-    private Component username;
+    private String username;
     private Component nickname;
     private LocalDateTime seen;
     private LocalDateTime joined;
@@ -32,7 +32,7 @@ public class PlayerEntry extends MySQLEntry {
     @Override
     public PlayerEntry populate(ResultSet resultSet) throws SQLException {
         this.uuid = UUID.fromString(resultSet.getString("uuid"));
-        this.username = MessageUtil.fromPlainText(resultSet.getString("username"));
+        this.username = resultSet.getString("username");
         var nick = resultSet.getString("nickname");
         if (nick != null) {
             this.nickname = MessageUtil.fromMiniMessage(nick);

@@ -9,6 +9,8 @@ import org.bukkit.Location;
 
 import java.util.UUID;
 
+import static com.gardensmc.gardensplayers.util.MathUtil.round;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
@@ -24,11 +26,11 @@ public class LocationJsonEntry extends JsonEntry {
 
     public static LocationJsonEntry fromLocation(Location location) {
         return new LocationJsonEntry()
-                .setX(location.getX())
-                .setY(location.getY())
-                .setZ(location.getZ())
-                .setYaw(location.getYaw())
-                .setPitch(location.getPitch())
+                .setX(round(location.getX()))
+                .setY(round(location.getY()))
+                .setZ(round(location.getZ()))
+                .setYaw(round(location.getYaw()))
+                .setPitch(round(location.getPitch()))
                 .setWorld(location.getWorld().getUID());
     }
 

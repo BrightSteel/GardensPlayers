@@ -22,6 +22,7 @@ public class Commands {
         register(new RtpCommand());
         register(new FarmShopCommand());
         register(new GardensPlayersCommand());
+        register(new WarpCommand());
     }
 
     private static void register(GardensCommand gardensCommand) {
