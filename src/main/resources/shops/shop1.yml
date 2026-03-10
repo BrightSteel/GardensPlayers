@@ -1,0 +1,6 @@
+name: "Shop1"
+items:
+  item1:
+    material: DIAMOND
+    price: 10
+    currency: gems

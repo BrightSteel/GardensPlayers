@@ -3,21 +3,32 @@ package com.gardensmc.gardensplayers;
 import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.command.Commands;
 import com.gardensmc.gardensplayers.config.Config;
+import com.gardensmc.gardensplayers.crate.Crate;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.GardensEconomyProvider;
 import com.gardensmc.gardensplayers.listener.Listeners;
+import com.gardensmc.gardensplayers.menu.shop.Shop;
+import com.gardensmc.gardensplayers.menu.tile.TileMenuHandler;
 import com.gardensmc.gardensplayers.placeholder.GardensPlayersPlaceholder;
+import com.gardensmc.gardensplayers.reward.RewardHandler;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
+import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class GardensPlayers extends JavaPlugin {
 
@@ -26,6 +37,9 @@ public class GardensPlayers extends JavaPlugin {
     public static Chat chat;
     public static Permission permission;
     public static Config config;
+    public static List<Shop> shops;
+    public static List<Crate> crates;
+    public static SpawnLimits spawnLimits;
 
     @Override
     public void onLoad() {
@@ -63,6 +77,7 @@ public class GardensPlayers extends JavaPlugin {
 //        economy = getServiceProvider(Economy.class);
 //        chat = getServiceProvider(Chat.class);
         permission = getServiceProvider(Permission.class);
+        loadShops();
 
         int tickEvery = 2;
         Bukkit.getScheduler().runTaskTimer(
@@ -100,5 +115,27 @@ public class GardensPlayers extends JavaPlugin {
 
     private void disablePlugin() {
         getServer().getPluginManager().disablePlugin(this);
+    }
+
+    public static void loadShops() {
+        var shopsDir = new File(GardensPlayers.plugin.getDataFolder(), "shops");
+        if (!shopsDir.exists()) {
+            shopsDir.mkdir();
+        }
+        var shopFiles = shopsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+        if (shopFiles != null) {
+            shops = Arrays.stream(shopFiles)
+                    .map(YamlConfiguration::loadConfiguration)
+                    .map(Shop::new)
+                    .toList();
+        }
+        crates = ConfigUtil.cratesYaml.getKeys(false)
+                .stream()
+                .map(key -> new Crate(Objects.requireNonNull(ConfigUtil.cratesYaml.getConfigurationSection(key))))
+                .toList();
+        spawnLimits = new SpawnLimits(ConfigUtil.spawnLimitsYaml);
+        RewardHandler.loadRewards();
+        TileMenuHandler.constructShopPages();
+        TileMenuHandler.constructWardrobePages();
     }
 }

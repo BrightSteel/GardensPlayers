@@ -1,0 +1,4 @@
+reward1:
+  server_item: "some_item"
+  permission: "blah.blah"
+  expiration: "2026-01-31"

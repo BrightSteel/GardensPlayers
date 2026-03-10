@@ -3,6 +3,9 @@ package com.gardensmc.gardensplayers.util;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.custom.item.CustomItem;
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.currency.Currency;
+import lombok.AllArgsConstructor;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -12,11 +15,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+@AllArgsConstructor
 public class ShopTransactionUtil {
 
-    public static void tryPurchase(Player player, int cost, ItemStack item, String shopItemName, int amount) {
-        if (GardensPlayers.economy.has(player, cost)) {
-            GardensPlayers.economy.withdrawPlayer(player, cost);
+    private final Currency currency;
+
+    public boolean tryPurchase(Player player, int cost, ItemStack item, Component itemName, int amount) {
+        if (currency.getCurrency(player) >= cost) {
+            try {
+                currency.chargeCurrency(player, cost).get();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
             var stacks = amount / 64;
             var remainder = amount % 64;
             IntStream.range(0, stacks).forEach(i -> {
@@ -29,34 +40,55 @@ public class ShopTransactionUtil {
                 stack.setAmount(remainder);
                 player.give(stack);
             }
-            player.sendMessage(MiniMessage.miniMessage().deserialize("You bought <red>%s x %s <white>for <red>$%s".formatted(amount, shopItemName, cost)));
+            player.sendMessage(MiniMessage.miniMessage()
+                    .deserialize("You bought <red>%s x ".formatted(amount))
+                    .append(itemName)
+                    .append(MiniMessage.miniMessage().deserialize(" <white>for <red>" + cost + " " + currency.symbol())));
+            return true;
         } else {
-            player.sendMessage(MiniMessage.miniMessage().deserialize("You need <red>$%s <white>to buy <red>%s x %s<white>.".formatted(cost, amount, shopItemName)));
+            player.sendMessage(MiniMessage.miniMessage()
+                    .deserialize("You need <red>%s %s <white>to buy <red>%s x ".formatted(cost, currency.symbol(), amount))
+                    .append(itemName));
+            return false;
         }
     }
 
-    public static boolean trySell(Player player, int price, ItemStack item, String shopItemName, int amount) {
+    public boolean trySell(Player player, int price, ItemStack item, Component itemName, int amount) {
         if (hasItems(player, item, amount)) {
             takeItems(player, item, amount);
-            GardensPlayers.economy.depositPlayer(player, price);
-            player.sendMessage(MiniMessage.miniMessage().deserialize("You sold <green>%s x %s <white>for <green>$%s".formatted(amount, shopItemName, price)));
+            try {
+                currency.addCurrency(player, price).get();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+            player.sendMessage(MiniMessage.miniMessage()
+                    .deserialize("You sold <green>%s x ".formatted(amount))
+                    .append(itemName)
+                    .append(MiniMessage.miniMessage().deserialize(" <white>for <green>" + price + " " + currency.symbol())));
             return true;
         }
-        player.sendMessage(MiniMessage.miniMessage().deserialize("You don't have <red>%s x %s <white>to sell.".formatted(amount, shopItemName)));
+        player.sendMessage(MiniMessage.miniMessage()
+                .deserialize("You don't have <red>%s x ".formatted(amount))
+                .append(itemName)
+                .append(MiniMessage.miniMessage().deserialize(" <white>to sell.")));
         return false;
     }
 
-    private static boolean hasItems(Player player, ItemStack item, int amount) {
+    public int getItemCount(Player player, ItemStack item) {
         var customItem = GardensFurniture.itemRegistry.getCustomItem(item);
-        var itemAmount = Arrays.stream(player.getInventory().getContents()).reduce(
+        return Arrays.stream(player.getInventory().getContents()).reduce(
                 0,
                 (accum, itemStack) -> isSameItem(customItem, item, itemStack) ? accum + itemStack.getAmount() : accum,
                 Integer::sum
         );
-        return itemAmount >= amount;
     }
 
-    private static void takeItems(Player player, ItemStack item, int amount) {
+    private boolean hasItems(Player player, ItemStack item, int amount) {
+        return getItemCount(player, item) >= amount;
+    }
+
+    private void takeItems(Player player, ItemStack item, int amount) {
         var customItem = GardensFurniture.itemRegistry.getCustomItem(item);
         var amountTaken = 0;
         for (ItemStack invItem : player.getInventory().getContents()) {
@@ -71,7 +103,7 @@ public class ShopTransactionUtil {
         }
     }
 
-    private static boolean isSameItem(@Nullable CustomItem c1, ItemStack itemStack1, @Nullable ItemStack itemStack2) {
+    private boolean isSameItem(@Nullable CustomItem c1, ItemStack itemStack1, @Nullable ItemStack itemStack2) {
         if (itemStack2 == null || itemStack2.getType() == Material.AIR) {
             return false; // fast break
         }

@@ -1,5 +1,6 @@
 package com.gardensmc.gardensplayers.command.registered;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.type.GardensCommand;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
 import org.bukkit.command.CommandSender;
@@ -17,6 +18,7 @@ public class GardensPlayersCommand extends GardensCommand {
             executor.sendMessage("GardensPlayers plugin");
         } else if (args[0].equalsIgnoreCase("reload")) {
             ConfigUtil.loadYamls();
+            GardensPlayers.loadShops();
             executor.sendMessage("Reloaded GardensPlayers");
         }
     }

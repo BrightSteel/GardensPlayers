@@ -3,6 +3,8 @@ package com.gardensmc.gardensplayers.util;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
+import java.util.Comparator;
+
 public class PermissionUtil {
 
     /**
@@ -13,8 +15,7 @@ public class PermissionUtil {
                 .stream()
                 .map(PermissionAttachmentInfo::getPermission)
                 .filter(s -> s.startsWith(permission))
-                .sorted() // or maybe reversed?
-                .findFirst()
+                .max(Comparator.naturalOrder())
                 .map(s -> Integer.valueOf(s.substring(permission.length() + 1)))
                 .orElse(1);
     }

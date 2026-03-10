@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class PlayerTable implements Table {
@@ -36,7 +38,10 @@ public class PlayerTable implements Table {
     public PlayerEntry getPlayerEntry(UUID uuid) {
         try {
             return DatabaseConnector.INSTANCE.querySingleton(
-                    "SELECT * FROM player LEFT JOIN lastLocation ON player.uuid = lastLocation.playerUUID WHERE uuid = ?",
+                    "SELECT * FROM player " +
+                            "LEFT JOIN lastLocation ON player.uuid = lastLocation.playerUUID " +
+                            "LEFT JOIN wardrobes ON player.uuid = wardrobes.playerUUID " +
+                            "WHERE uuid = ?",
                     PlayerEntry::new,
                     uuid.toString()
             );
@@ -72,6 +77,18 @@ public class PlayerTable implements Table {
         }
     }
 
+    public void addPoints(UUID uuid, int amount) {
+        try {
+            DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET points = points + ? WHERE uuid = ?",
+                    amount,
+                    uuid.toString()
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void addMoney(UUID uuid, int amount) {
         try {
             DatabaseConnector.INSTANCE.executeUpdate(
@@ -96,11 +113,47 @@ public class PlayerTable implements Table {
         }
     }
 
+    public void subtractPoints(UUID uuid, int amount) {
+        try {
+            DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET points = points - ? WHERE uuid = ?",
+                    amount,
+                    uuid.toString()
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void setNickname(String uuid, String nickname) {
         try {
             DatabaseConnector.INSTANCE.executeUpdate(
                     "UPDATE player SET nickname = ? WHERE uuid = ?",
                     nickname,
+                    uuid
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setPoints(String uuid, int points) {
+        try {
+            DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET points = ? WHERE uuid = ?",
+                    points,
+                    uuid
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setMoney(String uuid, int money) {
+        try {
+            DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET money = ? WHERE uuid = ?",
+                    money,
                     uuid
             );
         } catch (SQLException e) {
@@ -130,5 +183,28 @@ public class PlayerTable implements Table {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public List<PlayerBal> getTopBalances() {
+        try {
+            Connection conn = DatabaseConnector.INSTANCE.getConnection();
+            String query = "SELECT username, money FROM player ORDER BY money DESC LIMIT 10";
+            PreparedStatement ps = conn.prepareStatement(query);
+
+            ResultSet rs = ps.executeQuery();
+            var topBalances = new ArrayList<PlayerBal>();
+            while (rs.next()) {
+                topBalances.add(new PlayerBal(rs.getString("username"), rs.getInt("money")));
+            }
+            rs.close();
+            ps.close();
+            conn.close();
+            return topBalances;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public record PlayerBal(String username, int balance) {
     }
 }

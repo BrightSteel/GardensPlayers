@@ -1,0 +1,10 @@
+christmas:
+  furniture_id: christmas_crate
+  display: "Christmas"
+  contents:
+    normalitem:
+      furniture_id: "id"
+    dynamicitem:
+      furniture_ids:
+        - "id1"
+        - "id2"

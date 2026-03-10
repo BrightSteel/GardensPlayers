@@ -27,7 +27,7 @@ public class BalanceCommand extends PlayerCommand {
         super.executeOnPlayer(executor, targetPlayer, args);
         var balance = new PlayerEconomyHandler(targetPlayer.getUniqueId()).getBalance();
         executor.sendMessage(MessageUtil.parseIntoComponent(
-                "<green>%s's balance is %s%s".formatted(
+                "<green>%s's balance is %s\uE124%s".formatted(
                         MessageUtil.toPlainText(targetPlayer.displayName()),
                         GardensPlayers.config.getCurrencySymbol(),
                         balance

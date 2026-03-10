@@ -28,6 +28,7 @@ public class PlayerEntry extends MySQLEntry {
     // foreign keyed
     @Nullable
     private LocationEntry lastLocation;
+    private WardrobeEntry wardrobe;
 
     @Override
     public PlayerEntry populate(ResultSet resultSet) throws SQLException {
@@ -44,6 +45,7 @@ public class PlayerEntry extends MySQLEntry {
         if (resultSet.getString("world") != null) {
             this.lastLocation = new LocationEntry().populate(resultSet);
         }
+        this.wardrobe = new WardrobeEntry().populate(resultSet);
         return this;
     }
 }

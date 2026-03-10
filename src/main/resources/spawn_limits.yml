@@ -1,0 +1,5 @@
+radius: 25
+limits:
+  spawner: 100
+  breed: 100
+breed_dumb_at_limit: true

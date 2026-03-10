@@ -2,6 +2,7 @@ package com.gardensmc.gardensplayers.shop;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensplayers.cache.ShopLimitKey;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElement;
@@ -25,6 +26,7 @@ public class ShopQuantityMenu extends Menu {
             "    j    "
     };
 
+    private final ShopTransactionUtil transactionUtil = new ShopTransactionUtil(AcornsCurrencyHandler.INSTANCE);
     private final String shopItemName;
     private final ItemStack item;
     private final int basePrice;
@@ -78,10 +80,10 @@ public class ShopQuantityMenu extends Menu {
                     var total = amount * basePrice;
                     if (isPurchase) {
                         if (mode == TransactionMode.BUY) {
-                            ShopTransactionUtil.tryPurchase(viewer, total, item, shopItemName, amount);
+                            transactionUtil.tryPurchase(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount);
                         } else {
                             if (canSell(item.getAmount())) {
-                                if (ShopTransactionUtil.trySell(viewer, total, item, shopItemName, amount)) {
+                                if (transactionUtil.trySell(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount)) {
                                     shopLimitHandler.increaseAmountTransacted(amount).thenRun(() -> onCancel.accept(gui));
                                     return true;
                                 }

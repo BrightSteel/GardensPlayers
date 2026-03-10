@@ -8,7 +8,7 @@ import org.bukkit.inventory.meta.Damageable;
 public class RepairCommand extends PlayerExecutorCommand {
 
     public RepairCommand() {
-        super("repair");
+        super("fix");
     }
 
     @Override

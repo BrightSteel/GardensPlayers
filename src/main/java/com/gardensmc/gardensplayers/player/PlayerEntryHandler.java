@@ -3,8 +3,11 @@ package com.gardensmc.gardensplayers.player;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
+import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
+import de.tr7zw.nbtapi.NBT;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Clock;
@@ -59,6 +62,22 @@ public class PlayerEntryHandler {
             }
             // update seen time as well while we're at it
             Tables.playerTable.setSeen(player, LocalDateTime.now(Clock.systemUTC()));
+        }).thenRun(this::refreshCache);
+    }
+
+    public CompletableFuture<Void> updateWardrobe(CosmeticSlot slot, String nbt) {
+        var player = Objects.requireNonNull(Bukkit.getPlayer(uuid));
+        return CompletableFuture.runAsync(() -> {
+            Tables.wardrobeTable.createWardrobeEntryIfNotExists(player);
+            if (slot == CosmeticSlot.HELMET) {
+                Tables.wardrobeTable.setHelmet(player, nbt);
+            } else if (slot == CosmeticSlot.BACKPACK) {
+                Tables.wardrobeTable.setBackpack(player, nbt);
+            } else if (slot == CosmeticSlot.OFFHAND) {
+                Tables.wardrobeTable.setOffhand(player, nbt);
+            } else if (slot == CosmeticSlot.BALLOON) {
+                Tables.wardrobeTable.setBalloon(player, nbt);
+            }
         }).thenRun(this::refreshCache);
     }
 

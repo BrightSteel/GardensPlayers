@@ -1,5 +1,6 @@
 package com.gardensmc.gardensplayers.menu;
 
+import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.entry.WarpEntry;
 import com.gardensmc.gardensplayers.util.HeadUtil;
@@ -9,7 +10,6 @@ import de.themoep.inventorygui.GuiElementGroup;
 import de.themoep.inventorygui.GuiPageElement;
 import de.themoep.inventorygui.StaticGuiElement;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.apache.commons.lang3.StringUtils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 
@@ -30,26 +30,32 @@ public class WarpsMenu extends Menu {
     private final List<WarpEntry> warps;
     private final boolean isYourWarps;
 
-    public WarpsMenu(Player viewer, List<WarpEntry> warps, boolean isYourWarps) {
-        super(layout, "<font:gardens:default>\u0103\u0128</font>", viewer);
+    public WarpsMenu(Player viewer, List<WarpEntry> warps, boolean isYourWarps, int highlightIdx) {
+        super(layout, "<font:gardens:default>\u0103\u0128" + getHighlight(highlightIdx) + "</font>", viewer);
         this.warps = warps;
         this.isYourWarps = isYourWarps;
         initElements();
     }
 
+    private static String getHighlight(int highlightIdx) {
+        if (highlightIdx == -1) {
+            return "";
+        }
+        return getShift(-151 + (18 * highlightIdx)) + "\u0129";
+    }
 
     private void initElements() {
         var warpsGroup = new GuiElementGroup('w');
         warpsGroup.addElements(warps.stream().map(this::createWarpElement).toList());
         gui.addElement(warpsGroup);
         gui.addElements(List.of(
-                createCategoryPicker('a', WarpEntry.Category.SHOP),
-                createCategoryPicker('b', WarpEntry.Category.FARM),
-                createCategoryPicker('c', WarpEntry.Category.MOB_FARM),
-                createCategoryPicker('d', WarpEntry.Category.BUILD),
-                createCategoryPicker('e', WarpEntry.Category.LANDMARK),
-                createCategoryPicker('i', WarpEntry.Category.GAME),
-                createCategoryPicker('j', WarpEntry.Category.MISC)
+                createCategoryPicker('a', WarpEntry.Category.SHOP, 0),
+                createCategoryPicker('b', WarpEntry.Category.FARM, 1),
+                createCategoryPicker('c', WarpEntry.Category.MOB_FARM, 2),
+                createCategoryPicker('d', WarpEntry.Category.BUILD, 3),
+                createCategoryPicker('e', WarpEntry.Category.LANDMARK, 4),
+                createCategoryPicker('i', WarpEntry.Category.GAME, 5),
+                createCategoryPicker('j', WarpEntry.Category.MISC, 6)
         ));
         gui.addElement(createViewerWarps());
         gui.addElement(new GuiPageElement('f', blankItem, GuiPageElement.PageAction.PREVIOUS, "<blue>Previous"));
@@ -81,11 +87,11 @@ public class WarpsMenu extends Menu {
         );
     }
 
-    private GuiElement createCategoryPicker(char character, WarpEntry.Category category) {
+    private GuiElement createCategoryPicker(char character, WarpEntry.Category category, int highlightIdx) {
         return new StaticGuiElement(
                 character,
-                blankItem,
-                click -> open(() -> new WarpsMenu(viewer, WarpsHandler.INSTANCE.getCachedWarps().warpsByCategory().getOrDefault(category, Collections.emptyList()), false)),
+                GardensFurniture.itemRegistry.buildItem("warp_menu_icon_" + category.toString().toLowerCase()),
+                click -> open(() -> new WarpsMenu(viewer, WarpsHandler.INSTANCE.getCachedWarps().warpsByCategory().getOrDefault(category, Collections.emptyList()), false, highlightIdx)),
                 "<blue>" + category.getName()
         );
     }
@@ -94,7 +100,7 @@ public class WarpsMenu extends Menu {
         return new StaticGuiElement(
                 'g',
                 HeadUtil.createHead(viewer),
-                click -> open(() -> new WarpsMenu(viewer, WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(viewer.getUniqueId(), Collections.emptyList()), true)),
+                click -> open(() -> new WarpsMenu(viewer, WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(viewer.getUniqueId(), Collections.emptyList()), true, -1)),
                 "<blue>Your Warps"
         );
     }

@@ -53,6 +53,7 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
         return switch (params.toLowerCase()) {
             case "nickname" -> MessageUtil.parseIntoLegacyDisplayable(playerEntry.getNickname());
             case "balance" -> String.valueOf(playerEntry.getMoney());
+            case "gems" -> String.valueOf(playerEntry.getPoints());
             case "afk" -> {
                 if (!player.isOnline()) {
                     // avoid creating cache entry if not online

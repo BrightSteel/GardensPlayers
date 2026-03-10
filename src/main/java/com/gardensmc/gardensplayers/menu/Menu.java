@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensplayers.util.FontShift;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
@@ -79,6 +80,10 @@ public class Menu {
         InventoryGui.clearHistory(viewer);
         menuSupplier.get().open();
         return true;
+    }
+
+    protected static String getShift(int shift) {
+        return FontShift.INSTANCE.getShift(shift);
     }
 
 }

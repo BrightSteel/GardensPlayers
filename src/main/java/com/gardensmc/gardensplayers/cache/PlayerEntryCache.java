@@ -1,5 +1,6 @@
 package com.gardensmc.gardensplayers.cache;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import lombok.AccessLevel;
@@ -31,14 +32,18 @@ public class PlayerEntryCache extends AsyncLoadingCache<UUID, PlayerEntry> {
     private PlayerEntry createPlayerEntry(UUID uuid) {
         var player = Objects.requireNonNull(Bukkit.getPlayer(uuid));
         Tables.playerTable.createPlayerEntry(player);
-        // announce new player
-        Bukkit.getServer().sendMessage(Component.text()
-                .color(NamedTextColor.LIGHT_PURPLE)
-                .append(Component.text("Welcome "))
-                .append(player.displayName())
-                .append(Component.text(" to Gardens MC"))
-                .build()
-        );
+        Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+            // announce new player
+            Bukkit.getServer().sendMessage(Component.text()
+                    .color(NamedTextColor.LIGHT_PURPLE)
+                    .append(Component.text("Welcome "))
+                    .append(player.displayName())
+                    .append(Component.text(" to Gardens MC"))
+                    .build()
+            );
+            // force them to spawn - huskhomes doesn't do this :(
+            player.chat("/spawn");
+        });
         return Tables.playerTable.getPlayerEntry(uuid);
     }
 }

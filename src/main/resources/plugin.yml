@@ -5,6 +5,13 @@ author: Bright_Steel
 api-version: 1.20
 depend:
   - Vault
+  - ItemEdit
+  - HMCCosmetics
+  - packetevents
+  - GardensFurniture
+  - GardensEnchants
+softdepend:
+  - ShopGUIPlus
 commands:
   balance:
     description: View yours or another players balance
@@ -14,6 +21,9 @@ commands:
   pay:
     description: Send money to another player
     usage: /<command> <player> <amount>
+  baltop:
+    description: View top balances
+    usage: /<command>
 #  nickname:
 #    description: Set yours or another players nickname
 #    usage: /<command> <nick> [player]
@@ -22,11 +32,9 @@ commands:
   feed:
     description: Feed yourself or others
     usage: /<command> [player]
-  repair:
+  fix:
     description: Repair the item you are holding
     usage: /<command>
-    aliases:
-      - fix
   fly:
     description: Enable or disable flight for yourself or others
     usage: /<command> [on|off] [player]
@@ -40,6 +48,7 @@ commands:
     usage: /<command>
     aliases:
       - workbench
+      - wb
   top:
     description: Teleport to top-most block at current position
     usage: /<command>
@@ -55,6 +64,19 @@ commands:
   gardensplayers:
     description: Gardens Players command
     usage: /<command>
+  gem:
+    description: View or modify gems
+    usage: /<command>
+    aliases:
+      - gems
+  acorn:
+    description: View or modify acorns
+    usage: /<command>
+    aliases:
+      - acorns
+  withdraw:
+    description: Withdraw acorns
+    usage: /<command>
   warp:
     description: Warp command
     aliases:
@@ -62,4 +84,49 @@ commands:
       - pw
       - playerwarp
       - playerwarps
+    usage: /<command>
+  deposit:
+    description: Deposit acorns
+    usage: /<command>
+  upgrades:
+    description: Upgrade shop
+    usage: /<command>
+  shop:
+    description: View shop
+    usage: /<command>
+  wardrobe:
+    description: View wardrobe
+    usage: /<command>
+  rewards:
+    description: View rewards
+    aliases:
+      - reward
+    usage: /<command>
+  spawner:
+    description: Change spawner
+    aliases:
+      - ss
+    usage: /<command>
+  tppos:
+    description: Teleport to a position
+    usage: /<command>
+  map:
+    description: View map link
+    usage: /<command>
+  gamemode:
+    description: Set gamemode
+    aliases:
+      - gm
+    usage: /<command>
+  trash:
+    description: Open trash
+    usage: /<command>
+  anvil:
+    description: Open anvil
+    usage: /<command>
+  loom:
+    description: Open loom
+    usage: /<command>
+  grindstone:
+    description: Open grindstone
     usage: /<command>

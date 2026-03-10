@@ -49,7 +49,8 @@ public class WarpCommand extends PlayerExecutorCommand {
                 WarpsHandler.INSTANCE.getCachedWarps().warpsByCategory().getOrDefault(
                     WarpEntry.Category.SHOP,
                     Collections.emptyList()),
-                false
+                false,
+                0
         ).open();
     }
 
