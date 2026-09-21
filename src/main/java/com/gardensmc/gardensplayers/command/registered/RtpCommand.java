@@ -3,15 +3,11 @@ package com.gardensmc.gardensplayers.command.registered;
 import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
+import com.gardensmc.gardensplayers.menu.BedrockRtpMenu;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.geysermc.cumulus.form.Form;
-import org.geysermc.cumulus.form.SimpleForm;
-import org.geysermc.cumulus.util.FormImage;
 import org.geysermc.floodgate.api.FloodgateApi;
-
-import java.util.Set;
 
 public class RtpCommand extends PlayerExecutorCommand {
 
@@ -24,7 +20,9 @@ public class RtpCommand extends PlayerExecutorCommand {
         super.execute(executor, args);
         if (args.length == 0) {
             if (FloodgateApi.getInstance().isFloodgatePlayer(executor.getUniqueId())) {
-                FloodgateApi.getInstance().sendForm(executor.getUniqueId(), getRtpForm(executor));
+                BedrockRtpMenu.open(executor);
+            } else if (executor.getWorld().getName().contains("resource")) {
+                executor.chat("/dm open resource_rtp");
             } else {
                 executor.chat("/dm open rtp");
             }
@@ -54,23 +52,5 @@ public class RtpCommand extends PlayerExecutorCommand {
                 }
             }
         }
-    }
-
-    private static final String[] WORLDS_BY_ID = new String[]{
-            "gardens",
-                    "resource_world",
-                    "gardens_nether",
-                    "gardens_the_end"
-    };
-
-    private Form getRtpForm(Player viewer) {
-        return SimpleForm.builder()
-                .title("RTP")
-                .button("Overworld", FormImage.Type.PATH, "textures/blocks/sapling_oak.png")
-                .button("Resource World", FormImage.Type.PATH, "textures/blocks/cherry_sapling.png")
-                .button("Nether", FormImage.Type.PATH, "textures/items/nether_wart.png")
-                .button("End", FormImage.Type.PATH, "textures/items/chorus_fruit.png")
-                .validResultHandler(response -> viewer.chat("/rtp " + WORLDS_BY_ID[response.clickedButtonId()]))
-                .build();
     }
 }

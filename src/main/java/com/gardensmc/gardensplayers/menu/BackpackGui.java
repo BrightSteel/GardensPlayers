@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -30,9 +31,13 @@ public class BackpackGui implements InventoryHolder {
 
     public BackpackGui(Player viewer, RowConfig rowConfig, ItemStack backpackItem, ItemStack[] items, boolean isWardrobeBackpack) {
         this.viewer = viewer;
-        this.fillerSlots = rowConfig.getFillerRows() * 9;
+        var isBedrockViewer = FloodgateApi.getInstance().isFloodgatePlayer(viewer.getUniqueId());
+        this.fillerSlots = isBedrockViewer ? 0 : rowConfig.getFillerRows() * 9;
         this.backpackItem = backpackItem;
-        this.inventory = Bukkit.createInventory(this, rowConfig.getTotalRows() * 9, getTitle(rowConfig));
+        var title = isBedrockViewer ? Component.text("Backpack") : getTitle(rowConfig);
+        // bedrock has no filler rows, so the inventory is just the backpack rows
+        var totalRows = isBedrockViewer ? rowConfig.getRows() : rowConfig.getTotalRows();
+        this.inventory = Bukkit.createInventory(this, totalRows * 9, title);
         this.isWardrobeBackpack = isWardrobeBackpack;
         addEmptySlots();
         if (items != null) {

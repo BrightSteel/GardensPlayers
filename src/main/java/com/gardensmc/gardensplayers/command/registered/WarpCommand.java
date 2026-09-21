@@ -3,10 +3,12 @@ package com.gardensmc.gardensplayers.command.registered;
 import com.gardensmc.gardensplayers.command.exception.InvalidStateException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.database.entry.WarpEntry;
+import com.gardensmc.gardensplayers.menu.BedrockWarpEditMenu;
+import com.gardensmc.gardensplayers.menu.BedrockWarpsMenu;
 import com.gardensmc.gardensplayers.menu.CreateWarpMenu;
 import com.gardensmc.gardensplayers.menu.UpdateWarpMenu;
-import com.gardensmc.gardensplayers.menu.WarpsMenu;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
+import org.geysermc.floodgate.api.FloodgateApi;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.command.Command;
@@ -36,6 +38,7 @@ public class WarpCommand extends PlayerExecutorCommand {
                 case "edit" -> onEditWarp(player, args);
 //                case "setlocation" -> onSetLocation(player, args);
                 case "delete" -> onDelete(player, args);
+                case "tp" -> onTpWarp(player, args);
                 default -> throw new InvalidStateException("Unknown argument: " + args[0]);
             }
         } else {
@@ -44,14 +47,11 @@ public class WarpCommand extends PlayerExecutorCommand {
     }
 
     private void onListWarps(Player player) {
-        new WarpsMenu(
-                player,
-                WarpsHandler.INSTANCE.getCachedWarps().warpsByCategory().getOrDefault(
-                    WarpEntry.Category.SHOP,
-                    Collections.emptyList()),
-                false,
-                0
-        ).open();
+        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+            BedrockWarpsMenu.open(player);
+            return;
+        }
+        WarpsHandler.INSTANCE.openMenu(player);
     }
 
     private void onCreateWarp(Player player, String[] args) {
@@ -65,11 +65,29 @@ public class WarpCommand extends PlayerExecutorCommand {
         if (PlainTextComponentSerializer.plainText().serialize(MiniMessage.miniMessage().deserialize(name)).length() > 20) {
             throw new InvalidStateException("Warp name too long!");
         }
+        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+            BedrockWarpEditMenu.openCreate(player, name);
+            return;
+        }
         new CreateWarpMenu(player, name).open();
     }
 
     private void onEditWarp(Player player, String[] args) {
-        new UpdateWarpMenu(player, getWarpFromArgs(player, args)).open();
+        var warp = getWarpFromArgs(player, args);
+        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+            BedrockWarpEditMenu.openEdit(player, warp);
+            return;
+        }
+        new UpdateWarpMenu(player, warp).open();
+    }
+
+    private void onTpWarp(Player player, String[] args) {
+        var warp = getWarpFromArgs(player, args);
+        if (!WarpsHandler.INSTANCE.canPlayerAccess(player, warp)) {
+            throw new InvalidStateException("This warp is not open to the public!");
+        }
+        player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Warping to " + warp.getName()));
+        WarpsHandler.INSTANCE.travel(player, warp);
     }
 
 //    private void onSetLocation(Player player, String[] args) {
@@ -107,11 +125,22 @@ public class WarpCommand extends PlayerExecutorCommand {
         }
         String filter = args[args.length - 1].toLowerCase();
         if (args.length == 1) {
-            return Stream.of("list", "create", "edit", "delete").filter(s1 -> s1.contains(filter)).toList();
+            return Stream.of("list", "create", "edit", "delete", "tp").filter(s1 -> s1.contains(filter)).toList();
         }
-        var warps = commandSender.hasPermission("gplayers.warp.edit.any")
-                ? WarpsHandler.INSTANCE.getCachedWarps().warps()
-                : WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(player.getUniqueId(), Collections.emptyList());
+        List<WarpEntry> warps;
+        if (args[0].equals("tp")) {
+            warps = commandSender.hasPermission("gplayers.warp.any")
+                    ? WarpsHandler.INSTANCE.getCachedWarps().warps().stream().limit(500).toList()
+                    : WarpsHandler.INSTANCE.getCachedWarps().warps()
+                        .stream()
+                        .filter(warpEntry -> WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry))
+                        .limit(500)
+                        .toList();
+        } else {
+            warps = commandSender.hasPermission("gplayers.warp.edit.any")
+                    ? WarpsHandler.INSTANCE.getCachedWarps().warps().stream().limit(500).toList()
+                    : WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(player.getUniqueId(), Collections.emptyList());
+        }
         var longFilter = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
         return warps.stream()
                 .map(WarpEntry::getReadableName)

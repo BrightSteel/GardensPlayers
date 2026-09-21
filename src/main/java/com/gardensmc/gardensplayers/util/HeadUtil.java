@@ -17,7 +17,9 @@ public class HeadUtil {
     }
 
     public static ItemStack createHead(UUID playerUUID) {
-        return createHead(Bukkit.createProfile(playerUUID), true);
+        var profile = Bukkit.createProfile(playerUUID);
+        profile.complete(); // load texture so that it won't show "dynamic" tooltip
+        return createHead(profile, true);
     }
 
     private static ItemStack createHead(PlayerProfile profile, boolean flat) {

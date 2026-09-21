@@ -16,6 +16,12 @@ public class Tables {
     public static final WarpVisitsTable warpVisitsTable = register(WarpVisitsTable::new);
     public static final WardrobeTable wardrobeTable = register(WardrobeTable::new);
     public static final RewardsTable rewardsTable = register(RewardsTable::new);
+    public static final FriendsTable friendsTable = register(FriendsTable::new);
+    public static final MailTable mailTable = register(MailTable::new);
+    public static final GuildsTable guildsTable = register(GuildsTable::new);
+    public static final GuildMembersTable guildMembersTable = register(GuildMembersTable::new);
+    public static final GuildJoinRequestsTable guildJoinRequestsTable = register(GuildJoinRequestsTable::new);
+    public static final GuildInvitesTable guildInvitesTable = register(GuildInvitesTable::new);
 
     private static <T extends Table> T register(Supplier<T> tableSupplier) {
         var logger = GardensPlayers.plugin.getLogger();
@@ -27,6 +33,17 @@ public class Tables {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Failed to initialize " + tableName, e);
             Bukkit.getServer().getPluginManager().disablePlugin(GardensPlayers.plugin);
+            return table;
+        }
+        for (String migration : table.getMigrations()) {
+            try {
+                DatabaseConnector.INSTANCE.executeUpdate(migration);
+            } catch (SQLException e) {
+                // MySQL/MariaDB error 1060 = duplicate column, i.e. the migration is already applied — ignore it
+                if (e.getErrorCode() != 1060) {
+                    logger.log(Level.WARNING, "Migration failed for " + tableName + ": " + migration, e);
+                }
+            }
         }
         return table;
     }

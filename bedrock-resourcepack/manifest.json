@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Gardens Shop UI v1.0.44",
+    "description": "Themes the Geyser /shop forms (category grid, item lore, Yes/No confirm) for Bedrock players.",
+    "uuid": "002bf438-89cf-4316-9abe-92e086437ce7",
+    "version": [
+      1,
+      0,
+      44
+    ],
+    "min_engine_version": [
+      1,
+      20,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "5041e24f-6225-4528-bba7-589e215b7f82",
+      "version": [
+        1,
+        0,
+        44
+      ]
+    }
+  ]
+}

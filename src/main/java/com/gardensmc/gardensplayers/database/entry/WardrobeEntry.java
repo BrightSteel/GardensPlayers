@@ -3,7 +3,7 @@ package com.gardensmc.gardensplayers.database.entry;
 import de.tr7zw.nbtapi.NBT;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.bukkit.entity.Player;
+import org.apache.logging.log4j.util.Strings;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class WardrobeEntry extends MySQLEntry {
 
     @Nullable
     private ItemStack toItemStack(String nbt) {
-        if (nbt == null) {
+        if (Strings.isEmpty(nbt)) {
             return null;
         }
         return NBT.itemStackFromNBT(NBT.parseNBT(nbt));

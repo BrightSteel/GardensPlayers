@@ -22,10 +22,16 @@ public class PlayerEntryCache extends AsyncLoadingCache<UUID, PlayerEntry> {
     protected CompletableFuture<PlayerEntry> createCacheEntry(UUID key) {
         return CompletableFuture.supplyAsync(() -> {
             var playerEntry = Tables.playerTable.getPlayerEntry(key);
-            return Objects.requireNonNullElseGet(
-                    playerEntry,
-                    () -> createPlayerEntry(key)
-            );
+            if (playerEntry == null) {
+                return createPlayerEntry(key);
+            }
+            // Keep the stored username current (e.g. after a Mojang name change) while the player is online.
+            var online = Bukkit.getPlayer(key);
+            if (online != null && !online.getName().equals(playerEntry.getUsername())) {
+                Tables.playerTable.updateUsername(key, online.getName());
+                return Tables.playerTable.getPlayerEntry(key);
+            }
+            return playerEntry;
         });
     }
 

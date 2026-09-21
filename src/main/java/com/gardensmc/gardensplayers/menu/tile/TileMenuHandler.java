@@ -50,10 +50,10 @@ public class TileMenuHandler {
     }
 
     public static void openShopMenu(Player viewer) {
-        new TileMenu(viewer, TileMenuHandler.shopPages, true, '\u0138').open();
+        TileMenu.builder(viewer, TileMenuHandler.shopPages, '\u0138').showBalances(true).open();
     }
 
     public static void openCosmeticsMenu(Player viewer) {
-        new TileMenu(viewer, TileMenuHandler.wardrobePages, false, '\u014B').open();
+        TileMenu.builder(viewer, TileMenuHandler.wardrobePages, '\u014B').open();
     }
 }

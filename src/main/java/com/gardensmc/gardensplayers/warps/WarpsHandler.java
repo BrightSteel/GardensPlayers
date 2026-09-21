@@ -5,12 +5,18 @@ import com.gardensmc.gardensplayers.cache.CachedWarps;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.WarpEntry;
 import com.gardensmc.gardensplayers.database.entry.nested.LocationJsonEntry;
+import com.gardensmc.gardensplayers.menu.TileMenu;
+import com.gardensmc.gardensplayers.menu.tile.CategoryPages;
+import com.gardensmc.gardensplayers.menu.tile.TileCategory;
+import com.gardensmc.gardensplayers.menu.tile.WarpTileItem;
 import com.gardensmc.gardensplayers.util.PermissionUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -19,6 +25,12 @@ import java.util.concurrent.ExecutionException;
 public class WarpsHandler {
 
     public static final WarpsHandler INSTANCE = new WarpsHandler();
+
+    /**
+     * Background glyph for the warp tile menu title. Each tile menu has its own header texture in the resource pack
+     * (ĸ shop, Ŝ friends, ŝ guild, ...); Ş must map to a "Warps" header there.
+     */
+    private static final char TILE_BACKGROUND = '\u0162';
 
     private CachedWarps cachedWarps;
 
@@ -35,6 +47,33 @@ public class WarpsHandler {
 
     public void clearCachedWarps() {
         cachedWarps = null;
+    }
+
+    /** Opens the tile-based warp menu, one tab per {@link WarpEntry.Category} plus a trailing "Your Warps" tab. */
+    public void openMenu(Player player) {
+        TileMenu.builder(player, buildCategoryPages(player), TILE_BACKGROUND).open();
+    }
+
+    private CategoryPages buildCategoryPages(Player viewer) {
+        var cached = getCachedWarps();
+        var categories = new ArrayList<TileCategory>();
+        for (WarpEntry.Category category : WarpEntry.Category.values()) {
+            var warps = cached.warpsByCategory().getOrDefault(category, Collections.emptyList());
+            categories.add(new TileCategory(
+                    category.toString(),
+                    category.getName(),
+                    "warp_menu_icon_" + category.toString().toLowerCase(),
+                    warps.stream().map(warp -> new WarpTileItem(warp, false)).toList()
+            ));
+        }
+        var yourWarps = cached.warpsByPlayer().getOrDefault(viewer.getUniqueId(), Collections.emptyList());
+        categories.add(new TileCategory(
+                "your_warps",
+                "Your Warps",
+                "icon_profile",
+                yourWarps.stream().map(warp -> new WarpTileItem(warp, true)).toList()
+        ));
+        return new CategoryPages(categories);
     }
 
     public ActionResult createWarp(Player player, String name, Location location, WarpEntry.Category category, boolean isPublic, String description) {
@@ -100,8 +139,20 @@ public class WarpsHandler {
                 .thenRun(this::clearCachedWarps);
     }
 
+    public boolean canPlayerAccess(Player player, WarpEntry warpEntry) {
+        return warpEntry.isPublicAccess()
+                || warpEntry.isServerWarp()
+                || warpEntry.getPlayerUUID() == player.getUniqueId()
+                || player.hasPermission("gplayers.warp.any");
+    }
+
     public void travel(Player player, WarpEntry warpEntry) {
         CompletableFuture.runAsync(() -> Tables.warpVisitsTable.createWarpVisitIfNotExists(warpEntry.getId(), player.getUniqueId()));
-        player.teleport(warpEntry.getLocation().toLocation());
+        var location = warpEntry.getLocation().toLocation();
+        if (location.getWorld() == null) { // uuid is no longer referencing a valid world
+            player.sendMessage(ChatColor.RED + "Cannot travel to warp - resource world was reset");
+        } else {
+            player.teleport(location);
+        }
     }
 }

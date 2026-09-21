@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.currency.Currency;
+import com.gardensmc.gardensplayers.util.PlayerUtil;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @AllArgsConstructor
@@ -34,6 +36,7 @@ public class CurrencyCommand implements TabExecutor {
                     case "give" -> giveCurrency(commandSender, args);
                     case "set" -> setCurrency(commandSender, args);
                     case "get" -> getCurrency(commandSender, args);
+                    case "balance", "bal" -> showBalance(commandSender, args);
                 }
             } catch (NumberFormatException e) {
                 commandSender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Amount must be a number!"));
@@ -57,7 +60,8 @@ public class CurrencyCommand implements TabExecutor {
             return;
         }
         var target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
+        var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
+        if (targetUUID == null) {
             sender.sendMessage("<red>Couldn't find player " + args[1]);
             return;
         }
@@ -66,9 +70,11 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Amount must be greater than 0!"));
             return;
         }
-        currency.addCurrency(target, amount).thenRun(() -> {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave %s %s %s".formatted(target.getName(), amount, currency.symbol())));
-            target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s gave you %s %s".formatted(sender.getName(), amount, currency.symbol())));
+        currency.addCurrency(targetUUID, amount).thenRun(() -> {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave %s %s %s".formatted(args[1], amount, currency.symbol())));
+            if (target != null) {
+                target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s gave you %s %s".formatted(sender.getName(), amount, currency.symbol())));
+            }
         });
     }
 
@@ -82,7 +88,8 @@ public class CurrencyCommand implements TabExecutor {
             return;
         }
         var target = Bukkit.getPlayer(args[1]);
-        if (target == null) {
+        var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
+        if (targetUUID == null) {
             sender.sendMessage("<red>Couldn't find player " + args[1]);
             return;
         }
@@ -91,9 +98,11 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Amount must be positive!"));
             return;
         }
-        currency.setCurrency(target, amount).thenRun(() -> {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Set %s's %s to %s".formatted(target.getName(), currency.name(), amount)));
-            target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s set your %s to %s".formatted(sender.getName(), currency.name(), amount)));
+        currency.setCurrency(targetUUID, amount).thenRun(() -> {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Set %s's %s to %s".formatted(args[1], currency.name(), amount)));
+            if (target != null) {
+                target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s set your %s to %s".formatted(sender.getName(), currency.name(), amount)));
+            }
         });
     }
 
@@ -120,10 +129,39 @@ public class CurrencyCommand implements TabExecutor {
         );
     }
 
+    private void showBalance(CommandSender sender, String[] args) {
+        if (!sender.hasPermission(currency.name() + ".balance")) {
+            sendNoPerms(sender);
+            return;
+        }
+        if (args.length >= 2) {
+            if (!sender.hasPermission(currency.name() + ".balance.others")) {
+                sendNoPerms(sender);
+                return;
+            }
+            var target = Bukkit.getPlayer(args[1]);
+            var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
+            if (targetUUID == null) {
+                sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Couldn't find player " + args[1]));
+                return;
+            }
+            var targetName = target != null ? target.getName() : args[1];
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<green>%s has %s %s".formatted(targetName, currency.getCurrency(targetUUID), currency.symbol())));
+        } else if (sender instanceof Player player) {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                    "<green>You have %s %s".formatted(currency.getCurrency(player), currency.symbol())));
+        } else {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Provide a player"));
+        }
+    }
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] args) {
         if (args.length == 1) {
-            return Stream.of("give", "set", "get").filter(arg -> commandSender.hasPermission(currency.name() + "." + arg)).toList();
+            return Stream.of("balance", "give", "set", "get")
+                    .filter(arg -> commandSender.hasPermission(currency.name() + "." + arg))
+                    .toList();
         }
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("get")) {

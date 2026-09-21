@@ -24,6 +24,12 @@ public class PlayerEntry extends MySQLEntry {
     private LocalDateTime joined;
     private int money;
     private int points;
+    private int questsCompleted;
+    /**
+     * Leaderboard rank by quests completed (players with an equal count share a rank). Derived in the
+     * {@code getPlayerEntry} query rather than stored as a column, so it's as fresh as the cached entry.
+     */
+    private int questRank;
 
     // foreign keyed
     @Nullable
@@ -42,6 +48,8 @@ public class PlayerEntry extends MySQLEntry {
         this.joined = resultSet.getObject("joined", LocalDateTime.class);
         this.money = resultSet.getInt("money");
         this.points = resultSet.getInt("points");
+        this.questsCompleted = resultSet.getInt("questsCompleted");
+        this.questRank = resultSet.getInt("questRank");
         if (resultSet.getString("world") != null) {
             this.lastLocation = new LocationEntry().populate(resultSet);
         }

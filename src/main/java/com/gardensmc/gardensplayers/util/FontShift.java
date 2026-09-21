@@ -74,14 +74,16 @@ public class FontShift {
         return width;
     }
 
-    // for large character size
+    // glyph advances for Minecraft's default font (in pixels, before the trailing spacing)
     private int getPixelWidth(char c) {
-        int pixels;
-        switch (c) {
-            case '!', '.' -> pixels = 1;
-            case ' ', 'I' -> pixels = 3;
-            default -> pixels = 5;
-        }
+        int pixels = switch (c) {
+            case '!', '\'', ',', '.', ':', ';', 'i', '|' -> 1;
+            case '`', 'l' -> 2;
+            case ' ', 'I', '(', ')', '*', '[', ']', 't', '{', '}', '"' -> 3;
+            case '<', '>', 'f', 'k' -> 4;
+            case '@', '~' -> 6;
+            default -> 5;
+        };
         pixels++; //account for space between letters
         return pixels;
     }

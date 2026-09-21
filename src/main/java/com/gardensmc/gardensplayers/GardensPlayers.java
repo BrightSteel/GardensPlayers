@@ -10,6 +10,9 @@ import com.gardensmc.gardensplayers.listener.Listeners;
 import com.gardensmc.gardensplayers.menu.shop.Shop;
 import com.gardensmc.gardensplayers.menu.tile.TileMenuHandler;
 import com.gardensmc.gardensplayers.placeholder.GardensPlayersPlaceholder;
+import com.gardensmc.gardensplayers.quest.QuestHandler;
+import com.gardensmc.gardensplayers.resourceworld.GenResourceHandler;
+import com.gardensmc.gardensplayers.restart.RestartHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
@@ -24,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.popcraft.chunky.api.ChunkyAPI;
 
 import java.io.File;
 import java.util.Arrays;
@@ -40,6 +44,7 @@ public class GardensPlayers extends JavaPlugin {
     public static List<Shop> shops;
     public static List<Crate> crates;
     public static SpawnLimits spawnLimits;
+    public static ChunkyAPI chunkyAPI;
 
     @Override
     public void onLoad() {
@@ -71,6 +76,9 @@ public class GardensPlayers extends JavaPlugin {
         if (Bukkit.getPluginManager().getPlugin("PlaceHolderAPI") != null) {
             new GardensPlayersPlaceholder().register();
         }
+        if (Bukkit.getPluginManager().getPlugin("EnderMap") != null) {
+            com.gardensmc.gardensplayers.map.EnderMapWarps.register(this);   // public warps on the web map
+        }
 
         // register vault instances
         verifyVaultInstalled();
@@ -78,6 +86,7 @@ public class GardensPlayers extends JavaPlugin {
 //        chat = getServiceProvider(Chat.class);
         permission = getServiceProvider(Permission.class);
         loadShops();
+        chunkyAPI = Bukkit.getServer().getServicesManager().load(ChunkyAPI.class);
 
         int tickEvery = 2;
         Bukkit.getScheduler().runTaskTimer(
@@ -89,6 +98,23 @@ public class GardensPlayers extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, RtpHandler.INSTANCE::queueLocations, 20, 60);
         // update cache periodically to update visits in case cache hasn't updated for other reasons
         Bukkit.getScheduler().runTaskTimer(this, WarpsHandler.INSTANCE::clearCachedWarps, 20, 6000);
+        Bukkit.getScheduler().runTaskTimer(this, GenResourceHandler.INSTANCE::tick, 20, 40);
+
+        // load persisted quest state on startup, then regenerate at each midnight (America/Los_Angeles) and autosave every 5 minutes
+        if (!QuestHandler.INSTANCE.loadFromFile()) {
+            QuestHandler.INSTANCE.generateDailyTasks();
+        }
+        QuestHandler.INSTANCE.scheduleNextReset();
+        QuestHandler.INSTANCE.scheduleAutoSave();
+
+        // schedule the daily server restart at midnight (America/Los_Angeles) with countdown warnings
+        RestartHandler.INSTANCE.scheduleNextRestart();
+    }
+
+    @Override
+    public void onDisable() {
+        // persist quest state synchronously — async tasks won't run during shutdown
+        QuestHandler.INSTANCE.save();
     }
 
     private void tickPlayer(Player player, int ticksPassed) {

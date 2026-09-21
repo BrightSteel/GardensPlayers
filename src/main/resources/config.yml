@@ -7,7 +7,10 @@ database:
 economy:
   currencySymbol: '$'
   startingBalance: 250
+  # cost in acorns to teleport back to your death location via the clickable death message
+  deathBackCost: 250
 messages:
   prefix: '[Gardens]'
   mainColor: '<green>'
   errorColor: '<red>'
+resourceWorldRadius: 8000

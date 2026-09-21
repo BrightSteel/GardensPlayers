@@ -49,6 +49,10 @@ public class BackpackHandler {
     private final ItemStack itemStack;
     private final CustomBackpackItem backpackItem;
 
+    public static void clearBackpackFromMap(Player player) {
+        openBackpacks.remove(player.getUniqueId());
+    }
+
     public static void closeBackpackIfOpen(Player player, ItemStack backpack) {
         var backpackId = NBT.get(backpack, nbt -> {
             var compound = nbt.getCompound(BACKPACK_KEY);

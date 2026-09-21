@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -25,19 +26,29 @@ public class AcornsCurrencyHandler implements Currency {
     }
 
     @Override
-    public int getCurrency(Player player) {
-        return new PlayerEconomyHandler(player.getUniqueId()).getBalance();
+    public int getCurrency(UUID uuid) {
+        return new PlayerEconomyHandler(uuid).getBalance();
     }
 
     @Override
     public CompletableFuture<Void> addCurrency(Player player, int amount) {
-        return new PlayerEconomyHandler(player.getUniqueId()).deposit(amount);
+        return addCurrency(player.getUniqueId(), amount);
+    }
+
+    @Override
+    public CompletableFuture<Void> addCurrency(UUID player, int amount) {
+        return new PlayerEconomyHandler(player).deposit(amount);
     }
 
     @Override
     public CompletableFuture<Void> setCurrency(Player player, int amount) {
+        return setCurrency(player.getUniqueId(), amount);
+    }
+
+    @Override
+    public CompletableFuture<Void> setCurrency(UUID player, int amount) {
         return CompletableFuture
-                .runAsync(() -> Tables.playerTable.setMoney(player.getUniqueId().toString(), amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player.getUniqueId()));
+                .runAsync(() -> Tables.playerTable.setMoney(player.toString(), amount))
+                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player));
     }
 }

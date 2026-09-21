@@ -1,8 +1,10 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
+import com.gardensmc.gardensplayers.menu.shop.BedrockShopMenu;
 import com.gardensmc.gardensplayers.menu.tile.TileMenuHandler;
 import org.bukkit.entity.Player;
+import org.geysermc.floodgate.api.FloodgateApi;
 
 public class ShopCommand extends PlayerExecutorCommand {
 
@@ -12,6 +14,10 @@ public class ShopCommand extends PlayerExecutorCommand {
 
     @Override
     public void execute(Player executor, String[] args) {
-        TileMenuHandler.openShopMenu(executor);
+        if (FloodgateApi.getInstance().isFloodgatePlayer(executor.getUniqueId())) {
+            BedrockShopMenu.open(executor);
+        } else {
+            TileMenuHandler.openShopMenu(executor);
+        }
     }
 }

@@ -6,7 +6,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.PlayerInventory;
@@ -44,7 +43,7 @@ public class DepositGuiListener implements Listener {
     public void onShiftIntoBackpack(InventoryClickEvent e) {
         if (e.getClickedInventory() instanceof PlayerInventory) {
             if (e.getView().getTopInventory().getHolder() instanceof DepositGui depositGui) {
-                if (e.getClick() == ClickType.SHIFT_LEFT) {
+                if (e.getClick().isShiftClick()) {
                     var item = e.getClickedInventory().getItem(e.getSlot());
                     if (!depositGui.isValidItem(item)) {
                         e.setCancelled(true);

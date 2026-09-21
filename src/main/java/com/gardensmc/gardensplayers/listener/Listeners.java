@@ -18,6 +18,8 @@ public class Listeners {
         register(new BackpackListener());
         register(new BackpackGuiListener());
         register(new SpawnLimitListener());
+        register(new QuestProgressListener());
+        register(new DeathListener());
         BackpackHandler.registerUseListener();
         PlayerListener.registerPacketListener();
     }

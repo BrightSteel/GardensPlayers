@@ -21,11 +21,24 @@ public class WardrobeGuiListener implements Listener {
     public void onClick(InventoryClickEvent e) {
         var clickedInv = e.getClickedInventory();
         if (clickedInv != null && clickedInv.getHolder() instanceof WardrobeGui wardrobeGui) {
-            var item = e.getCursor();
+            var cursor = e.getCursor();
             var wardrobeSlot = WardrobeGui.WARDROBE_SLOTS.get(e.getSlot());
             if (wardrobeSlot == null) {
                 e.setCancelled(true);
-            } else if (item.getType() != Material.AIR && !wardrobeSlot.isValidItem(item)) {
+                return;
+            }
+            var holdingValidItem = cursor.getType() != Material.AIR && wardrobeSlot.isValidItem(cursor);
+            var currentItem = e.getCurrentItem();
+            if (currentItem != null && wardrobeGui.isTemplate(currentItem)) {
+                // the template must never leave the gui, so cancel and handle placement manually
+                e.setCancelled(true);
+                if (holdingValidItem) {
+                    // drop the held item into the slot and consume the template on the cursor
+                    wardrobeGui.getInventory().setItem(e.getSlot(), cursor);
+                    e.getWhoClicked().setItemOnCursor(null);
+                    Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> wardrobeGui.updateWardrobeSlot(e.getSlot(), wardrobeSlot), 1);
+                }
+            } else if (cursor.getType() != Material.AIR && !holdingValidItem) {
                 e.setCancelled(true);
             } else {
                 Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> wardrobeGui.updateWardrobeSlot(e.getSlot(), wardrobeSlot), 1);
@@ -49,7 +62,10 @@ public class WardrobeGuiListener implements Listener {
                     var item = e.getClickedInventory().getItem(e.getSlot());
                     var wardrobeEntry = WardrobeGui.WARDROBE_SLOTS.entrySet()
                             .stream()
-                            .filter(entry -> isNullOrAir(wardrobeGui.getInventory().getItem(entry.getKey())) && entry.getValue().isValidItem(item))
+                            .filter(entry -> {
+                                var current = wardrobeGui.getInventory().getItem(entry.getKey());
+                                return (isNullOrAir(current) || wardrobeGui.isTemplate(current)) && entry.getValue().isValidItem(item);
+                            })
                             .findFirst()
                             .orElse(null);
                     if (wardrobeEntry != null) {

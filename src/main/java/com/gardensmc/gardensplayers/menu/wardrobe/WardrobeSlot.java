@@ -11,4 +11,6 @@ public interface WardrobeSlot {
 
     void updateWardrobe(Player player, ItemStack itemStack);
 
+    ItemStack getTemplate();
+
 }

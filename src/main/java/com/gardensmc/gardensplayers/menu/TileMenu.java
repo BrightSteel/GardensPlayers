@@ -6,6 +6,7 @@ import com.gardensmc.gardensplayers.currency.GemsCurrencyHandler;
 import com.gardensmc.gardensplayers.menu.tile.CategoryPages;
 import com.gardensmc.gardensplayers.menu.tile.TileItem;
 import com.gardensmc.gardensplayers.util.FontShift;
+import com.gardensmc.gardensplayers.util.MessageUtil;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElementGroup;
 import de.themoep.inventorygui.StaticGuiElement;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class TileMenu extends Menu {
 
-    private static final String[] layout = new String[] {
+    protected static final String[] DEFAULT_LAYOUT = new String[] {
             "a  ggghhh",
             "bbbbbbbbb",
             "ddddddddd",
@@ -34,40 +35,57 @@ public class TileMenu extends Menu {
     private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCompactNumberInstance(
             Locale.US, NumberFormat.Style.SHORT);
 
+    private final String[] layout;
     private final CategoryPages categoryPages;
     private final int page;
     private final int selectedCategory;
     private final int guiPageNumber;
     private final boolean showBalances;
     private final char bg;
+    private final String extraTitleChars;
     private int guiMaxPages;
 
-    public TileMenu(Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg) {
-        super(layout, buildTitle(viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg), viewer);
+    protected TileMenu(String[] layout, Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg, String extraTitleChars) {
+        super(layout, buildTitle(viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars), viewer);
+        this.layout = layout;
         this.categoryPages = pages;
         this.page = page;
         this.selectedCategory = selectedCategory;
         this.guiPageNumber = guiPageNumber;
         this.showBalances = showBalances;
         this.bg = bg;
+        this.extraTitleChars = extraTitleChars;
         initElements();
     }
 
-    public TileMenu(Player viewer, CategoryPages pages, int page, boolean showBalances, char bg) {
-        this(viewer, pages, page, 0, 0, showBalances, bg);
+    public static Builder builder(Player viewer, CategoryPages pages, char bg) {
+        return new Builder(viewer, pages, bg);
     }
 
-    public TileMenu(Player viewer, CategoryPages pages, boolean showBalances, char bg) {
-        this(viewer, pages, 0, 0, 0, showBalances, bg);
+    /**
+     * Constructs a menu of this concrete type. Subclasses override this so that navigation (paging, tab switches,
+     * {@link #reopenWith}) recreates the subtype rather than degrading to a plain {@link TileMenu}.
+     */
+    protected TileMenu create(String[] layout, Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg, String extraTitleChars) {
+        return new TileMenu(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
     }
 
-    private static String buildTitle(Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg) {
+    /** Re-renders this menu with the given navigation state, carrying over its layout, balances and title. */
+    private TileMenu copyWith(CategoryPages pages, int page, int selectedCategory, int guiPageNumber) {
+        return create(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+    }
+
+    private static String buildTitle(Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg, String extraTitleChars) {
         var categoryPage = pages.getPage(page);
         var currCategory = categoryPage.getCategories().get(selectedCategory);
 
         var titleBuilder = new StringBuilder("<white><font:gardens:default>" + getShift(-8) + bg);
         titleBuilder.append(getShift(-256));
         titleBuilder.append(getShift(79));
+
+        if (!extraTitleChars.isEmpty()) {
+            titleBuilder.append(extraTitleChars);
+        }
 
         if (showBalances) {
             // append balances
@@ -89,7 +107,7 @@ public class TileMenu extends Menu {
 
         // append page numbers
         titleBuilder.append(getShift(-1));
-        var pageNumbers = "%s / %s".formatted(guiPageNumber + 1, (int) Math.ceil((double) currCategory.getItems().size() / 27));
+        var pageNumbers = "%s / %s".formatted(guiPageNumber + 1, (int) Math.ceil((double) Math.max(currCategory.getItems().size(), 1) / 27));
         titleBuilder.append("<font:gardens:tile_page>").append(pageNumbers).append("</font>");
 
         // shift back
@@ -143,7 +161,7 @@ public class TileMenu extends Menu {
         return idx;
     }
 
-    private void initElements() {
+    protected void initElements() {
         var categoryGrp = new GuiElementGroup('b');
         if (showBalances) {
             gui.addElement(new StaticGuiElement('g', blankItem, "<blue>Gems", "<gray>Earn gems with /vote or /buy"));
@@ -156,7 +174,8 @@ public class TileMenu extends Menu {
                     'b',
                     blankItem,
                     click -> {
-                        open(() -> new TileMenu(viewer, categoryPages, prevPage, categoryPages.getPage(prevPage).getCategories().size() - 1, 0, showBalances, bg));
+                        open(() -> copyWith(categoryPages, prevPage,
+                                categoryPages.getPage(prevPage).getCategories().size() - 1, 0));
                         return true;
                     },
                     "Back"
@@ -173,7 +192,7 @@ public class TileMenu extends Menu {
                         icon != null ? icon : new ItemStack(Material.PAPER),
                         click -> {
                             if (!category.equals(currCategory)) {
-                                open(() -> new TileMenu(viewer, categoryPages, page, finalI, 0, showBalances, bg));
+                                open(() -> copyWith(categoryPages, page, finalI, 0));
                             }
                             return true;
                         },
@@ -185,7 +204,7 @@ public class TileMenu extends Menu {
                     'b',
                     blankItem,
                     click -> {
-                        open(() -> new TileMenu(viewer, categoryPages, page + 1, 0, 0, showBalances, bg));
+                        open(() -> copyWith(categoryPages, page + 1, 0, 0));
                         return true;
                     },
                     "Next"
@@ -209,21 +228,87 @@ public class TileMenu extends Menu {
         // pagination
         gui.addElement(new DynamicGuiElement('e', () -> new StaticGuiElement('e', guiPageNumber == 0 ? null : blankItem, click -> {
             if (guiPageNumber > 0) {
-                open(() -> new TileMenu(viewer, categoryPages, page, selectedCategory, guiPageNumber - 1, showBalances, bg));
+                open(() -> copyWith(categoryPages, page, selectedCategory, guiPageNumber - 1));
             }
             return true;
         }, "Back")));
         gui.addElement(new DynamicGuiElement('f', () -> new StaticGuiElement('f', guiPageNumber == guiMaxPages - 1 ? null : blankItem, click -> {
             if (guiPageNumber < guiMaxPages - 1) {
-                open(() -> new TileMenu(viewer, categoryPages, page, selectedCategory, guiPageNumber + 1, showBalances, bg));
+                open(() -> copyWith(categoryPages, page, selectedCategory, guiPageNumber + 1));
             }
             return true;
         }, "Next")));
     }
 
-    // opens a new TileMenu with same page, etc; mainly for opening with re-built title
+    // opens a new menu with same page, etc; mainly for opening with re-built title
     public void reopen() {
-        new TileMenu(viewer, categoryPages, page, selectedCategory, guiPageNumber, showBalances, bg).open();
+        copyWith(categoryPages, page, selectedCategory, guiPageNumber).open();
+    }
+
+    // re-renders with freshly-built categories, preserving the open tab and page
+    public void reopenWith(CategoryPages newCategoryPages) {
+        copyWith(newCategoryPages, page, selectedCategory, guiPageNumber).open();
+    }
+
+    /**
+     * Fluent builder for a {@link TileMenu}. {@code viewer}, {@code pages} and {@code bg} are required; {@code page},
+     * {@code selectedCategory} and {@code guiPageNumber} default to 0 and {@code showBalances} to {@code false}.
+     */
+    public static final class Builder {
+
+        private final Player viewer;
+        private final CategoryPages pages;
+        private final char bg;
+        private String[] layout = DEFAULT_LAYOUT;
+        private int page;
+        private int selectedCategory;
+        private int guiPageNumber;
+        private boolean showBalances;
+        private String extraTitleChars = "";
+
+        private Builder(Player viewer, CategoryPages pages, char bg) {
+            this.viewer = viewer;
+            this.pages = pages;
+            this.bg = bg;
+        }
+
+        public Builder layout(String[] layout) {
+            this.layout = layout;
+            return this;
+        }
+
+        public Builder page(int page) {
+            this.page = page;
+            return this;
+        }
+
+        public Builder selectedCategory(int selectedCategory) {
+            this.selectedCategory = selectedCategory;
+            return this;
+        }
+
+        public Builder guiPageNumber(int guiPageNumber) {
+            this.guiPageNumber = guiPageNumber;
+            return this;
+        }
+
+        public Builder showBalances(boolean showBalances) {
+            this.showBalances = showBalances;
+            return this;
+        }
+
+        public Builder extraTitleChars(String extraTitleChars) {
+            this.extraTitleChars = extraTitleChars;
+            return this;
+        }
+
+        public TileMenu build() {
+            return new TileMenu(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+        }
+
+        public void open() {
+            build().open();
+        }
     }
 
 }

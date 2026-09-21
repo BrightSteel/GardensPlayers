@@ -14,6 +14,7 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
@@ -25,6 +26,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class GardensPlayersPlaceholder extends PlaceholderExpansion {
+
+    /** Invisible U+E120 gate glyph the gardens-bedrock hud_screen.json override keys off of (blank in
+     *  font/glyph_E1.png). One boss bar carries Time + World on one line; the pack draws it as a single
+     *  box centered top-center where the vanilla boss bar sits. */
+    private static final String HUD_TOKEN = "\uE120";
+
+    /** Invisible U+E121 gate glyph (blank in font/glyph_E1.png) marking the acorn-balance BOSS BAR so the
+     *  pack can single it out (separate from the Time/World boss bar's U+E120) and redraw it right-
+     *  aligned above the hunger bar instead of centered. Prefixed so its advance width falls to the
+     *  LEFT of the right-aligned text. */
+    private static final String ACORN_TOKEN = "\uE121";
+
+    /** HUD icons for Bedrock, baked into gardens-bedrock font sheets. Emitted straight into the boss-bar
+     *  / action-bar title (Geyser's boss-bar path isn't run through TagBadges). Compass/clock live in
+     *  glyph_E4.png; the acorn is the existing glyph_E2.png cell U+E200 (E201 is the gem). */
+    private static final String COMPASS_ICON = "\uE400";
+    private static final String CLOCK_ICON = "\uE401";
+    private static final String ACORN_ICON = "\uE200";
 
     @Override
     public @NotNull String getIdentifier() {
@@ -84,7 +103,76 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
                 yield "Shop";
             }
             case "region" -> MessageUtil.readableId(PlaceholderAPI.setPlaceholders(player, "%worldguard_region_name_capitalized%"));
+            case "bedrock" -> {
+                var onlinePlayer = player.getPlayer();
+                if (onlinePlayer == null) {
+                    yield null;
+                }
+                var world = onlinePlayer.getWorld();
+                // HUD_TOKEN sits in the middle gap (not trailing) so its invisible advance width
+                // widens the Time/World gap instead of adding stray padding on the right edge.
+                yield CLOCK_ICON + " " + formatWorldTime(world.getTime()) + " " + HUD_TOKEN + " "
+                        + COMPASS_ICON + " " + resolveWorldLabel(onlinePlayer, world);
+            }
+            // Acorn balance + acorn icon, meant to be delivered as a BOSS BAR (by a separate plugin).
+            // The leading ACORN_TOKEN lets gardens-bedrock hud_screen.json recognize this boss bar and
+            // redraw it right-aligned above the hunger bar (see gardens_acorn_grid in the pack).
+            case "bedrock_acorns" -> ACORN_TOKEN + playerEntry.getMoney() + " " + ACORN_ICON;
             default -> null;
+        };
+    }
+
+    /*
+     * The bedrock HUD text is rendered top-center by the gardens-bedrock resource pack
+     * ({@code hud_screen.json}), which keys off the invisible U+E120 gate glyph to hide the normal
+     * centered boss bar and re-draw the gated bar as its own content-hugging black box mounted where
+     * the vanilla boss bar sits. A separate plugin delivers the string as a single boss bar title to
+     * Geyser players. Time and World share ONE bar on ONE line (three-space gap, no "\n") so it
+     * renders as a single box centered on the whole text. The glyph is appended (not prefixed) so it
+     * adds no leading space.
+     */
+
+    /** Convert a world's time-of-day ticks (0..24000, 0 = 06:00) to a 12-hour "h AM/PM" clock. */
+    private static String formatWorldTime(long ticks) {
+        long timeOfDay = ((ticks % 24000L) + 24000L) % 24000L;
+        int hour24 = (int) (((timeOfDay / 1000L) + 6L) % 24L);
+        String period = hour24 < 12 ? "AM" : "PM";
+        int hour12 = hour24 % 12;
+        if (hour12 == 0) {
+            hour12 = 12;
+        }
+        return hour12 + " " + period;
+    }
+
+    /**
+     * World label for the Bedrock HUD, in priority order (mirrors the Java nameplate config):
+     * 1. WorldGuard region name, if the player is standing in a named region.
+     * 2. GriefPrevention claim owner, if standing in a claim that isn't unclaimed/admin-owned.
+     * 3. Otherwise the world's display name.
+     */
+    private static String resolveWorldLabel(Player player, World world) {
+        String regionRaw = PlaceholderAPI.setPlaceholders(player, "%worldguard_region_name_capitalized%");
+        if (!regionRaw.isEmpty()) {
+            return MessageUtil.readableId(regionRaw);
+        }
+
+        String claimOwner = PlaceholderAPI.setPlaceholders(player, "%griefprevention_currentclaim_ownername%");
+        if (!claimOwner.equals("Unclaimed") && !claimOwner.equals("an administrator")) {
+            return claimOwner + "'s Claim";
+        }
+
+        return worldDisplayName(world);
+    }
+
+    private static String worldDisplayName(World world) {
+        return switch (world.getName()) {
+            case "gardens" -> "Gardens";
+            case "gardens_nether" -> "Nether";
+            case "gardens_the_end" -> "The End";
+            case "resource_world" -> "Resource World";
+            case "resource_nether" -> "Resource Nether";
+            case "resource_the_end" -> "Resource End";
+            default -> world.getName();
         };
     }
 

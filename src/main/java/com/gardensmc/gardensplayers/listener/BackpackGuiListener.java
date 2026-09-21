@@ -8,10 +8,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public class BackpackGuiListener implements Listener {
+
+    @EventHandler
+    public void onLeaveGame(PlayerQuitEvent e) {
+        // sometimes it can glitch and backpack is still left in map forever - at least let leaving clear it
+        BackpackHandler.clearBackpackFromMap(e.getPlayer());
+    }
 
     @EventHandler(ignoreCancelled = true)
     public void onClick(InventoryClickEvent e) {

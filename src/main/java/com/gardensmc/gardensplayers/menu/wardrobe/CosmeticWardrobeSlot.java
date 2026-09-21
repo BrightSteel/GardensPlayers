@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutionException;
 
+import static com.gardensmc.gardensplayers.menu.WardrobeGui.TEMPLATE_PREFIX;
+
 public class CosmeticWardrobeSlot implements WardrobeSlot {
 
     private final CosmeticSlot cosmeticSlot;
@@ -92,5 +94,10 @@ public class CosmeticWardrobeSlot implements WardrobeSlot {
             return null;
         }
         return HMCCosmeticsAPI.getCosmetic(furniture.getCosmeticId());
+    }
+
+    @Override
+    public ItemStack getTemplate() {
+        return GardensFurniture.itemRegistry.buildItem(TEMPLATE_PREFIX + cosmeticSlot.getName().toLowerCase());
     }
 }
