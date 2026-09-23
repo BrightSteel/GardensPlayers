@@ -43,43 +43,42 @@ public class BackpackGuiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlaceItemIntoBackpack(InventoryMoveItemEvent e) {
         if (e.getDestination().getHolder() instanceof BackpackGui) {
-            if (!isValidItem(e.getItem())) {
+            if (!BackpackHandler.isAllowedInBackpack(e.getItem())) {
                 e.setCancelled(true);
             }
         }
     }
 
-    @EventHandler
-    public void onShiftIntoBackpack(InventoryClickEvent e) {
-        // shifting from player inv -> backpack
-        if (e.getClickedInventory() instanceof PlayerInventory) {
-            if (e.getView().getTopInventory().getHolder() instanceof BackpackGui) {
-                if (e.getClick() == ClickType.SHIFT_LEFT) {
-                    var item = e.getClickedInventory().getItem(e.getSlot());
-                    if (!isValidItem(item)) {
-                        e.setCancelled(true);
-                    }
-                }
-            }
+    @EventHandler(ignoreCancelled = true)
+    public void onItemIntoBackpack(InventoryClickEvent e) {
+        if (!(e.getView().getTopInventory().getHolder() instanceof BackpackGui)) return;
+        if (!(e.getWhoClicked() instanceof Player player)) return;
+        if (!BackpackHandler.isAllowedInBackpack(getItemEnteringBackpack(e, player))) {
+            e.setCancelled(true);
         }
     }
 
-    @EventHandler
-    public void onDropIntoBackpack(InventoryClickEvent e) {
+    // Every click that can move an item into the backpack gui, and the item it would move.
+    private ItemStack getItemEnteringBackpack(InventoryClickEvent e, Player player) {
         var clickedInv = e.getClickedInventory();
-        if (clickedInv != null && clickedInv.getHolder() instanceof BackpackGui) {
-            if (e.getClick() == ClickType.LEFT) {
-                if (!isValidItem(e.getCursor())) {
-                    e.setCancelled(true);
-                }
-            }
+        if (clickedInv == null) {
+            return null;
         }
+        if (clickedInv.getHolder() instanceof BackpackGui) {
+            return switch (e.getClick()) {
+                case NUMBER_KEY -> player.getInventory().getItem(e.getHotbarButton());
+                case SWAP_OFFHAND -> player.getInventory().getItemInOffHand();
+                default -> e.getCursor(); // left/right/middle placement
+            };
+        }
+        // shifting from player inv -> backpack
+        return e.isShiftClick() ? e.getCurrentItem() : null;
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onDragItemsIntoBackpack(InventoryDragEvent e) {
         if (e.getInventory().getHolder() instanceof BackpackGui) {
-            if (!e.getNewItems().values().stream().allMatch(this::isValidItem)) {
+            if (!e.getNewItems().values().stream().allMatch(BackpackHandler::isAllowedInBackpack)) {
                 e.setCancelled(true);
             }
         }
@@ -88,17 +87,29 @@ public class BackpackGuiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onClose(InventoryCloseEvent e) {
         if (e.getInventory().getHolder() instanceof BackpackGui backpackGui) {
-            BackpackHandler.onClose((Player) e.getPlayer(), backpackGui.getBackpackItem(), backpackGui.getItemContents(), backpackGui.isWardrobeBackpack());
+            BackpackHandler.onClose((Player) e.getPlayer(), backpackGui, backpackGui.getBackpackItem());
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onMoveBackpackInInventory(InventoryClickEvent e) {
-        if (e.getClickedInventory() instanceof PlayerInventory playerInventory) {
+        if (!(e.getWhoClicked() instanceof Player player)) return;
+        var playerInventory = player.getInventory();
+        if (e.getClickedInventory() instanceof PlayerInventory) {
             var item = e.getClickedInventory().getItem(e.getSlot());
             if (BackpackHandler.isOpenBackpack(playerInventory, item)) {
                 e.setCancelled(true);
+                return;
             }
+        }
+        // hotbar keys and offhand swaps move the hotbar/offhand item without clicking it directly
+        var swapped = switch (e.getClick()) {
+            case NUMBER_KEY -> playerInventory.getItem(e.getHotbarButton());
+            case SWAP_OFFHAND -> playerInventory.getItemInOffHand();
+            default -> null;
+        };
+        if (BackpackHandler.isOpenBackpack(playerInventory, swapped)) {
+            e.setCancelled(true);
         }
     }
 
@@ -126,16 +137,5 @@ public class BackpackGuiListener implements Listener {
         if (GardensFurniture.itemRegistry.getCustomItem(potentialBackpack) instanceof CustomBackpackItem) {
             BackpackHandler.closeBackpackIfOpen(player, potentialBackpack);
         }
-    }
-
-    private boolean isValidItem(ItemStack item) {
-        if (item != null) {
-            var typeStr = item.getType().toString().toLowerCase();
-            if (typeStr.endsWith("shulker_box") || typeStr.endsWith("bundle")) {
-                return false;
-            }
-            return !(GardensFurniture.itemRegistry.getCustomItem(item) instanceof CustomBackpackItem);
-        }
-        return true;
     }
 }

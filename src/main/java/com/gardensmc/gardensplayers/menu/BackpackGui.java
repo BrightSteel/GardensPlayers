@@ -14,7 +14,10 @@ import org.bukkit.inventory.ItemStack;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 public class BackpackGui implements InventoryHolder {
@@ -28,6 +31,7 @@ public class BackpackGui implements InventoryHolder {
     private final int fillerSlots;
     @Getter
     private final boolean isWardrobeBackpack;
+    private boolean closed;
 
     public BackpackGui(Player viewer, RowConfig rowConfig, ItemStack backpackItem, ItemStack[] items, boolean isWardrobeBackpack) {
         this.viewer = viewer;
@@ -66,6 +70,33 @@ public class BackpackGui implements InventoryHolder {
             return originalContents;
         }
         return Arrays.copyOfRange(originalContents, fillerSlots, originalContents.length);
+    }
+
+    /**
+     * Marks this gui as closed, returning false if it already was. Closing can be handled twice
+     * (manual close followed by the InventoryCloseEvent), so this keeps the save/give-back to once.
+     */
+    public boolean markClosed() {
+        if (closed) {
+            return false;
+        }
+        closed = true;
+        return true;
+    }
+
+    /**
+     * Removes and returns every item in the storage slots (filler excluded) that matches the predicate.
+     */
+    public List<ItemStack> removeItems(Predicate<ItemStack> predicate) {
+        var removed = new ArrayList<ItemStack>();
+        for (int i = fillerSlots; i < inventory.getSize(); i++) {
+            var item = inventory.getItem(i);
+            if (item != null && !item.getType().isAir() && predicate.test(item)) {
+                removed.add(item);
+                inventory.setItem(i, null);
+            }
+        }
+        return removed;
     }
 
     @Override

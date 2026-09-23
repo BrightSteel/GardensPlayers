@@ -54,21 +54,40 @@ public class BackpackHandler {
     }
 
     public static void closeBackpackIfOpen(Player player, ItemStack backpack) {
-        var backpackId = NBT.get(backpack, nbt -> {
-            var compound = nbt.getCompound(BACKPACK_KEY);
-            if (compound != null) {
-                return compound.getUUID(BACKPACK_ID_KEY);
-            }
-            return null;
-        });
+        var backpackId = getBackpackId(backpack);
         if (backpackId == null) {
             return;
         }
         var openBackpack = openBackpacks.get(player.getUniqueId());
         if (openBackpack != null && openBackpack.equals(backpackId) && player.getOpenInventory().getTopInventory().getHolder() instanceof BackpackGui backpackGui) {
-            onClose(player, backpack, backpackGui.getItemContents(), backpackGui.isWardrobeBackpack());
+            onClose(player, backpackGui, backpack);
             player.getOpenInventory().close();
         }
+    }
+
+    /**
+     * Whether an item may be stored inside a backpack - no backpacks, shulkers or bundles.
+     */
+    public static boolean isAllowedInBackpack(@Nullable ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return true;
+        }
+        var typeStr = item.getType().toString().toLowerCase();
+        if (typeStr.endsWith("shulker_box") || typeStr.endsWith("bundle")) {
+            return false;
+        }
+        return !(GardensFurniture.itemRegistry.getCustomItem(item) instanceof CustomBackpackItem);
+    }
+
+    @Nullable
+    private static UUID getBackpackId(ItemStack itemStack) {
+        return NBT.get(itemStack, nbt -> {
+            var compound = nbt.getCompound(BACKPACK_KEY);
+            if (compound != null && compound.hasTag(BACKPACK_ID_KEY)) {
+                return compound.getUUID(BACKPACK_ID_KEY);
+            }
+            return null;
+        });
     }
 
     public ItemStack getUpgradeRowsResult() {
@@ -127,25 +146,33 @@ public class BackpackHandler {
         if (!(GardensFurniture.itemRegistry.getCustomItem(itemStack) instanceof CustomBackpackItem)) {
             return false;
         }
-        var backpackId = NBT.get(itemStack, nbt -> {
-           var compound = nbt.getCompound(BACKPACK_KEY);
-           if (compound != null) {
-               return compound.getUUID(BACKPACK_ID_KEY);
-           }
-           return null;
-        });
-        return Objects.equals(openBackpack, backpackId);
+        return Objects.equals(openBackpack, getBackpackId(itemStack));
     }
 
-    public static void onClose(Player player, ItemStack backpack, ItemStack[] contents, boolean isWardrobeBackpack) {
+    public static void onClose(Player player, BackpackGui backpackGui, ItemStack backpack) {
+        if (!backpackGui.markClosed()) {
+            return; // already saved - closeBackpackIfOpen saves, then the close event fires again
+        }
         if (backpack == null || backpack.getType() == Material.AIR) {
             // AIR if closed after dropping item, but fine since we run this prior manually
+            openBackpacks.remove(player.getUniqueId());
             return;
         }
-        serializeItems(backpack, contents);
-        if (isWardrobeBackpack) {
+        // Anything that slipped past the click checks (backpacks, shulkers, bundles) goes back to the player
+        // rather than being serialized into the backpack.
+        var disallowed = backpackGui.removeItems(item -> !isAllowedInBackpack(item));
+        // If the open backpack itself was moved into its gui (eg a hotbar key swap), the stack we hold is now
+        // stranded in the gui rather than the player's inventory. Save into the rescued stack and hand it back.
+        var backpackId = getBackpackId(backpack);
+        var target = disallowed.stream()
+                .filter(item -> backpackId != null && backpackId.equals(getBackpackId(item)))
+                .findFirst()
+                .orElse(backpack);
+        serializeItems(target, backpackGui.getItemContents());
+        returnToPlayer(player, disallowed);
+        if (backpackGui.isWardrobeBackpack()) {
             // save changes to db
-            var nbt = NBT.itemStackToNBT(backpack).toString();
+            var nbt = NBT.itemStackToNBT(target).toString();
             try {
                 new PlayerEntryHandler(player.getUniqueId()).updateWardrobe(CosmeticSlot.BACKPACK, nbt).get();
             } catch (Exception e) {
@@ -153,6 +180,14 @@ public class BackpackHandler {
             }
         }
         openBackpacks.remove(player.getUniqueId());
+    }
+
+    private static void returnToPlayer(Player player, List<ItemStack> items) {
+        if (items.isEmpty()) {
+            return;
+        }
+        player.getInventory().addItem(items.toArray(ItemStack[]::new)).values()
+                .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
     }
 
     public static UUID serializeItems(ItemStack backpack, ItemStack[] contents) {
