@@ -6,7 +6,6 @@ import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.cache.PlayerRewardsCache;
 import com.gardensmc.gardensplayers.command.SenderMessageHandler;
-import com.gardensmc.gardensplayers.mail.MailHandler;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.gardensmc.gardensplayers.quest.QuestHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
@@ -46,9 +45,6 @@ public class PlayerListener implements Listener {
         if (!PlayerRewardsCache.INSTANCE.getSync(e.getPlayer().getUniqueId()).isEmpty()) {
             player.sendMessage(MiniMessage.miniMessage().deserialize("<green>You have pending rewards! Claim them with <gray>/rewards"));
         }
-
-        // alert for unread mail
-        MailHandler.INSTANCE.alertUnread(player);
 
         // nudge about remaining daily quests, slightly delayed so it lands after the join clutter
         Bukkit.getScheduler().runTaskLater(

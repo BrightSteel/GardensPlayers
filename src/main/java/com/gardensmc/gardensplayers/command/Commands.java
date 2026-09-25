@@ -58,8 +58,6 @@ public class Commands {
             register(registrar, new SmiteCommand(), "Strike lightning at the block you're looking at", "/<command>", List.of("lightning"));
 
             // Native Brigadier command tree (not bridged from a GardensCommand)
-            registrar.register(FriendCommand.node(), "Manage your friends", List.of("f"));
-            registrar.register(MailCommand.node(), "Read your mail", List.of("inbox"));
             registrar.register(GuildCommand.node(), "Manage your guild", List.of("g"));
             registrar.register(GuildChatCommand.node(), "Send a message to your guild", List.of("gc"));
 

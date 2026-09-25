@@ -40,7 +40,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 /**
- * Business logic for the guild command suite. Mirrors {@link com.gardensmc.gardensplayers.friends.FriendsHandler}: every
+ * Business logic for the guild command suite: every
  * action runs its blocking database work off the main thread, then returns a {@link Runnable} that performs all
  * messaging (and online-player lookups) back on the main thread.
  *

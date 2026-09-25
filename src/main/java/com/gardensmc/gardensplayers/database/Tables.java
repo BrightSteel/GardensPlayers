@@ -16,8 +16,6 @@ public class Tables {
     public static final WarpVisitsTable warpVisitsTable = register(WarpVisitsTable::new);
     public static final WardrobeTable wardrobeTable = register(WardrobeTable::new);
     public static final RewardsTable rewardsTable = register(RewardsTable::new);
-    public static final FriendsTable friendsTable = register(FriendsTable::new);
-    public static final MailTable mailTable = register(MailTable::new);
     public static final GuildsTable guildsTable = register(GuildsTable::new);
     public static final GuildMembersTable guildMembersTable = register(GuildMembersTable::new);
     public static final GuildJoinRequestsTable guildJoinRequestsTable = register(GuildJoinRequestsTable::new);
