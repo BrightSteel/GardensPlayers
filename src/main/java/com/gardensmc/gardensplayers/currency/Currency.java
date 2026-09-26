@@ -17,6 +17,10 @@ public interface Currency {
         return getCurrency(player.getUniqueId());
     }
 
+    default boolean has(UUID uuid, int amount) {
+        return getCurrency(uuid) >= amount;
+    }
+
     CompletableFuture<Void> addCurrency(Player player, int amount);
 
     CompletableFuture<Void> addCurrency(UUID player, int amount);

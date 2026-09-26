@@ -4,7 +4,7 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import org.bukkit.entity.Player;
 
@@ -32,14 +32,14 @@ public class PayCommand extends PlayerExecutorCommand {
 
     // the target is credited only once the sender's debit has actually gone through
     private void pay(Player executor, int amount, Player targetPlayer) {
-        var economySender = new PlayerEconomyHandler(executor.getUniqueId());
+        var acorns = AcornsCurrencyHandler.INSTANCE;
         var messageSender = new SenderMessageHandler(executor);
-        if (!economySender.hasEnough(amount)) {
+        if (!acorns.has(executor.getUniqueId(), amount)) {
             messageSender.sendError("You do not have enough money to make this payment");
             return;
         }
         try {
-            economySender.withdraw(amount).thenAccept(taken -> {
+            acorns.takeCurrency(executor.getUniqueId(), amount).thenAccept(taken -> {
                 if (!taken) {
                     messageSender.sendError("You do not have enough money to make this payment");
                     return;
@@ -57,9 +57,8 @@ public class PayCommand extends PlayerExecutorCommand {
     }
 
     private void depositIntoTarget(Player executor, int amount, Player targetPlayer) {
-        var economyTarget = new PlayerEconomyHandler(targetPlayer.getUniqueId());
-        economyTarget
-                .deposit(amount)
+        AcornsCurrencyHandler.INSTANCE
+                .addCurrency(targetPlayer, amount)
                 .thenRun(() -> new SenderMessageHandler(targetPlayer).sendMessage("%s sent you %s%s".formatted(
                         MessageUtil.toPlainText(executor.displayName()),
                         GardensPlayers.config.getCurrencySymbol(),

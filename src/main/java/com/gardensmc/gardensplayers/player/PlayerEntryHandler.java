@@ -4,10 +4,8 @@ import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
-import de.tr7zw.nbtapi.NBT;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Clock;
@@ -37,31 +35,6 @@ public class PlayerEntryHandler {
         CompletableFuture
                 .runAsync(() -> Tables.playerTable.setNickname(uuid.toString(), nickname))
                 .thenRun(this::refreshCache);
-    }
-
-    // completes with true only if the balance covered it and the money was taken
-    public CompletableFuture<Boolean> subtractMoney(int amount) {
-        return CompletableFuture
-                .supplyAsync(() -> Tables.playerTable.subtractMoney(uuid, amount))
-                .whenComplete((taken, error) -> {
-                    if (Boolean.TRUE.equals(taken)) {
-                        PlayerEntryCache.INSTANCE.updateIfLoaded(uuid, entry -> entry.adjustMoney(-amount));
-                    } else {
-                        refreshCache(); // the cached balance was wrong - reload it
-                    }
-                });
-    }
-
-    public CompletableFuture<Void> addMoney(int amount) {
-        return CompletableFuture
-                .runAsync(() -> Tables.playerTable.addMoney(uuid, amount))
-                .whenComplete((ignored, error) -> {
-                    if (error == null) {
-                        PlayerEntryCache.INSTANCE.updateIfLoaded(uuid, entry -> entry.adjustMoney(amount));
-                    } else {
-                        refreshCache();
-                    }
-                });
     }
 
     public void updateLastLocation() {

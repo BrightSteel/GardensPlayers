@@ -10,7 +10,6 @@ import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Material;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -114,7 +113,7 @@ public class UpgradesMenu extends Menu {
                                 var permissionUpgrade = permission.equals(MAX_EC_PERMISSION)
                                         ? MAX_EC_PERMISSION + ".upgrade" + (amountOwned + 1)
                                         : permission + "." + (amountOwned + 1);
-                                GemsCurrencyHandler.INSTANCE.subtractGems(viewer, price).whenComplete((taken, error) ->
+                                GemsCurrencyHandler.INSTANCE.chargeCurrency(viewer, price).whenComplete((taken, error) ->
                                         Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
                                             purchasing = false;
                                             if (error != null || !Boolean.TRUE.equals(taken)) {

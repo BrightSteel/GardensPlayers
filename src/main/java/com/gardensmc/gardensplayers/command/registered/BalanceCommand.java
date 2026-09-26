@@ -5,8 +5,8 @@ import com.gardensmc.gardensplayers.command.exception.InvalidUserException;
 import com.gardensmc.gardensplayers.command.exception.NoPermissionException;
 import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.command.type.PlayerCommand;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.database.Tables;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import org.bukkit.command.CommandSender;
@@ -51,7 +51,7 @@ public class BalanceCommand extends PlayerCommand {
             if (targetUUID == null) {
                 throw new PlayerNotFoundException(username);
             }
-            return new PlayerEconomyHandler(targetUUID).getBalance();
+            return AcornsCurrencyHandler.INSTANCE.getCurrency(targetUUID);
         }, balance -> executor.sendMessage(MessageUtil.parseIntoComponent(
                 "<green>%s's balance is %s%s".formatted(
                         username,
@@ -64,7 +64,7 @@ public class BalanceCommand extends PlayerCommand {
     @Override
     public void executeOnSelf(Player player, String[] args) {
         super.executeOnSelf(player, args);
-        var balance = new PlayerEconomyHandler(player.getUniqueId()).getBalance();
+        var balance = AcornsCurrencyHandler.INSTANCE.getCurrency(player);
         player.sendMessage(MessageUtil.parseIntoComponent(
                 "<green>Your balance is %s%s".formatted(GardensPlayers.config.getCurrencySymbol(), balance)
         ));
@@ -73,7 +73,7 @@ public class BalanceCommand extends PlayerCommand {
     @Override
     public void executeOnPlayer(CommandSender executor, Player targetPlayer, String[] args) {
         super.executeOnPlayer(executor, targetPlayer, args);
-        var balance = new PlayerEconomyHandler(targetPlayer.getUniqueId()).getBalance();
+        var balance = AcornsCurrencyHandler.INSTANCE.getCurrency(targetPlayer);
         executor.sendMessage(MessageUtil.parseIntoComponent(
                 "<green>%s's balance is %s%s".formatted(
                         MessageUtil.toPlainText(targetPlayer.displayName()),

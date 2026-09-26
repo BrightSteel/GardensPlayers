@@ -2,6 +2,7 @@ package com.gardensmc.gardensplayers.economy;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import net.milkbowl.vault.economy.Economy;
@@ -15,6 +16,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public class GardensEconomyProvider implements Economy {
+
+    private static final AcornsCurrencyHandler ACORNS = AcornsCurrencyHandler.INSTANCE;
 
     @Override
     public boolean isEnabled() {
@@ -78,12 +81,12 @@ public class GardensEconomyProvider implements Economy {
         if (uuid == null) {
             return 0;
         }
-        return new PlayerEconomyHandler(uuid).getBalance();
+        return ACORNS.getCurrency(uuid);
     }
 
     @Override
     public double getBalance(OfflinePlayer offlinePlayer) {
-        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).getBalance();
+        return ACORNS.getCurrency(offlinePlayer.getUniqueId());
     }
 
     @Override
@@ -102,12 +105,12 @@ public class GardensEconomyProvider implements Economy {
         if (uuid == null) {
             return false;
         }
-        return new PlayerEconomyHandler(uuid).hasEnough(withdrawalAmount(amount));
+        return ACORNS.has(uuid, withdrawalAmount(amount));
     }
 
     @Override
     public boolean has(OfflinePlayer offlinePlayer, double amount) {
-        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).hasEnough(withdrawalAmount(amount));
+        return ACORNS.has(offlinePlayer.getUniqueId(), withdrawalAmount(amount));
     }
 
     @Override
@@ -143,10 +146,10 @@ public class GardensEconomyProvider implements Economy {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
         }
         try {
-            var promise = new PlayerEconomyHandler(uuid).withdraw(amountRounded);
+            var promise = ACORNS.takeCurrency(uuid, amountRounded);
             try {
                 if (!promise.get()) { // wait for withdrawal to occur
-                    return new EconomyResponse(0, new PlayerEconomyHandler(uuid).getBalance(), EconomyResponse.ResponseType.FAILURE, "Insufficient funds");
+                    return new EconomyResponse(0, ACORNS.getCurrency(uuid), EconomyResponse.ResponseType.FAILURE, "Insufficient funds");
                 }
             } catch (Exception e) {
                 // report it to the calling plugin instead of throwing into its transaction
@@ -155,7 +158,7 @@ public class GardensEconomyProvider implements Economy {
             }
             return new EconomyResponse(
                     amountRounded,
-                    new PlayerEconomyHandler(uuid).getBalance(),
+                    ACORNS.getCurrency(uuid),
                     EconomyResponse.ResponseType.SUCCESS,
                     null
             );
@@ -201,7 +204,7 @@ public class GardensEconomyProvider implements Economy {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
         }
         try {
-            var promise = new PlayerEconomyHandler(uuid).deposit(amountRounded);
+            var promise = ACORNS.addCurrency(uuid, amountRounded);
             try {
                 promise.get(); // wait for deposit to occur
             } catch (Exception e) {
@@ -210,7 +213,7 @@ public class GardensEconomyProvider implements Economy {
             }
             return new EconomyResponse(
                     amountRounded,
-                    new PlayerEconomyHandler(uuid).getBalance(),
+                    ACORNS.getCurrency(uuid),
                     EconomyResponse.ResponseType.SUCCESS,
                     null
             );

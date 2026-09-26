@@ -3,8 +3,8 @@ package com.gardensmc.gardensplayers.command.registered;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.exception.InvalidStateException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.death.DeathLocationTracker;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.menu.BedrockDeathBackMenu;
 import com.gardensmc.gardensplayers.menu.DeathBackConfirmMenu;
 import org.bukkit.Bukkit;
@@ -46,14 +46,14 @@ public class DeathBackCommand extends PlayerExecutorCommand {
         // Validate up front so we never show a confirmation we can't honour.
         Location location = getValidDeathLocation(executor);
         int cost = GardensPlayers.config.getDeathBackCost();
-        var economy = new PlayerEconomyHandler(executor.getUniqueId());
-        if (!economy.hasEnough(cost)) {
+        var acorns = AcornsCurrencyHandler.INSTANCE;
+        if (!acorns.has(executor.getUniqueId(), cost)) {
             throw new InvalidStateException("You need %d acorns to teleport to your death location".formatted(cost));
         }
 
         if (args.length > 0 && args[0].equalsIgnoreCase("confirm")) {
             // pay first, teleport only once the acorns were actually taken (a free deathback skips paying)
-            var paid = cost > 0 ? economy.withdraw(cost) : CompletableFuture.completedFuture(true);
+            var paid = cost > 0 ? acorns.takeCurrency(executor.getUniqueId(), cost) : CompletableFuture.completedFuture(true);
             paid.thenAccept(taken -> Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
                 if (!taken) {
                     sendMessage(executor, "<red>You need %d acorns to teleport to your death location".formatted(cost));
