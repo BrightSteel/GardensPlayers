@@ -1,15 +1,18 @@
 package com.gardensmc.gardensplayers.economy;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class GardensEconomyProvider implements Economy {
 
@@ -99,12 +102,12 @@ public class GardensEconomyProvider implements Economy {
         if (uuid == null) {
             return false;
         }
-        return new PlayerEconomyHandler(uuid).hasEnough(round(amount));
+        return new PlayerEconomyHandler(uuid).hasEnough((int) Math.ceil(amount)); // same rounding as withdrawPlayer
     }
 
     @Override
     public boolean has(OfflinePlayer offlinePlayer, double amount) {
-        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).hasEnough(round(amount));
+        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).hasEnough((int) Math.ceil(amount)); // same rounding as withdrawPlayer
     }
 
     @Override
@@ -134,8 +137,12 @@ public class GardensEconomyProvider implements Economy {
         return withdrawPlayer(uuid, amount);
     }
 
-    private EconomyResponse withdrawPlayer(UUID uuid, double amount) {
-        int amountRounded = round(amount);
+    private EconomyResponse withdrawPlayer(@Nullable UUID uuid, double amount) {
+        // round up: a withdrawal never takes less than asked, so fractional prices can't create money
+        int amountRounded = (int) Math.ceil(amount);
+        if (!hasEntry(uuid)) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
+        }
         try {
             var promise = new PlayerEconomyHandler(uuid).withdraw(amountRounded);
             try {
@@ -143,7 +150,9 @@ public class GardensEconomyProvider implements Economy {
                     return new EconomyResponse(0, new PlayerEconomyHandler(uuid).getBalance(), EconomyResponse.ResponseType.FAILURE, "Insufficient funds");
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                // report it to the calling plugin instead of throwing into its transaction
+                GardensPlayers.plugin.getLogger().log(Level.WARNING, "Vault withdrawal failed", e);
+                return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Database error");
             }
             return new EconomyResponse(
                     amountRounded,
@@ -187,14 +196,19 @@ public class GardensEconomyProvider implements Economy {
         return depositPlayer(offlinePlayer, amount);
     }
 
-    private EconomyResponse depositPlayer(UUID uuid, double amount) {
-        int amountRounded = round(amount);
+    private EconomyResponse depositPlayer(@Nullable UUID uuid, double amount) {
+        // round down: a deposit never gives more than asked
+        int amountRounded = (int) Math.floor(amount);
+        if (!hasEntry(uuid)) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
+        }
         try {
             var promise = new PlayerEconomyHandler(uuid).deposit(amountRounded);
             try {
                 promise.get(); // wait for deposit to occur
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                GardensPlayers.plugin.getLogger().log(Level.WARNING, "Vault deposit failed", e);
+                return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Database error");
             }
             return new EconomyResponse(
                     amountRounded,
@@ -294,6 +308,11 @@ public class GardensEconomyProvider implements Economy {
     @Override
     public boolean createPlayerAccount(OfflinePlayer offlinePlayer, String worldName) {
         return false;
+    }
+
+    // a player row exists (unknown usernames resolve to null)
+    private boolean hasEntry(@Nullable UUID uuid) {
+        return uuid != null && PlayerEntryCache.INSTANCE.getSync(uuid) != null;
     }
 
     private int round(double amount) {

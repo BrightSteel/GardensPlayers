@@ -23,7 +23,9 @@ public class PlayerEntryCache extends AsyncLoadingCache<UUID, PlayerEntry> {
         return CompletableFuture.supplyAsync(() -> {
             var playerEntry = Tables.playerTable.getPlayerEntry(key);
             if (playerEntry == null) {
-                return createPlayerEntry(key);
+                // only a player who is online gets a new row; anyone else (an NPC shop, a name that never
+                // joined) simply has no entry, instead of throwing
+                return Bukkit.getPlayer(key) != null ? createPlayerEntry(key) : null;
             }
             // Keep the stored username current (e.g. after a Mojang name change) while the player is online.
             var online = Bukkit.getPlayer(key);
