@@ -1,5 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.ModalForm;
 import org.geysermc.floodgate.api.FloodgateApi;
@@ -22,7 +24,8 @@ public class BedrockDeathBackMenu {
                 .button2("No")
                 .validResultHandler(response -> {
                     if (response.clickedButtonId() == 0) {
-                        viewer.chat("/deathback confirm");
+                        // form responses arrive off the main thread; the command teleports and charges acorns
+                        Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> viewer.chat("/deathback confirm"));
                     }
                 })
                 .build();

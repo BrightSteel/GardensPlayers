@@ -11,7 +11,6 @@ import com.gardensmc.gardensplayers.util.WorldGuardUtil;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -171,7 +170,7 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
             case "gardens" -> "Gardens";
             case "gardens_nether" -> "Nether";
             case "gardens_the_end" -> "The End";
-            case "resource_world" -> "Resource World";
+            case "resource" -> "Resource World";
             case "resource_nether" -> "Resource Nether";
             case "resource_the_end" -> "Resource End";
             default -> world.getName();
