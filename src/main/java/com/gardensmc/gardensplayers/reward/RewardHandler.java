@@ -4,7 +4,7 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerRewardsCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.RewardEntry;
-import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.util.DataFiles;
 import org.bukkit.entity.Player;
 
 import java.time.Instant;
@@ -19,9 +19,9 @@ public class RewardHandler {
 
     public static void loadRewards() {
         var loaded = new ArrayList<Reward>();
-        for (var key : ConfigUtil.rewardsYaml.getKeys(false)) {
+        for (var key : DataFiles.rewardsYaml.getKeys(false)) {
             try {
-                loaded.add(new Reward(key, Objects.requireNonNull(ConfigUtil.rewardsYaml.getConfigurationSection(key))));
+                loaded.add(new Reward(key, Objects.requireNonNull(DataFiles.rewardsYaml.getConfigurationSection(key))));
             } catch (Exception e) {
                 // e.g. an ItemEdit item that doesn't exist, or a malformed expiration date
                 GardensPlayers.plugin.getLogger().severe("Skipping reward '" + key + "': " + e);

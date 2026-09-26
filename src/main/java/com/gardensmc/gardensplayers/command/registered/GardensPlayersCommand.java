@@ -3,7 +3,7 @@ package com.gardensmc.gardensplayers.command.registered;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.type.GardensCommand;
 import com.gardensmc.gardensplayers.config.Config;
-import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.util.DataFiles;
 import org.bukkit.command.CommandSender;
 
 import java.util.logging.Level;
@@ -22,7 +22,7 @@ public class GardensPlayersCommand extends GardensCommand {
         } else if (args[0].equalsIgnoreCase("reload")) {
             GardensPlayers.plugin.reloadConfig();
             GardensPlayers.config = new Config(GardensPlayers.plugin.getConfig());
-            ConfigUtil.loadYamls();
+            DataFiles.loadYamls();
             try {
                 GardensPlayers.loadShops();
                 executor.sendMessage("Reloaded GardensPlayers");

@@ -16,7 +16,7 @@ import com.gardensmc.gardensplayers.restart.RestartHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
-import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.util.DataFiles;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
@@ -69,7 +69,7 @@ public class GardensPlayers extends JavaPlugin {
     public void onEnable() {
         plugin = this;
         saveDefaultConfig();
-        ConfigUtil.loadYamls();
+        DataFiles.loadYamls();
         config = new Config(getConfig());
         Tables.initializeClass();
         Listeners.registerListeners();
@@ -174,7 +174,7 @@ public class GardensPlayers extends JavaPlugin {
             }
             shops = List.copyOf(loaded);
         }
-        spawnLimits = new SpawnLimits(ConfigUtil.spawnLimitsYaml);
+        spawnLimits = new SpawnLimits(DataFiles.spawnLimitsYaml);
         RewardHandler.loadRewards();
         TileMenuHandler.constructShopPages();
     }

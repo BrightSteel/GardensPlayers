@@ -5,7 +5,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 
-public class ConfigUtil {
+// the plugin's yml data files (furniture shops, rewards, spawn limits), loaded from its data folder
+public class DataFiles {
 
     public static YamlConfiguration furnitureShopsYaml;
     public static YamlConfiguration rewardsYaml;
