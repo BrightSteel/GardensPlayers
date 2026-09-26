@@ -85,7 +85,9 @@ public class WardrobeGuiListener implements Listener {
             WardrobeGui.WARDROBE_SLOTS.entrySet().stream()
                     .filter(entry -> entry.getValue() instanceof ArmorWardrobeSlot && ((ArmorWardrobeSlot) entry.getValue()).getEquipmentSlot() == e.getSlot())
                     .findFirst()
-                    .ifPresent(entry -> Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> wardrobeGui.updateWardrobeSlot(entry.getKey(), entry.getValue()), 1));
+                    // the armour changed outside the GUI (damage, breaking, a dispenser): only refresh the GUI from it.
+                    // Writing the GUI's stale copy back undid durability loss and deleted dispensed armour.
+                    .ifPresent(entry -> Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> wardrobeGui.refreshSlot(entry.getKey(), entry.getValue()), 1));
         }
     }
 

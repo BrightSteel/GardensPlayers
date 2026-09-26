@@ -60,7 +60,11 @@ public class WardrobeGui implements InventoryHolder {
 
     public void updateWardrobeSlot(int slot, WardrobeSlot wardrobeSlot) {
         wardrobeSlot.updateWardrobe(viewer, inventory.getItem(slot));
-        // refresh modified slot
+        refreshSlot(slot, wardrobeSlot);
+    }
+
+    // show what the player is actually wearing, without writing the GUI's copy back to them
+    public void refreshSlot(int slot, WardrobeSlot wardrobeSlot) {
         inventory.setItem(slot, itemOrTemplate(wardrobeSlot, wardrobeSlot.getItem(viewer)));
     }
 
