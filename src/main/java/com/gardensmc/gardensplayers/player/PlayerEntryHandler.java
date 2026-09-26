@@ -43,13 +43,25 @@ public class PlayerEntryHandler {
     public CompletableFuture<Boolean> subtractMoney(int amount) {
         return CompletableFuture
                 .supplyAsync(() -> Tables.playerTable.subtractMoney(uuid, amount))
-                .whenComplete((taken, error) -> refreshCache());
+                .whenComplete((taken, error) -> {
+                    if (Boolean.TRUE.equals(taken)) {
+                        PlayerEntryCache.INSTANCE.updateIfLoaded(uuid, entry -> entry.adjustMoney(-amount));
+                    } else {
+                        refreshCache(); // the cached balance was wrong - reload it
+                    }
+                });
     }
 
     public CompletableFuture<Void> addMoney(int amount) {
         return CompletableFuture
                 .runAsync(() -> Tables.playerTable.addMoney(uuid, amount))
-                .thenRun(this::refreshCache);
+                .whenComplete((ignored, error) -> {
+                    if (error == null) {
+                        PlayerEntryCache.INSTANCE.updateIfLoaded(uuid, entry -> entry.adjustMoney(amount));
+                    } else {
+                        refreshCache();
+                    }
+                });
     }
 
     public void updateLastLocation() {

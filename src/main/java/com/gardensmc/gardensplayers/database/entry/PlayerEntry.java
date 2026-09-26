@@ -22,8 +22,9 @@ public class PlayerEntry extends MySQLEntry {
     private Component nickname;
     private LocalDateTime seen;
     private LocalDateTime joined;
-    private int money;
-    private int points;
+    // volatile: adjusted in place from database threads, read on the main thread
+    private volatile int money;
+    private volatile int points;
     private int questsCompleted;
     /**
      * Leaderboard rank by quests completed (players with an equal count share a rank). Derived in the
@@ -55,5 +56,15 @@ public class PlayerEntry extends MySQLEntry {
         }
         this.wardrobe = new WardrobeEntry().populate(resultSet);
         return this;
+    }
+
+    // keep a cached entry in step with a balance change the database has already applied, instead of
+    // throwing the entry away and reloading the whole row (with its joins and rank count) every time
+    public synchronized void adjustMoney(int delta) {
+        money += delta;
+    }
+
+    public synchronized void adjustPoints(int delta) {
+        points += delta;
     }
 }

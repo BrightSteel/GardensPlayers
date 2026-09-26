@@ -39,7 +39,9 @@ public class PlayerTable implements Table {
     public List<String> getMigrations() {
         return List.of(
                 // added after launch; existing player tables won't have it from CREATE TABLE IF NOT EXISTS
-                "ALTER TABLE player ADD COLUMN questsCompleted int NOT NULL DEFAULT 0"
+                "ALTER TABLE player ADD COLUMN questsCompleted int NOT NULL DEFAULT 0",
+                // the quest rank in getPlayerEntry counts players above this one on every cache load
+                "ALTER TABLE player ADD INDEX questsCompletedIdx (questsCompleted)"
         );
     }
 

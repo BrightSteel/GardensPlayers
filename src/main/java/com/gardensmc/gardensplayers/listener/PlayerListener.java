@@ -40,11 +40,16 @@ public class PlayerListener implements Listener {
             new SenderMessageHandler(player).sendMessage("Set your flight to on");
         }
 
-        // check for rewards
-        RewardHandler.grantPendingRewards(e.getPlayer());
-        if (!PlayerRewardsCache.INSTANCE.getSync(e.getPlayer().getUniqueId()).isEmpty()) {
-            player.sendMessage(MiniMessage.miniMessage().deserialize("<green>You have pending rewards! Claim them with <gray>/rewards"));
-        }
+        // check for rewards: once the player row exists (rewards reference it), grant any new ones, then tell
+        // them - all off the main thread, which used to wait on the database here
+        PlayerEntryCache.INSTANCE.get(player.getUniqueId())
+                .thenCompose(entry -> RewardHandler.grantPendingRewards(player))
+                .thenCompose(granted -> PlayerRewardsCache.INSTANCE.get(player.getUniqueId()))
+                .thenAccept(pending -> {
+                    if (!pending.isEmpty()) {
+                        player.sendMessage(MiniMessage.miniMessage().deserialize("<green>You have pending rewards! Claim them with <gray>/rewards"));
+                    }
+                });
 
         // nudge about remaining daily quests, slightly delayed so it lands after the join clutter
         Bukkit.getScheduler().runTaskLater(

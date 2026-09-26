@@ -52,4 +52,12 @@ public class PlayerEntryCache extends AsyncLoadingCache<UUID, PlayerEntry> {
         });
         return Tables.playerTable.getPlayerEntry(uuid);
     }
+
+    // apply a change the database already made to the cached entry, if one is loaded
+    public void updateIfLoaded(UUID uuid, java.util.function.Consumer<PlayerEntry> change) {
+        var entry = getIfPresentNow(uuid);
+        if (entry != null) {
+            change.accept(entry);
+        }
+    }
 }

@@ -65,9 +65,11 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
         if (player == null) {
             return null;
         }
-        var playerEntry = PlayerEntryCache.INSTANCE.getSync(player.getUniqueId());
+        // placeholders are requested every tick by scoreboards and tab lists: use what's cached, and on a miss
+        // load in the background and show nothing for now, instead of waiting on the database
+        var playerEntry = PlayerEntryCache.INSTANCE.getIfLoaded(player.getUniqueId());
         if (playerEntry == null) {
-            return null;
+            return "";
         }
         return switch (params.toLowerCase()) {
             case "nickname" -> MessageUtil.parseIntoLegacyDisplayable(playerEntry.getNickname());

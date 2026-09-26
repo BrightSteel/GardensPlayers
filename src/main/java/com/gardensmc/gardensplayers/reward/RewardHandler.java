@@ -23,12 +23,12 @@ public class RewardHandler {
                 .toList();
     }
 
-    public static void grantPendingRewards(Player player) {
+    public static CompletableFuture<Void> grantPendingRewards(Player player) {
         var currentRewards = rewards.stream()
                 .filter(reward -> reward.getExpiration() == null || Instant.now().isBefore(reward.getExpiration()))
                 .filter(reward -> reward.getPermission() == null || player.hasPermission(reward.getPermission()))
                 .toList();
-        CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> {
             boolean grantedReward = false;
             for (Reward reward : currentRewards) {
                 var hasReward = Tables.rewardsTable.hasReward(player.getUniqueId().toString(), reward.getId());
@@ -38,9 +38,7 @@ public class RewardHandler {
                 }
             }
             return grantedReward;
-        }).thenAccept(grantedReward -> {
-            PlayerRewardsCache.INSTANCE.remove(player.getUniqueId());
-        });
+        }).thenAccept(grantedReward -> PlayerRewardsCache.INSTANCE.remove(player.getUniqueId()));
     }
 
     public static RewardEntry makeRewardEntry(Reward reward) {

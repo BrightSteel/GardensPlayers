@@ -37,7 +37,13 @@ public class GemsCurrencyHandler implements Currency {
     @Override
     public CompletableFuture<Boolean> takeCurrency(UUID player, int amount) {
         return CompletableFuture.supplyAsync(() -> Tables.playerTable.subtractPoints(player, amount))
-                .whenComplete((taken, error) -> PlayerEntryCache.INSTANCE.remove(player));
+                .whenComplete((taken, error) -> {
+                    if (Boolean.TRUE.equals(taken)) {
+                        PlayerEntryCache.INSTANCE.updateIfLoaded(player, entry -> entry.adjustPoints(-amount));
+                    } else {
+                        PlayerEntryCache.INSTANCE.remove(player);
+                    }
+                });
     }
 
     @Override
@@ -48,7 +54,13 @@ public class GemsCurrencyHandler implements Currency {
     @Override
     public CompletableFuture<Void> addCurrency(UUID player, int amount) {
         return CompletableFuture.runAsync(() -> Tables.playerTable.addPoints(player, amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player));
+                .whenComplete((ignored, error) -> {
+                    if (error == null) {
+                        PlayerEntryCache.INSTANCE.updateIfLoaded(player, entry -> entry.adjustPoints(amount));
+                    } else {
+                        PlayerEntryCache.INSTANCE.remove(player);
+                    }
+                });
     }
 
     @Override

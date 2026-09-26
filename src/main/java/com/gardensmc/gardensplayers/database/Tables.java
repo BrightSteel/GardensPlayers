@@ -33,8 +33,8 @@ public class Tables {
             try {
                 DatabaseConnector.INSTANCE.executeUpdate(migration);
             } catch (SQLException e) {
-                // MySQL/MariaDB error 1060 = duplicate column, i.e. the migration is already applied — ignore it
-                if (e.getErrorCode() != 1060) {
+                // MySQL/MariaDB 1060 = duplicate column, 1061 = duplicate index: the migration is already applied
+                if (e.getErrorCode() != 1060 && e.getErrorCode() != 1061) {
                     logger.log(Level.WARNING, "Migration failed for " + tableName + ": " + migration, e);
                 }
             }
