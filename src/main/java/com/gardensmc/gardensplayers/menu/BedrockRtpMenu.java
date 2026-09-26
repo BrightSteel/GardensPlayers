@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.util.Worlds;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
@@ -44,14 +45,14 @@ public class BedrockRtpMenu {
     // Tabs in display order; the pack's tab row has one cell per entry (indices SLOTS..SLOTS+size-1).
     private static final List<Tab> TABS = List.of(
             new Tab("Build", List.of(
-                    new Dimension("gardens", "Overworld", ICON_DIR + "icon_overworld"),
-                    new Dimension("gardens_nether", "Nether", ICON_DIR + "icon_nether"),
-                    new Dimension("gardens_the_end", "End", ICON_DIR + "icon_end")
+                    new Dimension(Worlds.GARDENS, "Overworld", ICON_DIR + "icon_overworld"),
+                    new Dimension(Worlds.GARDENS_NETHER, "Nether", ICON_DIR + "icon_nether"),
+                    new Dimension(Worlds.GARDENS_END, "End", ICON_DIR + "icon_end")
             )),
             new Tab("Resources", List.of(
-                    new Dimension("resource_world", "Overworld", ICON_DIR + "icon_resource_world"),
-                    new Dimension("resource_nether", "Nether", ICON_DIR + "icon_resource_nether"),
-                    new Dimension("resource_the_end", "End", ICON_DIR + "icon_resource_end")
+                    new Dimension(Worlds.RESOURCE, "Overworld", ICON_DIR + "icon_resource_world"),
+                    new Dimension(Worlds.RESOURCE_NETHER, "Nether", ICON_DIR + "icon_resource_nether"),
+                    new Dimension(Worlds.RESOURCE_END, "End", ICON_DIR + "icon_resource_end")
             ))
     );
 

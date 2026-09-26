@@ -7,12 +7,12 @@ import com.gardensmc.gardensplayers.menu.BedrockWarpEditMenu;
 import com.gardensmc.gardensplayers.menu.BedrockWarpsMenu;
 import com.gardensmc.gardensplayers.menu.CreateWarpMenu;
 import com.gardensmc.gardensplayers.menu.UpdateWarpMenu;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class WarpCommand extends PlayerExecutorCommand {
     }
 
     private void onListWarps(Player player) {
-        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+        if (BedrockUtil.isBedrock(player)) {
             BedrockWarpsMenu.open(player);
             return;
         }
@@ -61,7 +61,7 @@ public class WarpCommand extends PlayerExecutorCommand {
         if (error != null) {
             throw new InvalidStateException(error);
         }
-        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+        if (BedrockUtil.isBedrock(player)) {
             BedrockWarpEditMenu.openCreate(player, name);
             return;
         }
@@ -70,7 +70,7 @@ public class WarpCommand extends PlayerExecutorCommand {
 
     private void onEditWarp(Player player, String[] args) {
         var warp = getWarpFromArgs(player, args);
-        if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
+        if (BedrockUtil.isBedrock(player)) {
             BedrockWarpEditMenu.openEdit(player, warp);
             return;
         }

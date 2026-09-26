@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class BackpackGui implements InventoryHolder {
 
     public BackpackGui(Player viewer, RowConfig rowConfig, ItemStack backpackItem, ItemStack[] items, boolean isWardrobeBackpack) {
         this.viewer = viewer;
-        var isBedrockViewer = FloodgateApi.getInstance().isFloodgatePlayer(viewer.getUniqueId());
+        var isBedrockViewer = BedrockUtil.isBedrock(viewer);
         this.fillerSlots = isBedrockViewer ? 0 : rowConfig.getFillerRows() * 9;
         this.backpackItem = backpackItem;
         var title = isBedrockViewer ? Component.text("Backpack") : getTitle(rowConfig);

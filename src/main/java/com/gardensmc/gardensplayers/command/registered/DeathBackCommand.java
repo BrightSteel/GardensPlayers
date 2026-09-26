@@ -7,12 +7,12 @@ import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.death.DeathLocationTracker;
 import com.gardensmc.gardensplayers.menu.BedrockDeathBackMenu;
 import com.gardensmc.gardensplayers.menu.DeathBackConfirmMenu;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public class DeathBackCommand extends PlayerExecutorCommand {
         }
 
         // No sub-action: ask for confirmation first.
-        if (FloodgateApi.getInstance().isFloodgatePlayer(executor.getUniqueId())) {
+        if (BedrockUtil.isBedrock(executor)) {
             BedrockDeathBackMenu.open(executor, cost);
         } else {
             DeathBackConfirmMenu.open(executor, cost);

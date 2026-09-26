@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.resourceworld;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.util.Worlds;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.audience.Audience;
@@ -16,9 +17,9 @@ public class GenResourceHandler {
 
     public static final GenResourceHandler INSTANCE = new GenResourceHandler();
     public static final Map<String, World.Environment> WORLDS = Map.of(
-            "resource_world", World.Environment.NORMAL, // the production name
-            "resource_nether", World.Environment.NETHER,
-            "resource_the_end", World.Environment.THE_END
+            Worlds.RESOURCE, World.Environment.NORMAL, // the production name
+            Worlds.RESOURCE_NETHER, World.Environment.NETHER,
+            Worlds.RESOURCE_END, World.Environment.THE_END
     );
 
     private GenResourceStatus status = GenResourceStatus.AVAILABLE;

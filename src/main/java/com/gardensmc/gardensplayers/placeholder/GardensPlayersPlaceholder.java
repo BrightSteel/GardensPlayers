@@ -8,6 +8,7 @@ import com.gardensmc.gardensplayers.shop.FurnitureShop;
 import com.gardensmc.gardensplayers.shop.FurnitureShops;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.WorldGuardUtil;
+import com.gardensmc.gardensplayers.util.Worlds;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -167,12 +168,12 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
 
     private static String worldDisplayName(World world) {
         return switch (world.getName()) {
-            case "gardens" -> "Gardens";
-            case "gardens_nether" -> "Nether";
-            case "gardens_the_end" -> "The End";
-            case "resource_world" -> "Resource World";
-            case "resource_nether" -> "Resource Nether";
-            case "resource_the_end" -> "Resource End";
+            case Worlds.GARDENS -> "Gardens";
+            case Worlds.GARDENS_NETHER -> "Nether";
+            case Worlds.GARDENS_END -> "The End";
+            case Worlds.RESOURCE -> "Resource World";
+            case Worlds.RESOURCE_NETHER -> "Resource Nether";
+            case Worlds.RESOURCE_END -> "Resource End";
             default -> world.getName();
         };
     }

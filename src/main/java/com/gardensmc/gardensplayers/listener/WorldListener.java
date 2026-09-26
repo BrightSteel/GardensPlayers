@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.listener;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.util.Worlds;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.event.EventHandler;
@@ -22,8 +23,8 @@ public class WorldListener implements Listener {
         }
 
         // sync time
-        if (!world.getName().equals("gardens")) {
-            var mainWorld = Bukkit.getWorld("gardens");
+        if (!world.getName().equals(Worlds.GARDENS)) {
+            var mainWorld = Bukkit.getWorld(Worlds.GARDENS);
             if (mainWorld != null) {
                 world.setTime(mainWorld.getTime());
             }

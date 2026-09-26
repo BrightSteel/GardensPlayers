@@ -9,6 +9,7 @@ import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.gardensmc.gardensplayers.quest.QuestHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
+import com.gardensmc.gardensplayers.util.Worlds;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
@@ -189,7 +190,7 @@ public class PlayerListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerPortalToEnd(PlayerPortalEvent e) {
         if (e.getCause() != PlayerTeleportEvent.TeleportCause.END_PORTAL) return;
-        if (!e.getFrom().getWorld().getName().equals("gardens")) return;
+        if (!e.getFrom().getWorld().getName().equals(Worlds.GARDENS)) return;
         e.setCancelled(true);
         e.getPlayer().chat("/warp tp pluto");
     }

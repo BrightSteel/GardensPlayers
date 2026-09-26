@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.rtp;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.util.Worlds;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.bukkit.*;
@@ -25,16 +26,16 @@ public class RtpHandler {
 
     // Worlds /rtp can send players to. Temporary generation worlds (<name>.<uuid>) never are.
     public static final Set<String> RTP_WORLDS = Set.of(
-            "gardens", "gardens_nether", "gardens_the_end",
-            "resource_world", "resource_nether", "resource_the_end"
+            Worlds.GARDENS, Worlds.GARDENS_NETHER, Worlds.GARDENS_END,
+            Worlds.RESOURCE, Worlds.RESOURCE_NETHER, Worlds.RESOURCE_END
     );
 
     // main nether/End RTP is unlocked by visiting them once (see PlayerListener.onPlayerChangeWorlds)
     @Nullable
     public static String requiredPermission(World world) {
         return switch (world.getName()) {
-            case "gardens_nether" -> "gplayers.rtp.nether";
-            case "gardens_the_end" -> "gplayers.rtp.end";
+            case Worlds.GARDENS_NETHER -> "gplayers.rtp.nether";
+            case Worlds.GARDENS_END -> "gplayers.rtp.end";
             default -> null;
         };
     }

@@ -5,9 +5,9 @@ import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.menu.BedrockRtpMenu;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 public class RtpCommand extends PlayerExecutorCommand {
 
@@ -19,7 +19,7 @@ public class RtpCommand extends PlayerExecutorCommand {
     public void execute(Player executor, String[] args) {
         super.execute(executor, args);
         if (args.length == 0) {
-            if (FloodgateApi.getInstance().isFloodgatePlayer(executor.getUniqueId())) {
+            if (BedrockUtil.isBedrock(executor)) {
                 BedrockRtpMenu.open(executor);
             } else if (executor.getWorld().getName().contains("resource")) {
                 executor.chat("/dm open resource_rtp");
