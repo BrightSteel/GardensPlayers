@@ -79,7 +79,7 @@ public class GardensPlayers extends JavaPlugin {
         Tables.initializeClass();
         Listeners.registerListeners();
         Commands.registerCommands();
-        if (Bukkit.getPluginManager().getPlugin("PlaceHolderAPI") != null) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new GardensPlayersPlaceholder().register();
         }
         if (Bukkit.getPluginManager().getPlugin("EnderMap") != null) {
