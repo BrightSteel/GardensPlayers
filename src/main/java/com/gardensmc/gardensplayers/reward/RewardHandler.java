@@ -1,13 +1,14 @@
 package com.gardensmc.gardensplayers.reward;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerRewardsCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.RewardEntry;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -17,10 +18,16 @@ public class RewardHandler {
     private static List<Reward> rewards;
 
     public static void loadRewards() {
-        rewards = ConfigUtil.rewardsYaml.getKeys(false)
-                .stream()
-                .map(key -> new Reward(key, Objects.requireNonNull(ConfigUtil.rewardsYaml.getConfigurationSection(key))))
-                .toList();
+        var loaded = new ArrayList<Reward>();
+        for (var key : ConfigUtil.rewardsYaml.getKeys(false)) {
+            try {
+                loaded.add(new Reward(key, Objects.requireNonNull(ConfigUtil.rewardsYaml.getConfigurationSection(key))));
+            } catch (Exception e) {
+                // e.g. an ItemEdit item that doesn't exist, or a malformed expiration date
+                GardensPlayers.plugin.getLogger().severe("Skipping reward '" + key + "': " + e);
+            }
+        }
+        rewards = List.copyOf(loaded);
     }
 
     public static CompletableFuture<Void> grantPendingRewards(Player player) {

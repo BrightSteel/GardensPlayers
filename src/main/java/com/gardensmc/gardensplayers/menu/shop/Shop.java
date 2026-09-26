@@ -1,9 +1,10 @@
 package com.gardensmc.gardensplayers.menu.shop;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
 import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,12 +19,22 @@ public class Shop {
         this.name = shopConfiguration.getString("name");
         this.furnitureId = shopConfiguration.getString("furniture_id");
         var itemSection = shopConfiguration.getConfigurationSection("items");
-        this.shopItems = Objects.requireNonNull(itemSection).getKeys(false)
-                .stream()
-                .map(id -> Pair.of(id, itemSection.getConfigurationSection(id)))
-                .filter(pair -> pair.getRight() != null)
-                .map(pair -> new ShopItem(pair.getLeft(), pair.getRight()))
-                .toList();
+        var items = new ArrayList<ShopItem>();
+        if (itemSection == null) {
+            GardensPlayers.plugin.getLogger().warning("Shop '" + name + "' has no items section");
+        } else {
+            for (var id : itemSection.getKeys(false)) {
+                var section = itemSection.getConfigurationSection(id);
+                if (section == null) continue;
+                try {
+                    items.add(new ShopItem(id, section));
+                } catch (Exception e) {
+                    // one typo (an unknown material or currency) shouldn't take the whole shop down
+                    GardensPlayers.plugin.getLogger().severe("Skipping shop item '" + id + "' in shop '" + name + "': " + e);
+                }
+            }
+        }
+        this.shopItems = List.copyOf(items);
     }
 
     @Override

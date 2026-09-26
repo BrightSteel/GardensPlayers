@@ -4,6 +4,7 @@ import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.command.Commands;
 import com.gardensmc.gardensplayers.config.Config;
 import com.gardensmc.gardensplayers.crate.Crate;
+import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.GardensEconomyProvider;
 import com.gardensmc.gardensplayers.listener.Listeners;
@@ -18,7 +19,6 @@ import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
-import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
@@ -31,7 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.api.ChunkyAPI;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
@@ -52,6 +52,8 @@ public class GardensPlayers extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        // the Vault provider registered below can be called by other plugins before our onEnable
+        plugin = this;
         // load economy
         try {
             economy = new GardensEconomyProvider();
@@ -89,7 +91,12 @@ public class GardensPlayers extends JavaPlugin {
 //        economy = getServiceProvider(Economy.class);
 //        chat = getServiceProvider(Chat.class);
         permission = getServiceProvider(Permission.class);
-        loadShops();
+        try {
+            loadShops();
+        } catch (Exception e) {
+            // keep enabling: the AFK tick, RTP queue, quests and daily restart below must still be scheduled
+            getLogger().log(Level.SEVERE, "Failed to load shops/rewards - fix the config and run /gardensplayers reload", e);
+        }
         chunkyAPI = Bukkit.getServer().getServicesManager().load(ChunkyAPI.class);
 
         int tickEvery = 2;
@@ -164,10 +171,15 @@ public class GardensPlayers extends JavaPlugin {
         }
         var shopFiles = shopsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
         if (shopFiles != null) {
-            shops = Arrays.stream(shopFiles)
-                    .map(YamlConfiguration::loadConfiguration)
-                    .map(Shop::new)
-                    .toList();
+            var loaded = new ArrayList<Shop>();
+            for (var shopFile : shopFiles) {
+                try {
+                    loaded.add(new Shop(YamlConfiguration.loadConfiguration(shopFile)));
+                } catch (Exception e) {
+                    GardensPlayers.plugin.getLogger().severe("Skipping shop file " + shopFile.getName() + ": " + e);
+                }
+            }
+            shops = List.copyOf(loaded);
         }
         crates = ConfigUtil.cratesYaml.getKeys(false)
                 .stream()

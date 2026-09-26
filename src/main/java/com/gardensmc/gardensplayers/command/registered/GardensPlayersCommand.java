@@ -2,8 +2,11 @@ package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.type.GardensCommand;
+import com.gardensmc.gardensplayers.config.Config;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
 import org.bukkit.command.CommandSender;
+
+import java.util.logging.Level;
 
 public class GardensPlayersCommand extends GardensCommand {
 
@@ -17,9 +20,16 @@ public class GardensPlayersCommand extends GardensCommand {
         if (args.length == 0) {
             executor.sendMessage("GardensPlayers plugin");
         } else if (args[0].equalsIgnoreCase("reload")) {
+            GardensPlayers.plugin.reloadConfig();
+            GardensPlayers.config = new Config(GardensPlayers.plugin.getConfig());
             ConfigUtil.loadYamls();
-            GardensPlayers.loadShops();
-            executor.sendMessage("Reloaded GardensPlayers");
+            try {
+                GardensPlayers.loadShops();
+                executor.sendMessage("Reloaded GardensPlayers");
+            } catch (Exception e) {
+                GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Reload failed", e);
+                executor.sendMessage("Reload failed - see the console");
+            }
         }
     }
 }
