@@ -21,13 +21,10 @@ public class OnlinePlayerData {
     private static final int AUTO_AFK_IN_TICKS = 6000;
     private static final int AFK_KICK_IN_TICKS = 18000;
 
-//    private static final int BACKPACK_CHECK_FREQUENCY_TICKS = 4;
-
     private boolean AFK;
     private int afkTick;
     private int rtpCooldown;
     private int wingsBoostCooldown;
-    private int backpackTicks;
     @Nullable
     private List<Entity> nearbyEntities;
     private Consumer<String> textCapture;
@@ -62,11 +59,6 @@ public class OnlinePlayerData {
         } else {
             nearbyEntities = null;
         }
-//        backpackTicks++;
-//        if (backpackTicks >= BACKPACK_CHECK_FREQUENCY_TICKS) {
-//            backpackTicks = 0;
-//            BackpackHandler.ensureInteractAvailable(player);
-//        }
     }
 
     // leaving the server: stop being AFK without announcing they're back

@@ -2,21 +2,15 @@ package com.gardensmc.gardensplayers.menu.tile;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.menu.TileMenu;
-import com.hibiscusmc.hmccosmetics.api.HMCCosmeticsAPI;
-import com.hibiscusmc.hmccosmetics.cosmetic.Cosmetic;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class TileMenuHandler {
 
     private static CategoryPages shopPages;
-    private static CategoryPages wardrobePages;
     private static final Set<CosmeticSlot> COSMETIC_CATEGORIES = Set.of(
             CosmeticSlot.HELMET,
             CosmeticSlot.BACKPACK,
@@ -36,24 +30,8 @@ public class TileMenuHandler {
         shopPages = new CategoryPages(tileCategories);
     }
 
-    public static void constructWardrobePages() {
-        var cosmeticsBySlot = HMCCosmeticsAPI.getAllCosmetics().stream().collect(Collectors.groupingBy(Cosmetic::getSlot, Collectors.mapping(
-                Function.identity(), Collectors.toList()
-        )));
-        var categories = COSMETIC_CATEGORIES.stream().map(cosmeticSlot -> new TileCategory(
-                cosmeticSlot.getName(),
-                cosmeticSlot.getName(),
-                "icon_" + cosmeticSlot.getName(),
-                cosmeticsBySlot.get(cosmeticSlot) == null ? Collections.emptyList() : cosmeticsBySlot.get(cosmeticSlot).stream().map(CosmeticTileItem::new).toList()
-        )).toList();
-        wardrobePages = new CategoryPages(categories);
-    }
-
     public static void openShopMenu(Player viewer) {
         TileMenu.builder(viewer, TileMenuHandler.shopPages, '\u0138').showBalances(true).open();
     }
 
-    public static void openCosmeticsMenu(Player viewer) {
-        TileMenu.builder(viewer, TileMenuHandler.wardrobePages, '\u014B').open();
-    }
 }

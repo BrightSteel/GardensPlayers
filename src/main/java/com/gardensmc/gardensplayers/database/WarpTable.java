@@ -6,7 +6,6 @@ import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
 
 public class WarpTable implements Table {
 
@@ -32,18 +31,6 @@ public class WarpTable implements Table {
             return DatabaseConnector.INSTANCE.queryCollection(
                     "SELECT warp.*, COUNT(warpVisits.warpId) AS visits FROM warp LEFT JOIN warpVisits ON warp.id = warpVisits.warpId GROUP BY id",
                     WarpEntry::new
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public WarpEntry getWarpEntry(int id) {
-        try {
-            return DatabaseConnector.INSTANCE.querySingleton(
-                    "SELECT * FROM warp LEFT JOIN (SELECT COUNT(warpVisits.warpId) FROM warpVisits) visits ON visits.warpId = warp.id WHERE warp.id = ?",
-                    WarpEntry::new,
-                    id
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);

@@ -35,7 +35,6 @@ public class WarpCommand extends PlayerExecutorCommand {
                 case "list" -> onListWarps(player);
                 case "create" -> onCreateWarp(player, args);
                 case "edit" -> onEditWarp(player, args);
-//                case "setlocation" -> onSetLocation(player, args);
                 case "delete" -> onDelete(player, args);
                 case "tp" -> onTpWarp(player, args);
                 default -> throw new InvalidStateException("Unknown argument: " + args[0]);
@@ -86,13 +85,6 @@ public class WarpCommand extends PlayerExecutorCommand {
         player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Warping to " + warp.getName()));
         WarpsHandler.INSTANCE.travel(player, warp);
     }
-
-//    private void onSetLocation(Player player, String[] args) {
-//        var warp = getWarpFromArgs(player, args);
-//        WarpsHandler.INSTANCE.updateWarpLocation(warp.getId(), player.getLocation()).thenRun(
-//                () -> player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Updated warp location"))
-//        );
-//    }
 
     private void onDelete(Player player, String[] args) {
         var warp = getWarpFromArgs(player, args);

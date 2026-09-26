@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.util.FontShift;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.InventoryGui;
@@ -26,10 +27,10 @@ public class Menu {
     public Menu(String[] layout, Component title, Player viewer) {
         this.viewer = viewer;
         this.gui = new InventoryGui(
-                GardensFurniture.plugin,
+                GardensPlayers.plugin,
                 new InventoryGui.InventoryCreator(
-                        (gui, who, type) -> GardensFurniture.plugin.getServer().createInventory(new InventoryGui.Holder(gui), type, title),
-                        (gui, who, size) -> GardensFurniture.plugin.getServer().createInventory(new InventoryGui.Holder(gui), size, title)
+                        (gui, who, type) -> GardensPlayers.plugin.getServer().createInventory(new InventoryGui.Holder(gui), type, title),
+                        (gui, who, size) -> GardensPlayers.plugin.getServer().createInventory(new InventoryGui.Holder(gui), size, title)
                 ),
                 (meta, s) -> meta.displayName(toComponent(s)),
                 (meta, strings) -> meta.lore(strings.stream().map(this::toComponent).toList()),

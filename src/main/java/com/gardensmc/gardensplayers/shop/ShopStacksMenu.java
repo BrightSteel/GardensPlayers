@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.shop;
 
 import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
+import com.gardensmc.gardensplayers.menu.Menu;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.GuiElementGroup;
@@ -34,7 +35,7 @@ public class ShopStacksMenu extends Menu {
     private final Consumer<InventoryGui> quantityMenuOnCancel;
 
     public ShopStacksMenu(Player viewer, String shopItemName, ItemStack item, int basePrice, TransactionMode mode, ShopLimitHandler shopLimitHandler, Consumer<InventoryGui> quantityMenuOnCancel) {
-        super(layout, "<white>\uE105 \uE604", viewer);
+        super(layout, "\uE105 \uE604" /* Menu adds <white> */, viewer);
         this.shopItemName = shopItemName;
         this.item = item;
         this.basePrice = basePrice;

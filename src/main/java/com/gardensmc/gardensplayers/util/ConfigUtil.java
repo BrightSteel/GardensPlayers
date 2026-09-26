@@ -8,15 +8,12 @@ import java.io.File;
 public class ConfigUtil {
 
     public static YamlConfiguration furnitureShopsYaml;
-    public static YamlConfiguration cratesYaml;
     public static YamlConfiguration rewardsYaml;
     public static YamlConfiguration spawnLimitsYaml;
 
     public static void loadYamls() {
         File dayFile = getYMLFile("furniture_shops.yml");
         furnitureShopsYaml = YamlConfiguration.loadConfiguration(dayFile);
-
-        cratesYaml = YamlConfiguration.loadConfiguration(getYMLFile("crates.yml"));
         rewardsYaml = YamlConfiguration.loadConfiguration(getYMLFile("rewards.yml"));
         spawnLimitsYaml = YamlConfiguration.loadConfiguration(getYMLFile("spawn_limits.yml"));
     }

@@ -4,35 +4,26 @@ import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.custom.item.CustomBackpackItem;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
-import com.gardensmc.gardensplayers.listener.BackpackListener;
 import com.gardensmc.gardensplayers.menu.BackpackGui;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUseItem;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSetPlayerInventory;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
 import de.tr7zw.nbtapi.NBT;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.block.data.Openable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.gardensmc.gardensplayers.menu.WardrobeGui.BACKPACK_SLOT;
 
 @AllArgsConstructor
 public class BackpackHandler {
@@ -43,8 +34,6 @@ public class BackpackHandler {
     private static final String BACKPACK_KEY = "GardensBackpack";
     private static final String BACKPACK_ID_KEY = "Id";
     private static final String BACKPACK_ROWS_KEY = "Rows";
-
-    private static final ItemStack HIDDEN_ITEM = GardensFurniture.itemRegistry.buildItem("blank_hidden");
 
     private final ItemStack itemStack;
     private final CustomBackpackItem backpackItem;
@@ -204,29 +193,6 @@ public class BackpackHandler {
         return backpackId;
     }
 
-    public static void ensureInteractAvailable(Player player) {
-        var wardrobe = PlayerEntryCache.INSTANCE.getSync(player.getUniqueId()).getWardrobe();
-        if (wardrobe.hasBackpack()) {
-            if (!hasItemInHand(player)) {
-                sendFakeItemPacket(player);
-            }
-        }
-    }
-
-    private static boolean hasItemInHand(Player player) {
-        var inventory = player.getInventory();
-        return inventory.getItemInMainHand().getType() != Material.AIR ||
-                inventory.getItemInMainHand().getType() != Material.AIR;
-    }
-
-    private static void sendFakeItemPacket(Player player) {
-        var packet = new WrapperPlayServerSetPlayerInventory(
-                player.getInventory().getHeldItemSlot(),
-                SpigotConversionUtil.fromBukkitItemStack(HIDDEN_ITEM)
-        );
-        PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
-    }
-
     public static void registerUseListener() {
         PacketEvents.getAPI().getEventManager().registerListener(new PacketListenerAbstract() {
             @Override
@@ -270,24 +236,6 @@ public class BackpackHandler {
                 return false;
             }
 
-            private static final Set<Material> INTERACTABLES = Set.of(
-                    Material.ANVIL,
-                    Material.ENCHANTING_TABLE,
-                    Material.CRAFTING_TABLE,
-                    Material.ENDER_CHEST,
-                    Material.CARTOGRAPHY_TABLE,
-                    Material.GRINDSTONE,
-                    Material.SMITHING_TABLE,
-                    Material.BEACON,
-                    Material.LOOM
-            );
-
-            private boolean isInteractableBlock(Block block) {
-                if (block.getBlockData() instanceof Openable || block.getState() instanceof InventoryHolder) {
-                    return true;
-                }
-                return INTERACTABLES.contains(block.getType()) || block.getType().toString().toLowerCase().endsWith("bed");
-            }
         });
     }
 }

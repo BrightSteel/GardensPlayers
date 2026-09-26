@@ -67,7 +67,7 @@ public class WarpsHandler {
 
     /**
      * Background glyph for the warp tile menu title. Each tile menu has its own header texture in the resource pack
-     * (ĸ shop, Ŝ friends, ŝ guild, ...); Ş must map to a "Warps" header there.
+     * (ĸ shop, ...); Ş must map to a "Warps" header there.
      */
     private static final char TILE_BACKGROUND = '\u0162';
 

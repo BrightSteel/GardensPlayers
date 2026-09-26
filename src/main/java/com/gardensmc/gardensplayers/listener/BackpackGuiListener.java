@@ -1,7 +1,5 @@
 package com.gardensmc.gardensplayers.listener;
 
-import com.gardensmc.gardensfurniture.GardensFurniture;
-import com.gardensmc.gardensfurniture.custom.item.CustomBackpackItem;
 import com.gardensmc.gardensplayers.backpack.BackpackHandler;
 import com.gardensmc.gardensplayers.menu.BackpackGui;
 import org.bukkit.entity.Player;
@@ -34,16 +32,6 @@ public class BackpackGuiListener implements Listener {
     public void onDrag(InventoryDragEvent e) {
         if (e.getWhoClicked() instanceof Player && e.getInventory().getHolder() instanceof BackpackGui backpackGui) {
             if (e.getRawSlots().stream().anyMatch(slot -> slot < backpackGui.getFillerSlots())) {
-                e.setCancelled(true);
-            }
-        }
-    }
-
-    // does this do anything? Had to add the shiftInto and dropInto events to actually prevent placing
-    @EventHandler(ignoreCancelled = true)
-    public void onPlaceItemIntoBackpack(InventoryMoveItemEvent e) {
-        if (e.getDestination().getHolder() instanceof BackpackGui) {
-            if (!BackpackHandler.isAllowedInBackpack(e.getItem())) {
                 e.setCancelled(true);
             }
         }
@@ -113,29 +101,4 @@ public class BackpackGuiListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onItemChangeInventory(InventoryMoveItemEvent e) {
-        if (e.getSource() instanceof PlayerInventory playerInventory) {
-            var item = e.getItem();
-            Player player = (Player) playerInventory.getHolder();
-            handleBackpackLeaveInventory(item, player);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onFillerChangeInventory(InventoryMoveItemEvent e) {
-        if (e.getSource().getHolder() instanceof BackpackGui) {
-            var customItem = GardensFurniture.itemRegistry.getCustomItem(e.getItem());
-            if (customItem != null && customItem.getIdentifier().equals("blank_hidden")) {
-                // prevent u from pressing q to drop blank items
-                e.setCancelled(true);
-            }
-        }
-    }
-
-    private void handleBackpackLeaveInventory(ItemStack potentialBackpack, Player player) {
-        if (GardensFurniture.itemRegistry.getCustomItem(potentialBackpack) instanceof CustomBackpackItem) {
-            BackpackHandler.closeBackpackIfOpen(player, potentialBackpack);
-        }
-    }
 }

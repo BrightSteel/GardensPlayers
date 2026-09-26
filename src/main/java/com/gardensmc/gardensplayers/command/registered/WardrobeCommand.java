@@ -13,7 +13,6 @@ public class WardrobeCommand extends PlayerExecutorCommand {
     @Override
     public void execute(Player executor, String[] args) {
         new WardrobeGui(executor).open();
-//        TileMenuHandler.openCosmeticsMenu(executor);
     }
 
     // doesn't check its permission node: available to everyone

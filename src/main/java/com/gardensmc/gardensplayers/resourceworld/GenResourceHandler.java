@@ -9,10 +9,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -36,14 +32,7 @@ public class GenResourceHandler {
         }
         this.requestor = requestor;
         status = GenResourceStatus.GENERATING;
-//        var resourceWorlds = getLoadedResourceWorlds();
 
-//        relocatePlayers(resourceWorlds);
-
-//        resourceWorlds.forEach(world -> Bukkit.unloadWorld(world, false));
-//        deleteResourceWorlds();
-
-//        createResourceWorlds();
         for (int i = 0; i < count; i++){
             var worlds = environment != null
                     ? WORLDS.entrySet().stream().filter(e -> e.getValue() == environment).toList()
@@ -96,46 +85,10 @@ public class GenResourceHandler {
        }
     }
 
-//    private void createResourceWorlds() {
-//        WORLDS.forEach((s, env) -> new WorldCreator(s).environment(env).createWorld());
-//    }
-
     private void failGeneration() {
         status = GenResourceStatus.FAILED;
         generationInProgress = null;
         generationQueue.clear();
     }
 
-//    private void deleteResourceWorlds() {
-//        var worldDirectory = Bukkit.getServer().getWorldContainer().toPath();
-//        try (var stream = Files.walk(worldDirectory)) {
-//            stream.filter(Files::isDirectory)
-//                    .filter(path -> path.getFileName().toString().contains("resource"))
-//                    .forEach(this::deleteDirectory);
-//        } catch (IOException e) {
-//            throw new RuntimeException("Failed to delete resource worlds", e);
-//        }
-//    }
-
-    private void deleteDirectory(Path dir) {
-        try (var stream = Files.walk(dir)) {
-            stream.sorted(Comparator.reverseOrder())
-                    .forEach(p -> {
-                        try {
-                            Files.delete(p);
-                        } catch (IOException e) {
-                            throw new RuntimeException("Failed to delete directory files", e);
-                        }
-                    });
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to delete directory: " + dir, ex);
-        }
-    }
-
-    private List<World> getLoadedResourceWorlds() {
-        return Bukkit.getWorlds()
-                .stream()
-                .filter(world -> world.getName().toLowerCase().contains("resource"))
-                .toList();
-    }
 }
