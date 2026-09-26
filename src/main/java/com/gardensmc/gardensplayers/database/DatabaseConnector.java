@@ -46,12 +46,14 @@ public class DatabaseConnector {
         return dataSource.getConnection();
     }
 
-    public void executeUpdate(String string, Object... obj) throws SQLException {
+    // returns the number of rows changed
+    public int executeUpdate(String string, Object... obj) throws SQLException {
         Connection connection = dataSource.getConnection();
         PreparedStatement ps = getPreparedStatement(connection, string, obj);
-        ps.executeUpdate();
+        int changed = ps.executeUpdate();
         ps.close();
         connection.close();
+        return changed;
     }
 
     public PreparedStatement getPreparedStatement(Connection connection, String statement, Object... obj) throws SQLException {

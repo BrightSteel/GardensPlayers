@@ -62,10 +62,23 @@ public class RewardsTable implements Table {
         }
     }
 
-    public void markRewardClaimed(String playerUUID, String rewardId) {
+    // true only for the one call that actually flipped it, so a reward can't be claimed twice
+    public boolean markRewardClaimed(String playerUUID, String rewardId) {
+        try {
+            return DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE rewards SET claimed = true WHERE playerUUID = ? AND id = ? AND claimed = false LIMIT 1",
+                    playerUUID,
+                    rewardId
+            ) == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void markRewardUnclaimed(String playerUUID, String rewardId) {
         try {
             DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE rewards SET claimed = true WHERE playerUUID = ? AND id = ? LIMIT 1",
+                    "UPDATE rewards SET claimed = false WHERE playerUUID = ? AND id = ? LIMIT 1",
                     playerUUID,
                     rewardId
             );
