@@ -70,7 +70,7 @@ public class ShopTransactionUtil {
         if (requested <= 0) {
             return 0;
         }
-        var amount = limit == null ? requested : Math.min(requested, limit.getAmountLeft());
+        var amount = sellAmount(requested, limit == null ? null : limit.getAmountLeft());
         if (amount <= 0) {
             player.sendMessage(MiniMessage.miniMessage()
                     .deserialize("<red>You've already met today's sell limit for ")
@@ -100,6 +100,11 @@ public class ShopTransactionUtil {
                 .append(itemName)
                 .append(MiniMessage.miniMessage().deserialize(" <white>for <green>" + price + " " + currency.symbol())));
         return amount;
+    }
+
+    // how many of `requested` may be sold with `amountLeft` of today's limit (null: no limit)
+    static int sellAmount(int requested, @Nullable Integer amountLeft) {
+        return Math.max(0, amountLeft == null ? requested : Math.min(requested, amountLeft));
     }
 
     public int getItemCount(Player player, ItemStack item) {

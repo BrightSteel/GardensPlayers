@@ -102,12 +102,12 @@ public class GardensEconomyProvider implements Economy {
         if (uuid == null) {
             return false;
         }
-        return new PlayerEconomyHandler(uuid).hasEnough((int) Math.ceil(amount)); // same rounding as withdrawPlayer
+        return new PlayerEconomyHandler(uuid).hasEnough(withdrawalAmount(amount));
     }
 
     @Override
     public boolean has(OfflinePlayer offlinePlayer, double amount) {
-        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).hasEnough((int) Math.ceil(amount)); // same rounding as withdrawPlayer
+        return new PlayerEconomyHandler(offlinePlayer.getUniqueId()).hasEnough(withdrawalAmount(amount));
     }
 
     @Override
@@ -138,8 +138,7 @@ public class GardensEconomyProvider implements Economy {
     }
 
     private EconomyResponse withdrawPlayer(@Nullable UUID uuid, double amount) {
-        // round up: a withdrawal never takes less than asked, so fractional prices can't create money
-        int amountRounded = (int) Math.ceil(amount);
+        int amountRounded = withdrawalAmount(amount);
         if (!hasEntry(uuid)) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
         }
@@ -197,8 +196,7 @@ public class GardensEconomyProvider implements Economy {
     }
 
     private EconomyResponse depositPlayer(@Nullable UUID uuid, double amount) {
-        // round down: a deposit never gives more than asked
-        int amountRounded = (int) Math.floor(amount);
+        int amountRounded = depositAmount(amount);
         if (!hasEntry(uuid)) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "No account for that player");
         }
@@ -314,6 +312,16 @@ public class GardensEconomyProvider implements Economy {
     // and the conditional write in withdraw/deposit block on the database; an online player's entry is cached.
     private boolean hasEntry(@Nullable UUID uuid) {
         return uuid != null && PlayerEntryCache.INSTANCE.getSync(uuid) != null;
+    }
+
+    // round up: a withdrawal never takes less than asked, so fractional prices can't create money
+    static int withdrawalAmount(double amount) {
+        return (int) Math.ceil(amount);
+    }
+
+    // round down: a deposit never gives more than asked
+    static int depositAmount(double amount) {
+        return (int) Math.floor(amount);
     }
 
     private int round(double amount) {
