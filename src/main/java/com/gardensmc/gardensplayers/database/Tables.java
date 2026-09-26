@@ -16,10 +16,6 @@ public class Tables {
     public static final WarpVisitsTable warpVisitsTable = register(WarpVisitsTable::new);
     public static final WardrobeTable wardrobeTable = register(WardrobeTable::new);
     public static final RewardsTable rewardsTable = register(RewardsTable::new);
-    public static final GuildsTable guildsTable = register(GuildsTable::new);
-    public static final GuildMembersTable guildMembersTable = register(GuildMembersTable::new);
-    public static final GuildJoinRequestsTable guildJoinRequestsTable = register(GuildJoinRequestsTable::new);
-    public static final GuildInvitesTable guildInvitesTable = register(GuildInvitesTable::new);
 
     private static <T extends Table> T register(Supplier<T> tableSupplier) {
         var logger = GardensPlayers.plugin.getLogger();

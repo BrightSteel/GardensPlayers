@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +30,7 @@ public class GenResourceHandler {
     private String generationInProgress;
     private Audience requestor;
 
-    public boolean triggerGeneration(Audience requestor, int count) {
+    public boolean triggerGeneration(Audience requestor, int count, World.Environment environment) {
         if (status == GenResourceStatus.GENERATING) {
             return false;
         }
@@ -44,9 +45,12 @@ public class GenResourceHandler {
 
 //        createResourceWorlds();
         for (int i = 0; i < count; i++){
-            generationQueue.addAll(WORLDS.keySet()
+            var worlds = environment != null
+                    ? WORLDS.entrySet().stream().filter(e -> e.getValue() == environment).toList()
+                    : WORLDS.entrySet().stream().toList();
+            generationQueue.addAll(worlds
                     .stream()
-                    .map(name -> name + "." + UUID.randomUUID())
+                    .map(world -> world.getKey() + "." + UUID.randomUUID())
                     .toList()
             );
         }

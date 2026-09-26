@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.resourceworld.GenResourceHandler;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,7 +19,8 @@ public class GenResourceCommand implements CommandExecutor {
             sender.sendMessage("Count must be greater than 0");
             return true;
         }
-        if (GenResourceHandler.INSTANCE.triggerGeneration(sender, count)) {
+        var env = (args.length > 1) ? World.Environment.valueOf(args[1].toUpperCase()) : null;
+        if (GenResourceHandler.INSTANCE.triggerGeneration(sender, count, env)) {
             sender.sendMessage("Started resource world generation");
         } else {
             sender.sendMessage("Generation already in progress!");

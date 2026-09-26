@@ -48,7 +48,6 @@ public class Commands {
             register(registrar, new GrindstoneCommand(), "Open grindstone", "/<command>");
             register(registrar, new MoreCommand(), "Get more of held item", "/<command>");
             register(registrar, new MountCommand(), "Open mounts menu", "/<command>", List.of("mounts"));
-            register(registrar, new GuildsCommand(), "Open guilds menu", "/<command>");
             register(registrar, new QuestsCommand(), "View daily quests", "/<command>", List.of("quest", "q"));
             register(registrar, new QuestResetCommand(), "Reset the daily quests", "/<command>");
             register(registrar, new SeenCommand(), "See when a player was last online", "/<command> <player>");
@@ -58,8 +57,6 @@ public class Commands {
             register(registrar, new SmiteCommand(), "Strike lightning at the block you're looking at", "/<command>", List.of("lightning"));
 
             // Native Brigadier command tree (not bridged from a GardensCommand)
-            registrar.register(GuildCommand.node(), "Manage your guild", List.of("g"));
-            registrar.register(GuildChatCommand.node(), "Send a message to your guild", List.of("gc"));
 
             // Commands that don't extend GardensCommand
             CommandBridge.register(registrar, new CurrencyCommand(GemsCurrencyHandler.INSTANCE), "gem", "View or modify gems", "/<command>", List.of("gems"));
