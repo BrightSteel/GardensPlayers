@@ -20,4 +20,10 @@ public class ShopCommand extends PlayerExecutorCommand {
             TileMenuHandler.openShopMenu(executor);
         }
     }
+
+    // doesn't check its permission node: available to everyone
+    @Override
+    public boolean isOpenToAll() {
+        return true;
+    }
 }

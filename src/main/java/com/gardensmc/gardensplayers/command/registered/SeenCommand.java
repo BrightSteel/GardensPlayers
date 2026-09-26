@@ -120,4 +120,10 @@ public class SeenCommand extends GardensCommand {
     private static String pluralize(long amount, String unit) {
         return "%d %s%s ago".formatted(amount, unit, amount == 1 ? "" : "s");
     }
+
+    // doesn't check its permission node: available to everyone
+    @Override
+    public boolean isOpenToAll() {
+        return true;
+    }
 }

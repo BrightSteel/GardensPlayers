@@ -14,4 +14,10 @@ public class RewardsCommand extends PlayerExecutorCommand {
     public void execute(Player executor, String[] args) {
         new RewardsMenu(executor).open();
     }
+
+    // doesn't check its permission node: available to everyone
+    @Override
+    public boolean isOpenToAll() {
+        return true;
+    }
 }

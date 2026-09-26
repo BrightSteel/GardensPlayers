@@ -29,6 +29,14 @@ public abstract class GardensCommand implements TabExecutor {
         this(name, 0);
     }
 
+    /**
+     * Commands that never check their permission node (everyone may use them) return true, so they're shown to
+     * everyone. All others are only suggested to players holding the node.
+     */
+    public boolean isOpenToAll() {
+        return false;
+    }
+
     public GardensCommand(String name, int requiredArgs) {
         this.name = name;
         this.requiredArgs = requiredArgs;
