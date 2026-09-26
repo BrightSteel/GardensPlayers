@@ -30,7 +30,12 @@ public class PlayerEconomyHandler {
         return playerEntry.getMoney();
     }
 
-    public CompletableFuture<Void> withdraw(int amount) throws IllegalArgumentException, IllegalStateException {
+    /**
+     * Throws right away when the (cached) balance is clearly too low, for a friendly message. The database has
+     * the final say: the future completes with false if the balance no longer covers it (e.g. a second
+     * withdrawal in the same tick). Only act on true.
+     */
+    public CompletableFuture<Boolean> withdraw(int amount) throws IllegalArgumentException, IllegalStateException {
         validateAmountPositive(amount);
         var playerEntry = getPlayerEntryOrThrow();
         if ((playerEntry.getMoney() - amount) < 0) {

@@ -27,31 +27,33 @@ public class PayCommand extends PlayerExecutorCommand {
         } catch (NumberFormatException e) {
             throw new InvalidArgumentException("amount");
         }
-        if (withdrawFromSender(executor, amount, targetPlayer)) {
-            depositIntoTarget(executor, amount, targetPlayer);
-        }
+        pay(executor, amount, targetPlayer);
     }
 
-    private boolean withdrawFromSender(Player executor, int amount, Player targetPlayer) {
+    // the target is credited only once the sender's debit has actually gone through
+    private void pay(Player executor, int amount, Player targetPlayer) {
         var economySender = new PlayerEconomyHandler(executor.getUniqueId());
         var messageSender = new SenderMessageHandler(executor);
         if (!economySender.hasEnough(amount)) {
             messageSender.sendError("You do not have enough money to make this payment");
-            return false;
+            return;
         }
         try {
-            economySender
-                    .withdraw(amount)
-                    .thenRun(() -> messageSender.sendMessage("Sent %s%s to %s".formatted(
-                            GardensPlayers.config.getCurrencySymbol(),
-                            amount,
-                            MessageUtil.toPlainText(targetPlayer.displayName())
-                    )));
+            economySender.withdraw(amount).thenAccept(taken -> {
+                if (!taken) {
+                    messageSender.sendError("You do not have enough money to make this payment");
+                    return;
+                }
+                messageSender.sendMessage("Sent %s%s to %s".formatted(
+                        GardensPlayers.config.getCurrencySymbol(),
+                        amount,
+                        MessageUtil.toPlainText(targetPlayer.displayName())
+                ));
+                depositIntoTarget(executor, amount, targetPlayer);
+            });
         } catch (IllegalStateException | IllegalArgumentException e) {
             messageSender.sendError(e.getMessage());
-            return false;
         }
-        return true;
     }
 
     private void depositIntoTarget(Player executor, int amount, Player targetPlayer) {

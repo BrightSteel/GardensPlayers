@@ -134,25 +134,29 @@ public class PlayerTable implements Table {
         }
     }
 
-    public void subtractMoney(UUID uuid, int amount) {
+    // only succeeds when the balance covers it, so two concurrent debits can't overdraw; true if taken
+    public boolean subtractMoney(UUID uuid, int amount) {
         try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET money = money - ? WHERE uuid = ?",
+            return DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET money = money - ? WHERE uuid = ? AND money >= ?",
                     amount,
-                    uuid.toString()
-            );
+                    uuid.toString(),
+                    amount
+            ) == 1;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void subtractPoints(UUID uuid, int amount) {
+    // only succeeds when the balance covers it; true if taken
+    public boolean subtractPoints(UUID uuid, int amount) {
         try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET points = points - ? WHERE uuid = ?",
+            return DatabaseConnector.INSTANCE.executeUpdate(
+                    "UPDATE player SET points = points - ? WHERE uuid = ? AND points >= ?",
                     amount,
-                    uuid.toString()
-            );
+                    uuid.toString(),
+                    amount
+            ) == 1;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

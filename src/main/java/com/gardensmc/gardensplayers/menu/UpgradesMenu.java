@@ -11,6 +11,7 @@ import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -18,6 +19,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public class UpgradesMenu extends Menu {
+
+    // an upgrade purchase is in flight (main thread only)
+    private boolean purchasing;
 
     private static final String[] layout = new String[] {
             "    a    ",
@@ -104,14 +108,23 @@ public class UpgradesMenu extends Menu {
                         character,
                         UPGRADE_ICON,
                         click -> {
-                            if (GemsCurrencyHandler.INSTANCE.getCurrency(viewer) >= price) {
-                                GemsCurrencyHandler.INSTANCE.subtractGems(viewer, price);
+                            // one purchase at a time: a double click must not pay twice for the same level
+                            if (!purchasing && GemsCurrencyHandler.INSTANCE.getCurrency(viewer) >= price) {
+                                purchasing = true;
                                 var permissionUpgrade = permission.equals(MAX_EC_PERMISSION)
                                         ? MAX_EC_PERMISSION + ".upgrade" + (amountOwned + 1)
                                         : permission + "." + (amountOwned + 1);
-                                GardensPlayers.permission.playerAdd(viewer, permissionUpgrade);
-                                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<green>Upgraded " + upgradeName + "!"));
-                                gui.draw();
+                                GemsCurrencyHandler.INSTANCE.subtractGems(viewer, price).whenComplete((taken, error) ->
+                                        Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+                                            purchasing = false;
+                                            if (error != null || !Boolean.TRUE.equals(taken)) {
+                                                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>You don't have enough gems for that upgrade"));
+                                            } else {
+                                                GardensPlayers.permission.playerAdd(viewer, permissionUpgrade);
+                                                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<green>Upgraded " + upgradeName + "!"));
+                                            }
+                                            gui.draw();
+                                        }));
                             }
                             return true;
                         },

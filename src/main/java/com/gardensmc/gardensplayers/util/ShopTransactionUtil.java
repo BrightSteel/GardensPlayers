@@ -26,7 +26,11 @@ public class ShopTransactionUtil {
     public boolean tryPurchase(Player player, int cost, ItemStack item, Component itemName, int amount) {
         if (currency.getCurrency(player) >= cost) {
             try {
-                currency.chargeCurrency(player, cost).get();
+                if (!currency.chargeCurrency(player, cost).get()) {
+                    // the cached balance was stale (e.g. a second purchase in the same tick)
+                    player.sendMessage(MiniMessage.miniMessage().deserialize("<red>You don't have enough to buy that"));
+                    return false;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return false;

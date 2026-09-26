@@ -139,7 +139,9 @@ public class GardensEconomyProvider implements Economy {
         try {
             var promise = new PlayerEconomyHandler(uuid).withdraw(amountRounded);
             try {
-                promise.get(); // wait for withdrawal to occur
+                if (!promise.get()) { // wait for withdrawal to occur
+                    return new EconomyResponse(0, new PlayerEconomyHandler(uuid).getBalance(), EconomyResponse.ResponseType.FAILURE, "Insufficient funds");
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

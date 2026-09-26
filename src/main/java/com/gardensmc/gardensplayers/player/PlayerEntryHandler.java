@@ -39,10 +39,11 @@ public class PlayerEntryHandler {
                 .thenRun(this::refreshCache);
     }
 
-    public CompletableFuture<Void> subtractMoney(int amount) {
+    // completes with true only if the balance covered it and the money was taken
+    public CompletableFuture<Boolean> subtractMoney(int amount) {
         return CompletableFuture
-                .runAsync(() -> Tables.playerTable.subtractMoney(uuid, amount))
-                .thenRun(this::refreshCache);
+                .supplyAsync(() -> Tables.playerTable.subtractMoney(uuid, amount))
+                .whenComplete((taken, error) -> refreshCache());
     }
 
     public CompletableFuture<Void> addMoney(int amount) {

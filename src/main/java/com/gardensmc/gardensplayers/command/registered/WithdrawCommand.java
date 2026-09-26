@@ -31,9 +31,14 @@ public class WithdrawCommand extends PlayerExecutorCommand {
             messageSender.sendError("You do not have enough money to make this payment");
         } else {
             try {
-                economySender.withdraw(amount)
-                        .thenRun(() -> Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount)))
-                        .thenRun(() -> messageSender.sendMessage("Withdrew %s %s".formatted(amount, GardensPlayers.config.getCurrencySymbol())));
+                economySender.withdraw(amount).thenAccept(taken -> {
+                    if (!taken) {
+                        messageSender.sendError("You do not have enough money to make this payment");
+                        return;
+                    }
+                    Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount));
+                    messageSender.sendMessage("Withdrew %s %s".formatted(amount, GardensPlayers.config.getCurrencySymbol()));
+                });
             } catch (IllegalStateException | IllegalArgumentException e) {
                 messageSender.sendError(e.getMessage());
             }

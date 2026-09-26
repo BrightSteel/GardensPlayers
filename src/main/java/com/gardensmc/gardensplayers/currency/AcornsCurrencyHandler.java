@@ -3,6 +3,7 @@ package com.gardensmc.gardensplayers.currency;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
+import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.bukkit.entity.Player;
@@ -38,6 +39,11 @@ public class AcornsCurrencyHandler implements Currency {
     @Override
     public CompletableFuture<Void> addCurrency(UUID player, int amount) {
         return new PlayerEconomyHandler(player).deposit(amount);
+    }
+
+    @Override
+    public CompletableFuture<Boolean> takeCurrency(UUID player, int amount) {
+        return new PlayerEntryHandler(player).subtractMoney(amount);
     }
 
     @Override

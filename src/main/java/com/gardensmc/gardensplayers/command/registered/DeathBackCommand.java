@@ -8,6 +8,7 @@ import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.menu.BedrockDeathBackMenu;
 import com.gardensmc.gardensplayers.menu.DeathBackConfirmMenu;
 import org.bukkit.Location;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * /deathback — returns the player to their most recent death location for the configured acorn cost.
@@ -50,10 +52,17 @@ public class DeathBackCommand extends PlayerExecutorCommand {
         }
 
         if (args.length > 0 && args[0].equalsIgnoreCase("confirm")) {
-            executor.teleport(location);
-            economy.withdraw(cost);
-            DeathLocationTracker.INSTANCE.clear(executor.getUniqueId());
-            sendMessage(executor, "<green>Teleported to your death location for %d acorns".formatted(cost));
+            // pay first, teleport only once the acorns were actually taken (a free deathback skips paying)
+            var paid = cost > 0 ? economy.withdraw(cost) : CompletableFuture.completedFuture(true);
+            paid.thenAccept(taken -> Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+                if (!taken) {
+                    sendMessage(executor, "<red>You need %d acorns to teleport to your death location".formatted(cost));
+                    return;
+                }
+                executor.teleport(location);
+                DeathLocationTracker.INSTANCE.clear(executor.getUniqueId());
+                sendMessage(executor, "<green>Teleported to your death location for %d acorns".formatted(cost));
+            }));
             return;
         }
 

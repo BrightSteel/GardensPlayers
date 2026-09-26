@@ -29,9 +29,15 @@ public class GemsCurrencyHandler implements Currency {
         return PlayerEntryCache.INSTANCE.getSync(uuid).getPoints();
     }
 
-    public CompletableFuture<Void> subtractGems(Player player, int amount) {
-        return CompletableFuture.runAsync(() -> Tables.playerTable.subtractPoints(player.getUniqueId(), amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player.getUniqueId()));
+    // completes with true only if the player had enough gems and they were taken
+    public CompletableFuture<Boolean> subtractGems(Player player, int amount) {
+        return takeCurrency(player.getUniqueId(), amount);
+    }
+
+    @Override
+    public CompletableFuture<Boolean> takeCurrency(UUID player, int amount) {
+        return CompletableFuture.supplyAsync(() -> Tables.playerTable.subtractPoints(player, amount))
+                .whenComplete((taken, error) -> PlayerEntryCache.INSTANCE.remove(player));
     }
 
     @Override

@@ -25,8 +25,10 @@ public interface Currency {
 
     CompletableFuture<Void> setCurrency(UUID player, int amount);
 
-    default CompletableFuture<Void> chargeCurrency(Player player, int amount) {
-        var bal = getCurrency(player);
-        return setCurrency(player, bal - amount);
+    // takes `amount` only if the balance covers it; completes with whether it was taken
+    CompletableFuture<Boolean> takeCurrency(UUID player, int amount);
+
+    default CompletableFuture<Boolean> chargeCurrency(Player player, int amount) {
+        return takeCurrency(player.getUniqueId(), amount);
     }
 }
