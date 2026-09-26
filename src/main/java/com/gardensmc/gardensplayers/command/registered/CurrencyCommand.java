@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @AllArgsConstructor
@@ -59,7 +58,7 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Provide <player> and <amount> args"));
             return;
         }
-        var target = Bukkit.getPlayer(args[1]);
+        var target = PlayerUtil.findOnline(args[1]);
         var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
         if (targetUUID == null) {
             sender.sendMessage("<red>Couldn't find player " + args[1]);
@@ -87,7 +86,7 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Provide <player> and <amount> args"));
             return;
         }
-        var target = Bukkit.getPlayer(args[1]);
+        var target = PlayerUtil.findOnline(args[1]);
         var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
         if (targetUUID == null) {
             sender.sendMessage("<red>Couldn't find player " + args[1]);
@@ -139,7 +138,7 @@ public class CurrencyCommand implements TabExecutor {
                 sendNoPerms(sender);
                 return;
             }
-            var target = Bukkit.getPlayer(args[1]);
+            var target = PlayerUtil.findOnline(args[1]);
             var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
             if (targetUUID == null) {
                 sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Couldn't find player " + args[1]));

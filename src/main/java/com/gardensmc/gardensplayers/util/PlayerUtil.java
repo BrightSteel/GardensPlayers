@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.craftbukkit.inventory.CraftContainer;
 import org.bukkit.craftbukkit.util.CraftChatMessage;
@@ -19,6 +20,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 public class PlayerUtil {
+
+    /**
+     * The online player with exactly this name (case-insensitive), or else exactly this display name (what tab
+     * completion offers). Never a prefix match: Bukkit.getPlayer("Al") would pick whichever name starts with "Al".
+     */
+    @Nullable
+    public static Player findOnline(String name) {
+        var exact = Bukkit.getPlayerExact(name);
+        if (exact != null) {
+            return exact;
+        }
+        var byDisplayName = Bukkit.getOnlinePlayers().stream()
+                .filter(player -> MessageUtil.toPlainText(player.displayName()).equalsIgnoreCase(name))
+                .toList();
+        return byDisplayName.size() == 1 ? byDisplayName.getFirst() : null;
+    }
 
     @Nullable
     public static UUID getUUID(String username) {

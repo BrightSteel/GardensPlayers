@@ -4,6 +4,7 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.command.exception.*;
 import com.gardensmc.gardensplayers.util.MessageUtil;
+import com.gardensmc.gardensplayers.util.PlayerUtil;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -95,10 +96,10 @@ public abstract class GardensCommand implements TabExecutor {
                 .toList();
     }
 
-    protected Player getPlayerOrThrow(String displayNameContains) {
-        var player = Bukkit.getPlayer(displayNameContains);
+    protected Player getPlayerOrThrow(String name) {
+        var player = PlayerUtil.findOnline(name);
         if (player == null) {
-            throw new PlayerNotFoundException(displayNameContains);
+            throw new PlayerNotFoundException(name);
         }
         return player;
     }

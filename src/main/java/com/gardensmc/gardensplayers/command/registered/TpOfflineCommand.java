@@ -7,7 +7,6 @@ import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -27,7 +26,7 @@ public class TpOfflineCommand extends PlayerExecutorCommand {
         super.execute(executor, args);
 
         String username = args[0];
-        var online = Bukkit.getPlayer(username);
+        var online = PlayerUtil.findOnline(username);
         if (online != null) {
             executor.teleport(online);
             executor.sendMessage(MessageUtil.parseIntoComponent(

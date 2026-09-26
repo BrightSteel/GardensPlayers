@@ -8,7 +8,6 @@ import com.gardensmc.gardensplayers.command.type.PlayerCommand;
 import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -36,7 +35,7 @@ public class BalanceCommand extends PlayerCommand {
         }
 
         // Online target — reuse the existing path.
-        var onlineTarget = Bukkit.getPlayer(username);
+        var onlineTarget = PlayerUtil.findOnline(username);
         if (onlineTarget != null) {
             executeOnPlayer(executor, onlineTarget, args);
             return;

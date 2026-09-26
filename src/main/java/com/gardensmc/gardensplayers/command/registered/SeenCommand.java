@@ -1,17 +1,15 @@
 package com.gardensmc.gardensplayers.command.registered;
 
+import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.command.type.GardensCommand;
-import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.entry.LocationEntry;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -40,7 +38,7 @@ public class SeenCommand extends GardensCommand {
         }
 
         String username = args[0];
-        var online = Bukkit.getPlayer(username);
+        var online = PlayerUtil.findOnline(username);
         UUID uuid = online != null ? online.getUniqueId() : PlayerUtil.getUUID(username);
         if (uuid == null) {
             throw new PlayerNotFoundException(username);
