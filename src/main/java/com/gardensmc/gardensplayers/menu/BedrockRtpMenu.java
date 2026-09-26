@@ -1,7 +1,6 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
-import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.SimpleForm;
@@ -50,7 +49,7 @@ public class BedrockRtpMenu {
                     new Dimension("gardens_the_end", "End", ICON_DIR + "icon_end")
             )),
             new Tab("Resources", List.of(
-                    new Dimension(null, "Overworld", ICON_DIR + "icon_resource_world"), // null: the resource overworld, by its current name
+                    new Dimension("resource_world", "Overworld", ICON_DIR + "icon_resource_world"),
                     new Dimension("resource_nether", "Nether", ICON_DIR + "icon_resource_nether"),
                     new Dimension("resource_the_end", "End", ICON_DIR + "icon_resource_end")
             ))
@@ -89,8 +88,7 @@ public class BedrockRtpMenu {
             if (idx < SLOTS) {
                 if (idx < dimensions.size()) {
                     // form responses arrive off the main thread; the command teleports, so run it on the main thread
-                    var dimension = dimensions.get(idx).world();
-                    var world = dimension != null ? dimension : RtpHandler.resourceOverworldName();
+                    var world = dimensions.get(idx).world();
                     Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> viewer.chat("/rtp " + world));
                 }
             } else {

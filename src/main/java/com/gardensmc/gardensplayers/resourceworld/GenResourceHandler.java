@@ -16,7 +16,7 @@ public class GenResourceHandler {
 
     public static final GenResourceHandler INSTANCE = new GenResourceHandler();
     public static final Map<String, World.Environment> WORLDS = Map.of(
-            "resource", World.Environment.NORMAL,
+            "resource_world", World.Environment.NORMAL, // the production name
             "resource_nether", World.Environment.NETHER,
             "resource_the_end", World.Environment.THE_END
     );

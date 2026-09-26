@@ -23,17 +23,11 @@ public class RtpHandler {
 
     private final Map<UUID, Queue<Location>> worldLocationQueue = new ConcurrentHashMap<>();
 
-    // Worlds /rtp can send players to. The resource overworld is "resource" once /resetresource has run and
-    // "resource_world" before that, so both are allowed. Temporary generation worlds (resource.<uuid>) never are.
+    // Worlds /rtp can send players to. Temporary generation worlds (<name>.<uuid>) never are.
     public static final Set<String> RTP_WORLDS = Set.of(
             "gardens", "gardens_nether", "gardens_the_end",
-            "resource", "resource_world", "resource_nether", "resource_the_end"
+            "resource_world", "resource_nether", "resource_the_end"
     );
-
-    // the resource overworld's current name (see RTP_WORLDS)
-    public static String resourceOverworldName() {
-        return Bukkit.getWorld("resource") != null ? "resource" : "resource_world";
-    }
 
     // main nether/End RTP is unlocked by visiting them once (see PlayerListener.onPlayerChangeWorlds)
     @Nullable

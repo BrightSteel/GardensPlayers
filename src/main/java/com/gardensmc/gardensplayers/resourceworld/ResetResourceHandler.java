@@ -97,7 +97,7 @@ public class ResetResourceHandler {
         }));
     }
 
-    // the newest folder named exactly <name>.<uuid> ("resource" must not match "resource_nether.<uuid>")
+    // the newest folder named exactly <name>.<uuid> (a prefix match could pick another world's folder)
     private Optional<Path> findPregenerated(String name) {
         var pattern = Pattern.compile(Pattern.quote(name) + "\\.[0-9a-fA-F-]{36}");
         try (Stream<Path> paths = Files.list(Bukkit.getWorldContainer().toPath())) {
