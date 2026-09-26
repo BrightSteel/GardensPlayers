@@ -90,11 +90,11 @@ public class TileShopPurchaseMenu extends Menu {
             gui.addElement(new DynamicGuiElement('h', () -> {
                 var price = item.getAmount() * shopItem.getSellPrice();
                 return new StaticGuiElement('h', blankItem, click -> {
+                    // only limited items are sold here; sell() clamps to what's left and pays for what was sold
                     if (shopItem.hasSellLimit()) {
                         var sellLimitHandler = new ShopLimitHandler(viewer.getUniqueId(), shopItem.getId(), shopItem.getSellLimit());
-                        var amount = Math.min(item.getAmount(), sellLimitHandler.getAmountLeft());
-                        if (transactionUtil.trySell(viewer, price, item, item.displayName(), amount)) {
-                            sellLimitHandler.increaseAmountTransacted(amount).thenRun(this::openPrev);
+                        if (transactionUtil.sell(viewer, shopItem.getSellPrice(), item, item.displayName(), item.getAmount(), sellLimitHandler) > 0) {
+                            openPrev();
                         }
                     }
                     return true;

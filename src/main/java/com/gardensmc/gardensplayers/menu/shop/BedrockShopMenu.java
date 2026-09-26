@@ -210,25 +210,10 @@ public class BedrockShopMenu {
                 var cost = shopItem.getBuyPrice() * quantity;
                 transactionUtil.tryPurchase(viewer, cost, itemStack, itemName, quantity);
             } else {
-                var amount = quantity;
                 ShopLimitHandler sellLimitHandler = shopItem.hasSellLimit()
                         ? new ShopLimitHandler(viewer.getUniqueId(), shopItem.getId(), shopItem.getSellLimit())
                         : null;
-                if (sellLimitHandler != null) {
-                    if (sellLimitHandler.isLimitMet()) {
-                        viewer.sendMessage(MiniMessage.miniMessage()
-                                .deserialize("<red>You've already met today's sell limit for ")
-                                .append(itemName));
-                        sendItemGridForm(viewer, shop, 0, !isBuy);
-                        return;
-                    }
-                    amount = Math.min(amount, sellLimitHandler.getAmountLeft());
-                }
-                var price = shopItem.getSellPrice() * amount;
-                int finalAmount = amount;
-                if (transactionUtil.trySell(viewer, price, itemStack, itemName, finalAmount) && sellLimitHandler != null) {
-                    sellLimitHandler.increaseAmountTransacted(finalAmount);
-                }
+                transactionUtil.sell(viewer, shopItem.getSellPrice(), itemStack, itemName, quantity, sellLimitHandler);
             }
             sendItemGridForm(viewer, shop, 0, !isBuy);
         });

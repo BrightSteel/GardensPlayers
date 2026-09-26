@@ -82,15 +82,10 @@ public class ShopQuantityMenu extends Menu {
                         if (mode == TransactionMode.BUY) {
                             transactionUtil.tryPurchase(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount);
                         } else {
-                            if (canSell(item.getAmount())) {
-                                if (transactionUtil.trySell(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount)) {
-                                    shopLimitHandler.increaseAmountTransacted(amount).thenRun(() -> onCancel.accept(gui));
-                                    return true;
-                                }
-                            } else {
-                                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>You cannot sell more than today's sell limit (" + shopLimitHandler.getLimit() + ")"));
-                                return true;
+                            if (transactionUtil.sell(viewer, basePrice, item, MiniMessage.miniMessage().deserialize(shopItemName), amount, shopLimitHandler) > 0) {
+                                onCancel.accept(gui);
                             }
+                            return true;
                         }
                     }
                     onCancel.accept(gui);

@@ -52,28 +52,19 @@ public class ShopLimitsTable implements Table {
         }
     }
 
-    public void createShopLimit(ShopLimitKey shopLimitKey, int amount, int day) {
+    // Adds to the player's amount for `day` in one statement: resets it first when the stored row is from an
+    // earlier day, and creates the row if there is none. Concurrent sells can't lose each other's increments.
+    public void addShopLimit(ShopLimitKey shopLimitKey, int amount, int day) {
         try {
             DatabaseConnector.INSTANCE.executeUpdate(
-                    "INSERT INTO shopLimits (playerUUID, shopItem, amount, day) VALUES (?, ?, ?, ?)",
+                    """
+                    INSERT INTO shopLimits (playerUUID, shopItem, amount, day) VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE amount = IF(day = VALUES(day), amount + VALUES(amount), VALUES(amount)), day = VALUES(day)
+                    """,
                     shopLimitKey.playerUUID().toString(),
                     shopLimitKey.shopItem(),
                     amount,
                     day
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void updateShopLimit(ShopLimitKey shopLimitKey, int amount, int day) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE shopLimits SET amount = ?, day = ? WHERE playerUUID = ? AND shopItem = ? LIMIT 1",
-                    amount,
-                    day,
-                    shopLimitKey.playerUUID().toString(),
-                    shopLimitKey.shopItem()
             );
         } catch (SQLException e) {
             throw new RuntimeException(e);

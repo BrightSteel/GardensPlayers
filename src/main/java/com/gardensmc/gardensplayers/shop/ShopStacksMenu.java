@@ -70,12 +70,8 @@ public class ShopStacksMenu extends Menu {
             if (mode == TransactionMode.BUY) {
                 transactionUtil.tryPurchase(viewer, price, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems);
             } else {
-                if (canSell(item.getAmount()) && transactionUtil.trySell(viewer, price, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems)) {
-                    shopLimitHandler.increaseAmountTransacted(totalItems);
-                    return true;
-                } else {
-                    viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>You cannot sell more than today's sell limit!"));
-                }
+                // checks the whole stack amount against the limit (it used to check the quantity-menu amount)
+                transactionUtil.sell(viewer, basePrice, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems, shopLimitHandler);
             }
           return true;
         }, (mode == TransactionMode.BUY ? "<#82CD47><bold>Buy " : "<green><bold>Sell ") + stacks + " stack" + (stacks > 1 ? "s" : ""),
@@ -84,10 +80,4 @@ public class ShopStacksMenu extends Menu {
         );
     }
 
-    private boolean canSell(int amount) {
-        if (shopLimitHandler == null) {
-            return true;
-        }
-        return !shopLimitHandler.isLimitMet() && shopLimitHandler.isTransactionWithinLimit(amount);
-    }
 }
