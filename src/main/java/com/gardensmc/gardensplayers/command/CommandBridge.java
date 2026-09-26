@@ -1,5 +1,6 @@
 package com.gardensmc.gardensplayers.command;
 
+import com.gardensmc.gardensplayers.command.type.GardensCommand;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -53,7 +54,12 @@ public final class CommandBridge {
             }
         };
 
-        LiteralCommandNode<CommandSourceStack> node = Commands.literal(name)
+        var literal = Commands.literal(name);
+        // hide commands from players who can't use them (tab complete, /help); they still check on run
+        if (executor instanceof GardensCommand gardensCommand && !gardensCommand.isOpenToAll()) {
+            literal.requires(source -> source.getSender().hasPermission(gardensCommand.getPermissionNode()));
+        }
+        LiteralCommandNode<CommandSourceStack> node = literal
                 .executes(ctx -> run(executor, bukkitCommand, name, ctx, ""))
                 .then(Commands.argument("args", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> suggest(executor, bukkitCommand, name, ctx, builder))

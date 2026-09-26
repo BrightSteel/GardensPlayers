@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.menu;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.util.FontShift;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.InventoryGui;
@@ -26,10 +27,10 @@ public class Menu {
     public Menu(String[] layout, Component title, Player viewer) {
         this.viewer = viewer;
         this.gui = new InventoryGui(
-                GardensFurniture.plugin,
+                GardensPlayers.plugin,
                 new InventoryGui.InventoryCreator(
-                        (gui, who, type) -> GardensFurniture.plugin.getServer().createInventory(new InventoryGui.Holder(gui), type, title),
-                        (gui, who, size) -> GardensFurniture.plugin.getServer().createInventory(new InventoryGui.Holder(gui), size, title)
+                        (gui, who, type) -> GardensPlayers.plugin.getServer().createInventory(new InventoryGui.Holder(gui), type, title),
+                        (gui, who, size) -> GardensPlayers.plugin.getServer().createInventory(new InventoryGui.Holder(gui), size, title)
                 ),
                 (meta, s) -> meta.displayName(toComponent(s)),
                 (meta, strings) -> meta.lore(strings.stream().map(this::toComponent).toList()),
@@ -69,6 +70,18 @@ public class Menu {
                 }, "<gold>Next")
                 : null
         );
+    }
+
+    // a button that changes `item`'s amount by `change`, kept between 1 and 64
+    protected final DynamicGuiElement buildQuantityButton(char character, ItemStack item, int change, String label) {
+        return new DynamicGuiElement(character, () -> {
+            var newAmount = Math.clamp(item.getAmount() + change, 1, 64);
+            return new StaticGuiElement(character, blankItem, click -> {
+                item.setAmount(newAmount);
+                gui.draw();
+                return true;
+            }, label);
+        });
     }
 
     protected void initializeElements() {

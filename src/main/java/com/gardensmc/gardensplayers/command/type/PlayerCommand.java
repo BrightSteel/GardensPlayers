@@ -6,8 +6,8 @@ import com.gardensmc.gardensplayers.command.exception.InvalidUserException;
 import com.gardensmc.gardensplayers.command.exception.NoPermissionException;
 import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.util.MessageUtil;
+import com.gardensmc.gardensplayers.util.PlayerUtil;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -56,7 +56,7 @@ public abstract class PlayerCommand extends GardensCommand {
             if (onlineUser instanceof Player sprouterPlayer && MessageUtil.toPlainText(sprouterPlayer.displayName()).equalsIgnoreCase(username)) {
                 executeOnSelf(sprouterPlayer, args);
             } else {
-                Player targetPlayer = Bukkit.getPlayer(username);
+                Player targetPlayer = PlayerUtil.findOnline(username);
                 if (targetPlayer == null) {
                     throw new PlayerNotFoundException(username);
                 }

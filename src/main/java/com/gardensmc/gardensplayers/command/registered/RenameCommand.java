@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
+import com.gardensmc.gardensplayers.command.exception.InvalidStateException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import net.kyori.adventure.text.Component;
@@ -19,14 +20,14 @@ public class RenameCommand extends PlayerExecutorCommand {
         super.execute(executor, args);
         var heldItem = executor.getInventory().getItemInMainHand();
         if (heldItem.getType() == Material.AIR) {
-            throw new IllegalStateException("You must be holding an item to rename");
+            throw new InvalidStateException("You must be holding an item to rename");
         }
         if (args.length == 0) {
-            throw new IllegalArgumentException("name");
+            throw new InvalidArgumentException("name");
         }
         var name = MessageUtil.fromMiniMessage(String.join(" ", args));
         if (MessageUtil.toPlainText(name).length() >= 50) {
-            throw new IllegalStateException("Name is too long!");
+            throw new InvalidStateException("Name is too long!");
         }
         var meta = heldItem.getItemMeta();
         meta.displayName(Component.text()

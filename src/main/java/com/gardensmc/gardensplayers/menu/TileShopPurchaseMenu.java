@@ -1,6 +1,5 @@
 package com.gardensmc.gardensplayers.menu;
 
-import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.menu.shop.ShopItem;
 import com.gardensmc.gardensplayers.shop.ShopLimitHandler;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
@@ -8,7 +7,6 @@ import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -90,11 +88,11 @@ public class TileShopPurchaseMenu extends Menu {
             gui.addElement(new DynamicGuiElement('h', () -> {
                 var price = item.getAmount() * shopItem.getSellPrice();
                 return new StaticGuiElement('h', blankItem, click -> {
+                    // only limited items are sold here; sell() clamps to what's left and pays for what was sold
                     if (shopItem.hasSellLimit()) {
                         var sellLimitHandler = new ShopLimitHandler(viewer.getUniqueId(), shopItem.getId(), shopItem.getSellLimit());
-                        var amount = Math.min(item.getAmount(), sellLimitHandler.getAmountLeft());
-                        if (transactionUtil.trySell(viewer, price, item, item.displayName(), amount)) {
-                            sellLimitHandler.increaseAmountTransacted(amount).thenRun(this::openPrev);
+                        if (transactionUtil.sell(viewer, shopItem.getSellPrice(), item, item.displayName(), item.getAmount(), sellLimitHandler) > 0) {
+                            openPrev();
                         }
                     }
                     return true;
@@ -113,16 +111,6 @@ public class TileShopPurchaseMenu extends Menu {
     }
 
     private GuiElement buildAmountModifierElement(char c, int modifier) {
-        return new DynamicGuiElement(c, () -> {
-            var finalAmount = item.getAmount() + modifier;
-            finalAmount = Math.min(finalAmount, 64);
-            finalAmount = Math.max(finalAmount, 1);
-            int finalAmount1 = finalAmount;
-            return new StaticGuiElement(c, blankItem, click -> {
-                item.setAmount(finalAmount1);
-                gui.draw();
-                return true;
-            }, (modifier > 0 ? "+" : "-") + Math.abs(modifier));
-        });
+        return buildQuantityButton(c, item, modifier, (modifier > 0 ? "+" : "-") + Math.abs(modifier));
     }
 }

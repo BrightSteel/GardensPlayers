@@ -20,7 +20,6 @@ public class RepairCommand extends PlayerExecutorCommand {
         }
         damageable.setDamage(0);
         item.setItemMeta(damageable);
-//        executor.getActiveItem().setItemMeta(itemMeta);
         sendMessage(executor, "Repaired your item");
     }
 }

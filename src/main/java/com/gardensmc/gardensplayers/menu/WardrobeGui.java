@@ -4,6 +4,7 @@ import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensplayers.menu.wardrobe.ArmorWardrobeSlot;
 import com.gardensmc.gardensplayers.menu.wardrobe.CosmeticWardrobeSlot;
 import com.gardensmc.gardensplayers.menu.wardrobe.WardrobeSlot;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import com.gardensmc.gardensplayers.util.FontShift;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
 import net.kyori.adventure.text.Component;
@@ -15,7 +16,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -42,7 +42,7 @@ public class WardrobeGui implements InventoryHolder {
 
     public WardrobeGui(Player viewer) {
         this.viewer = viewer;
-        var isBedrockViewer = FloodgateApi.getInstance().isFloodgatePlayer(viewer.getUniqueId());
+        var isBedrockViewer = BedrockUtil.isBedrock(viewer);
         this.templateSlots = isBedrockViewer;
         var title = isBedrockViewer ? Component.text("Wardrobe") : MiniMessage.miniMessage().deserialize("<white><font:gardens:default>" + FontShift.INSTANCE.getShift(-8) + "\u014B</font>");
         this.inventory = Bukkit.createInventory(this, 36, title);
@@ -60,7 +60,11 @@ public class WardrobeGui implements InventoryHolder {
 
     public void updateWardrobeSlot(int slot, WardrobeSlot wardrobeSlot) {
         wardrobeSlot.updateWardrobe(viewer, inventory.getItem(slot));
-        // refresh modified slot
+        refreshSlot(slot, wardrobeSlot);
+    }
+
+    // show what the player is actually wearing, without writing the GUI's copy back to them
+    public void refreshSlot(int slot, WardrobeSlot wardrobeSlot) {
         inventory.setItem(slot, itemOrTemplate(wardrobeSlot, wardrobeSlot.getItem(viewer)));
     }
 

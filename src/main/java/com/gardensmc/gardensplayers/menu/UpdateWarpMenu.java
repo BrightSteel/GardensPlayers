@@ -16,9 +16,11 @@ public class UpdateWarpMenu extends WarpMenu {
 
     @Override
     protected void onUpdate() {
-        WarpsHandler.INSTANCE.updateWarpMetadata(warpId, warpName, getCategory(), isPublic, description).thenRun(() -> viewer.sendMessage(
-                MiniMessage.miniMessage().deserialize("<green>Updated warp " + warpName + "<green>!"))
-        );
-
+        WarpsHandler.INSTANCE.updateWarpMetadata(warpId, warpName, getCategory(), isPublic, description).whenComplete((ignored, error) -> {
+            var cause = error != null && error.getCause() != null ? error.getCause() : error;
+            viewer.sendMessage(MiniMessage.miniMessage().deserialize(error == null
+                    ? "<green>Updated warp " + WarpsHandler.cleanText(warpName) + "<green>!"
+                    : "<red>" + cause.getMessage()));
+        });
     }
 }

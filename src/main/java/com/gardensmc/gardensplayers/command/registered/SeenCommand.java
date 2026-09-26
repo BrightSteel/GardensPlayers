@@ -1,22 +1,17 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
-import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.command.type.GardensCommand;
-import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.entry.LocationEntry;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * /seen &lt;player&gt; — shows when a player was last online (or that they're currently online).
@@ -40,29 +35,19 @@ public class SeenCommand extends GardensCommand {
         }
 
         String username = args[0];
-        var online = Bukkit.getPlayer(username);
-        UUID uuid = online != null ? online.getUniqueId() : PlayerUtil.getUUID(username);
-        if (uuid == null) {
-            throw new PlayerNotFoundException(username);
-        }
-
-        PlayerEntry entry = PlayerEntryCache.INSTANCE.getSync(uuid);
-        if (entry == null) {
-            throw new PlayerNotFoundException(username);
-        }
-
-        String name = online != null
-                ? MessageUtil.toPlainText(online.displayName())
-                : entry.getUsername();
-
+        var online = PlayerUtil.findOnline(username);
         if (online != null) {
             // When the player is online, that's the only thing this command reports.
             executor.sendMessage(MessageUtil.parseIntoComponent(
-                    "<green>%s is currently <bold>online</bold>".formatted(name)
+                    "<green>%s is currently <bold>online</bold>".formatted(MessageUtil.toPlainText(online.displayName()))
             ));
             return;
         }
+        runAsync(executor, () -> PlayerUtil.loadOfflineEntry(username), entry -> sendSeen(executor, entry));
+    }
 
+    private void sendSeen(CommandSender executor, PlayerEntry entry) {
+        String name = entry.getUsername();
         if (entry.getSeen() != null) {
             executor.sendMessage(MessageUtil.parseIntoComponent(
                     "<yellow>%s was last seen %s".formatted(name, formatRelative(entry.getSeen()))
@@ -121,5 +106,11 @@ public class SeenCommand extends GardensCommand {
 
     private static String pluralize(long amount, String unit) {
         return "%d %s%s ago".formatted(amount, unit, amount == 1 ? "" : "s");
+    }
+
+    // doesn't check its permission node: available to everyone
+    @Override
+    public boolean isOpenToAll() {
+        return true;
     }
 }

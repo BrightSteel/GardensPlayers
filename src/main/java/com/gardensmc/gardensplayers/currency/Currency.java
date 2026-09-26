@@ -17,6 +17,10 @@ public interface Currency {
         return getCurrency(player.getUniqueId());
     }
 
+    default boolean has(UUID uuid, int amount) {
+        return getCurrency(uuid) >= amount;
+    }
+
     CompletableFuture<Void> addCurrency(Player player, int amount);
 
     CompletableFuture<Void> addCurrency(UUID player, int amount);
@@ -25,8 +29,10 @@ public interface Currency {
 
     CompletableFuture<Void> setCurrency(UUID player, int amount);
 
-    default CompletableFuture<Void> chargeCurrency(Player player, int amount) {
-        var bal = getCurrency(player);
-        return setCurrency(player, bal - amount);
+    // takes `amount` only if the balance covers it; completes with whether it was taken
+    CompletableFuture<Boolean> takeCurrency(UUID player, int amount);
+
+    default CompletableFuture<Boolean> chargeCurrency(Player player, int amount) {
+        return takeCurrency(player.getUniqueId(), amount);
     }
 }

@@ -56,17 +56,11 @@ public class ShopTileItem extends TileItem {
             var itemStack = shopItem.getItemStack();
             var transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler());
             var items = transactionUtil.getItemCount(player, itemStack);
-            if (sellLimitHandler != null) {
-                items = Math.min(items, sellLimitHandler.getAmountLeft());
-            }
             if (items > 0) {
-                if (transactionUtil.trySell(player, shopItem.getSellPrice() * items, itemStack, itemStack.displayName(), items)) {
-                    if (sellLimitHandler != null) {
-                        sellLimitHandler.increaseAmountTransacted(items).thenRun(() -> {
-                            InventoryGui.clearHistory(player);
-                            tileMenu.reopen();
-                        });
-                    }
+                // sell everything held, up to the limit left
+                if (transactionUtil.sell(player, shopItem.getSellPrice(), itemStack, itemStack.displayName(), items, sellLimitHandler) > 0) {
+                    InventoryGui.clearHistory(player);
+                    tileMenu.reopen();
                 }
             } else {
                 player.sendMessage(MiniMessage.miniMessage()

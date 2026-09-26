@@ -4,6 +4,7 @@ import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.database.entry.WarpEntry;
 import com.gardensmc.gardensplayers.util.HeadUtil;
+import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.StaticGuiElement;
@@ -59,7 +60,13 @@ public abstract class WarpMenu extends Menu {
                     gui.close();
                     viewer.sendMessage(MiniMessage.miniMessage().deserialize("<green>Please type a warp name"));
                     OnlinePlayerCache.INSTANCE.getOnlinePlayerData(viewer.getUniqueId()).setTextCapture(text -> {
-                        this.warpName = text;
+                        var name = WarpsHandler.cleanText(text);
+                        var error = WarpsHandler.validateName(name);
+                        if (error != null) {
+                            viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>" + error));
+                        } else {
+                            this.warpName = name;
+                        }
                         this.open();
                         gui.draw();
                     });
@@ -80,7 +87,13 @@ public abstract class WarpMenu extends Menu {
                     gui.close();
                     viewer.sendMessage(MiniMessage.miniMessage().deserialize("<green>Please type a description"));
                     OnlinePlayerCache.INSTANCE.getOnlinePlayerData(viewer.getUniqueId()).setTextCapture(text -> {
-                        this.description = text;
+                        var description = WarpsHandler.cleanText(text);
+                        var error = WarpsHandler.validateDescription(description);
+                        if (error != null) {
+                            viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>" + error));
+                        } else {
+                            this.description = description;
+                        }
                         this.open();
                         gui.draw();
                     });

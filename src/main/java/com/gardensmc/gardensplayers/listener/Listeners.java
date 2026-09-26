@@ -10,7 +10,6 @@ public class Listeners {
         register(new PlayerListener());
         register(new FurnitureListener());
         register(new CropsListener());
-//        register(new ShopGuiListener());
         register(new WorldListener());
         register(new BlockListener());
         register(new DepositGuiListener());

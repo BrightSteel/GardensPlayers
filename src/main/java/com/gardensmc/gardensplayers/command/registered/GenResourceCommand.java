@@ -14,12 +14,19 @@ public class GenResourceCommand implements CommandExecutor {
         if (!sender.hasPermission("gplayers.genresource")) {
             return false;
         }
-        var count = (args.length > 0) ? Integer.parseInt(args[0]) : 1;
+        int count;
+        World.Environment env;
+        try {
+            count = (args.length > 0) ? Integer.parseInt(args[0]) : 1;
+            env = (args.length > 1) ? World.Environment.valueOf(args[1].toUpperCase()) : null;
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage("Usage: /genresource [count] [normal|nether|the_end]");
+            return true;
+        }
         if (count < 1) {
             sender.sendMessage("Count must be greater than 0");
             return true;
         }
-        var env = (args.length > 1) ? World.Environment.valueOf(args[1].toUpperCase()) : null;
         if (GenResourceHandler.INSTANCE.triggerGeneration(sender, count, env)) {
             sender.sendMessage("Started resource world generation");
         } else {

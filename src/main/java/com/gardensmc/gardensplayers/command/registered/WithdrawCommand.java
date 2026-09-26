@@ -5,7 +5,7 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -25,15 +25,26 @@ public class WithdrawCommand extends PlayerExecutorCommand {
         } catch (NumberFormatException e) {
             throw new InvalidArgumentException("amount");
         }
-        var economySender = new PlayerEconomyHandler(executor.getUniqueId());
+        var acorns = AcornsCurrencyHandler.INSTANCE;
         var messageSender = new SenderMessageHandler(executor);
-        if (!economySender.hasEnough(amount)) {
+        if (!acorns.has(executor.getUniqueId(), amount)) {
             messageSender.sendError("You do not have enough money to make this payment");
         } else {
             try {
-                economySender.withdraw(amount)
-                        .thenRun(() -> Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount)))
-                        .thenRun(() -> messageSender.sendMessage("Withdrew %s %s".formatted(amount, GardensPlayers.config.getCurrencySymbol())));
+                acorns.takeCurrency(executor.getUniqueId(), amount).thenAccept(taken -> {
+                    if (!taken) {
+                        messageSender.sendError("You do not have enough money to make this payment");
+                        return;
+                    }
+                    Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+                        if (!executor.isOnline()) {
+                            acorns.addCurrency(executor.getUniqueId(), amount); // logged out before the acorns could be given
+                            return;
+                        }
+                        PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount);
+                    });
+                    messageSender.sendMessage("Withdrew %s %s".formatted(amount, GardensPlayers.config.getCurrencySymbol()));
+                });
             } catch (IllegalStateException | IllegalArgumentException e) {
                 messageSender.sendError(e.getMessage());
             }

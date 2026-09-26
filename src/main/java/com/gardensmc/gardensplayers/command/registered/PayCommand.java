@@ -4,7 +4,7 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
+import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import org.bukkit.entity.Player;
 
@@ -27,37 +27,38 @@ public class PayCommand extends PlayerExecutorCommand {
         } catch (NumberFormatException e) {
             throw new InvalidArgumentException("amount");
         }
-        if (withdrawFromSender(executor, amount, targetPlayer)) {
-            depositIntoTarget(executor, amount, targetPlayer);
-        }
+        pay(executor, amount, targetPlayer);
     }
 
-    private boolean withdrawFromSender(Player executor, int amount, Player targetPlayer) {
-        var economySender = new PlayerEconomyHandler(executor.getUniqueId());
+    // the target is credited only once the sender's debit has actually gone through
+    private void pay(Player executor, int amount, Player targetPlayer) {
+        var acorns = AcornsCurrencyHandler.INSTANCE;
         var messageSender = new SenderMessageHandler(executor);
-        if (!economySender.hasEnough(amount)) {
+        if (!acorns.has(executor.getUniqueId(), amount)) {
             messageSender.sendError("You do not have enough money to make this payment");
-            return false;
+            return;
         }
         try {
-            economySender
-                    .withdraw(amount)
-                    .thenRun(() -> messageSender.sendMessage("Sent %s%s to %s".formatted(
-                            GardensPlayers.config.getCurrencySymbol(),
-                            amount,
-                            MessageUtil.toPlainText(targetPlayer.displayName())
-                    )));
+            acorns.takeCurrency(executor.getUniqueId(), amount).thenAccept(taken -> {
+                if (!taken) {
+                    messageSender.sendError("You do not have enough money to make this payment");
+                    return;
+                }
+                messageSender.sendMessage("Sent %s%s to %s".formatted(
+                        GardensPlayers.config.getCurrencySymbol(),
+                        amount,
+                        MessageUtil.toPlainText(targetPlayer.displayName())
+                ));
+                depositIntoTarget(executor, amount, targetPlayer);
+            });
         } catch (IllegalStateException | IllegalArgumentException e) {
             messageSender.sendError(e.getMessage());
-            return false;
         }
-        return true;
     }
 
     private void depositIntoTarget(Player executor, int amount, Player targetPlayer) {
-        var economyTarget = new PlayerEconomyHandler(targetPlayer.getUniqueId());
-        economyTarget
-                .deposit(amount)
+        AcornsCurrencyHandler.INSTANCE
+                .addCurrency(targetPlayer, amount)
                 .thenRun(() -> new SenderMessageHandler(targetPlayer).sendMessage("%s sent you %s%s".formatted(
                         MessageUtil.toPlainText(executor.displayName()),
                         GardensPlayers.config.getCurrencySymbol(),

@@ -121,7 +121,8 @@ public class QuestHandler {
     /**
      * Writes the current daily tasks and all player progress to disk. Safe to call off the main thread.
      */
-    public void save() {
+    // synchronized: completions now save right away, so saves can overlap and must not interleave writes
+    public synchronized void save() {
         var yaml = new YamlConfiguration();
         yaml.set("lastGenerated", lastGenerated.toString());
         for (Task task : dailyTasks) {
@@ -247,12 +248,31 @@ public class QuestHandler {
         }
     }
 
+    /**
+     * Takes back progress {@link #progress} gave, eg a placed block that was broken again. Main thread only.
+     */
+    public void revokeProgress(Player player, TaskCategory category, String key, int amount) {
+        var playerProgress = progress.get(player.getUniqueId());
+        if (playerProgress == null) {
+            return;
+        }
+        for (Task task : dailyTasks) {
+            var taskProgress = playerProgress.get(task.getId());
+            if (taskProgress != null && task.getCategory() == category && task.matches(key)) {
+                taskProgress.decrement(amount);
+            }
+        }
+    }
+
     private void completeTask(Player player, Task task) {
         task.getReward().grant(player);
         new SenderMessageHandler(player).sendMessage(
                 "<green>Quest complete: <white>" + task.getDescription()
                         + " <gray>(+" + task.getReward().describe() + "<gray>)"
         );
+        // save now rather than at the next 5-minute autosave: after a crash the task would be completable (and
+        // paid out) again
+        saveAsync();
         // bump the player's lifetime quest count and refresh their cached entry
         var playerId = player.getUniqueId();
         CompletableFuture
@@ -298,12 +318,20 @@ public class QuestHandler {
      * Recomputing each time keeps it correct across DST changes.
      */
     public void scheduleNextReset() {
-        long delayTicks = Math.max(1, getTimeUntilReset().toSeconds() * 20);
+        // round up (whole seconds truncated, so it could fire just before midnight and then again right after)
+        long delayTicks = Math.max(1, (getTimeUntilReset().toMillis() + 49) / 50);
         Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> {
-            generateDailyTasks();
-            saveAsync();
+            // a late tick or an early fire must not generate the same day's tasks twice
+            if (lastGenerated.isBefore(startOfToday())) {
+                generateDailyTasks();
+                saveAsync();
+            }
             scheduleNextReset();
         }, delayTicks);
+    }
+
+    private static Instant startOfToday() {
+        return ZonedDateTime.now(RESET_ZONE).toLocalDate().atStartOfDay(RESET_ZONE).toInstant();
     }
 
     /**

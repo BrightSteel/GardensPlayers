@@ -7,7 +7,6 @@ import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.ShopLimitEntry;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -20,47 +19,37 @@ public class ShopLimitHandler {
     @Getter
     private final int limit;
 
-    @Nullable
-    private ShopLimitEntry getShopLimitEntry() {
-        var shopLimitEntries = ShopLimitsCache.INSTANCE.getSync(playerUUID);
-        return shopLimitEntries.get(shopItem);
+    // today's amount only: a cached entry from an earlier day no longer counts
+    private int getAmountUsed() {
+        var shopLimitEntry = ShopLimitsCache.INSTANCE.getSync(playerUUID).get(shopItem);
+        if (shopLimitEntry == null || shopLimitEntry.getDay() != GardensCrops.getCurrentDay()) {
+            return 0;
+        }
+        return shopLimitEntry.getAmount();
     }
 
     public int getAmountLeft() {
-        var shopLimitEntry = getShopLimitEntry();
-        var currentAmount = shopLimitEntry == null ? 0 : shopLimitEntry.getAmount();
-        return limit - currentAmount;
+        return Math.max(0, limit - getAmountUsed());
     }
 
     public boolean isLimitMet() {
-        var shopLimitEntry = getShopLimitEntry();
-        if (shopLimitEntry == null) {
-            return false;
-        }
-        return shopLimitEntry.getAmount() == limit;
+        return getAmountLeft() <= 0;
     }
 
     public boolean isTransactionWithinLimit(int amount) {
-        var shopLimitEntry = getShopLimitEntry();
-        var currentAmount = shopLimitEntry == null ? 0 : shopLimitEntry.getAmount();
-        return currentAmount + amount <= limit;
+        return amount <= getAmountLeft();
     }
 
+    /**
+     * Records `increase` against today's limit. The cached count is updated right away (shop clicks all run on
+     * the main thread), so the very next sell sees it; the database catches up with one atomic upsert. The old
+     * version only refreshed the cache after the async write, so two quick sells both passed the limit check.
+     */
     public CompletableFuture<Void> increaseAmountTransacted(int increase) {
         var currentDay = GardensCrops.getCurrentDay();
+        var cached = ShopLimitsCache.INSTANCE.getSync(playerUUID);
+        cached.put(shopItem, new ShopLimitEntry(shopItem, getAmountUsed() + increase, currentDay));
         var shopLimitKey = new ShopLimitKey(playerUUID, shopItem);
-        return CompletableFuture.runAsync(() -> {
-            var shopLimitEntry = Tables.shopLimitsTable.getShopLimit(shopLimitKey);
-            if (shopLimitEntry == null) {
-                Tables.shopLimitsTable.createShopLimit(shopLimitKey, increase, currentDay);
-            } else {
-                var currentAmount = currentDay == shopLimitEntry.getDay() ? shopLimitEntry.getAmount() : 0;
-                Tables.shopLimitsTable.updateShopLimit(
-                        shopLimitKey,
-                        currentAmount + increase,
-                        currentDay
-                );
-            }
-        }).thenRun(() -> ShopLimitsCache.INSTANCE.remove(playerUUID));
+        return CompletableFuture.runAsync(() -> Tables.shopLimitsTable.addShopLimit(shopLimitKey, increase, currentDay));
     }
 }

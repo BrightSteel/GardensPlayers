@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.shop;
 
 import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
+import com.gardensmc.gardensplayers.menu.Menu;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.GuiElementGroup;
@@ -34,7 +35,7 @@ public class ShopStacksMenu extends Menu {
     private final Consumer<InventoryGui> quantityMenuOnCancel;
 
     public ShopStacksMenu(Player viewer, String shopItemName, ItemStack item, int basePrice, TransactionMode mode, ShopLimitHandler shopLimitHandler, Consumer<InventoryGui> quantityMenuOnCancel) {
-        super(layout, "<white>\uE105 \uE604", viewer);
+        super(layout, "\uE105 \uE604" /* Menu adds <white> */, viewer);
         this.shopItemName = shopItemName;
         this.item = item;
         this.basePrice = basePrice;
@@ -70,12 +71,8 @@ public class ShopStacksMenu extends Menu {
             if (mode == TransactionMode.BUY) {
                 transactionUtil.tryPurchase(viewer, price, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems);
             } else {
-                if (canSell(item.getAmount()) && transactionUtil.trySell(viewer, price, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems)) {
-                    shopLimitHandler.increaseAmountTransacted(totalItems);
-                    return true;
-                } else {
-                    viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>You cannot sell more than today's sell limit!"));
-                }
+                // checks the whole stack amount against the limit (it used to check the quantity-menu amount)
+                transactionUtil.sell(viewer, basePrice, item, MiniMessage.miniMessage().deserialize(shopItemName), totalItems, shopLimitHandler);
             }
           return true;
         }, (mode == TransactionMode.BUY ? "<#82CD47><bold>Buy " : "<green><bold>Sell ") + stacks + " stack" + (stacks > 1 ? "s" : ""),
@@ -84,10 +81,4 @@ public class ShopStacksMenu extends Menu {
         );
     }
 
-    private boolean canSell(int amount) {
-        if (shopLimitHandler == null) {
-            return true;
-        }
-        return !shopLimitHandler.isLimitMet() && shopLimitHandler.isTransactionWithinLimit(amount);
-    }
 }

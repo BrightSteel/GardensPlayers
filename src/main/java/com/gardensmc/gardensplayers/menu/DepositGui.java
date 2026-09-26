@@ -51,7 +51,7 @@ public class DepositGui implements InventoryHolder {
     }
 
     public Component getTitle() {
-        var balance = (int) GardensPlayers.economy.getBalance(viewer);
+        var balance = Math.max(0, (int) GardensPlayers.economy.getBalance(viewer)); // the title font has no '-'
         var numbersRemapped = String.valueOf(balance).chars()
                 .mapToObj(c -> NUMBER_MAPPINGS.get((char) c).toString())
                 .collect(Collectors.joining());

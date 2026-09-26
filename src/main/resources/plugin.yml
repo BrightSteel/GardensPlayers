@@ -12,8 +12,16 @@ depend:
   - GardensEnchants
   - Chunky
   - Multiverse-Core
+  # used unconditionally (quests, farm shop, Bedrock menus, furniture shops, fishing quests)
+  - GardensCrops
+  - floodgate
+  - WorldGuard
+  - CustomFishing
 softdepend:
   - ShopGUIPlus
   - EnderMap
+  - PlaceholderAPI
+  - MCPets
+  - GriefPrevention
 # Commands are registered at runtime via Paper's Brigadier command API.
 # See com.gardensmc.gardensplayers.command.Commands / CommandBridge.

@@ -1,17 +1,15 @@
 package com.gardensmc.gardensplayers.currency;
 
-import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
-import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
+import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.bukkit.entity.Player;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
+// acorns are the server's money: the player table's money column, and what Vault reports
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class AcornsCurrencyHandler implements Currency {
+public class AcornsCurrencyHandler extends StoredCurrency {
 
     public static final AcornsCurrencyHandler INSTANCE = new AcornsCurrencyHandler();
 
@@ -22,33 +20,31 @@ public class AcornsCurrencyHandler implements Currency {
 
     @Override
     public String symbol() {
-        return "<white><font:gardens:default>\u0120</font></white>";
+        return "<white><font:gardens:default>Ġ</font></white>";
     }
 
     @Override
-    public int getCurrency(UUID uuid) {
-        return new PlayerEconomyHandler(uuid).getBalance();
+    protected int read(PlayerEntry entry) {
+        return entry.getMoney();
     }
 
     @Override
-    public CompletableFuture<Void> addCurrency(Player player, int amount) {
-        return addCurrency(player.getUniqueId(), amount);
+    protected void adjustCached(PlayerEntry entry, int delta) {
+        entry.adjustMoney(delta);
     }
 
     @Override
-    public CompletableFuture<Void> addCurrency(UUID player, int amount) {
-        return new PlayerEconomyHandler(player).deposit(amount);
+    protected void addStored(UUID player, int amount) {
+        Tables.playerTable.addMoney(player, amount);
     }
 
     @Override
-    public CompletableFuture<Void> setCurrency(Player player, int amount) {
-        return setCurrency(player.getUniqueId(), amount);
+    protected boolean takeStored(UUID player, int amount) {
+        return Tables.playerTable.subtractMoney(player, amount);
     }
 
     @Override
-    public CompletableFuture<Void> setCurrency(UUID player, int amount) {
-        return CompletableFuture
-                .runAsync(() -> Tables.playerTable.setMoney(player.toString(), amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player));
+    protected void setStored(UUID player, int amount) {
+        Tables.playerTable.setMoney(player.toString(), amount);
     }
 }

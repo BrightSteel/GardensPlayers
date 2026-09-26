@@ -1,7 +1,7 @@
 package com.gardensmc.gardensplayers.shop;
 
 import com.gardensmc.gardensfurniture.custom.item.CustomItem;
-import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.util.DataFiles;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +11,7 @@ public class FurnitureShops {
     public static final FurnitureShops INSTANCE = new FurnitureShops();
 
     public FurnitureShop getFurnitureShop(String shop, CustomItem customItem) {
-        var shopSection = ConfigUtil.furnitureShopsYaml.getConfigurationSection(shop);
+        var shopSection = DataFiles.furnitureShopsYaml.getConfigurationSection(shop);
         if (shopSection != null) {
             var itemSection = shopSection.getConfigurationSection(customItem.getIdentifier());
             if (itemSection != null) {

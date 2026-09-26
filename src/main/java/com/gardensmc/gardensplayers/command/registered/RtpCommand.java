@@ -5,9 +5,9 @@ import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.menu.BedrockRtpMenu;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
+import com.gardensmc.gardensplayers.util.BedrockUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 public class RtpCommand extends PlayerExecutorCommand {
 
@@ -19,7 +19,7 @@ public class RtpCommand extends PlayerExecutorCommand {
     public void execute(Player executor, String[] args) {
         super.execute(executor, args);
         if (args.length == 0) {
-            if (FloodgateApi.getInstance().isFloodgatePlayer(executor.getUniqueId())) {
+            if (BedrockUtil.isBedrock(executor)) {
                 BedrockRtpMenu.open(executor);
             } else if (executor.getWorld().getName().contains("resource")) {
                 executor.chat("/dm open resource_rtp");
@@ -37,16 +37,22 @@ public class RtpCommand extends PlayerExecutorCommand {
                         .filter(w -> w.getName().equalsIgnoreCase(args[0]))
                         .findAny()
                         .orElse(null);
-                if (world == null) {
+                if (world == null || !RtpHandler.RTP_WORLDS.contains(world.getName())) {
                     throw new InvalidArgumentException("Unknown world: " + args[0]);
                 }
-                if (!executor.hasPermission("gardens.rtp.bypass_cooldown")) {
-                    playerData.setRtpCooldown(300);
+                var permission = RtpHandler.requiredPermission(world);
+                if (permission != null && !executor.hasPermission(permission)) {
+                    sendMessage(executor, "<red>Visit that dimension once to unlock random teleports there");
+                    return;
                 }
                 var location = RtpHandler.INSTANCE.getQueuedLocation(world);
                 if (location == null) {
                     sendMessage(executor, "<red>Location queue is empty, please wait and try again");
                 } else {
+                    // the cooldown starts only once they actually teleport
+                    if (!executor.hasPermission("gardens.rtp.bypass_cooldown")) {
+                        playerData.setRtpCooldown(300);
+                    }
                     sendMessage(executor, "<green>Randomly teleporting...");
                     executor.teleport(location);
                 }

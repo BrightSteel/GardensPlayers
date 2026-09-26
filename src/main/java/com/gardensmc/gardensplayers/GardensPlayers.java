@@ -3,7 +3,7 @@ package com.gardensmc.gardensplayers;
 import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.command.Commands;
 import com.gardensmc.gardensplayers.config.Config;
-import com.gardensmc.gardensplayers.crate.Crate;
+import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.GardensEconomyProvider;
 import com.gardensmc.gardensplayers.listener.Listeners;
@@ -16,9 +16,8 @@ import com.gardensmc.gardensplayers.restart.RestartHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
 import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
-import com.gardensmc.gardensplayers.util.ConfigUtil;
+import com.gardensmc.gardensplayers.util.DataFiles;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
-import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
@@ -30,24 +29,26 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.popcraft.chunky.api.ChunkyAPI;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class GardensPlayers extends JavaPlugin {
 
     public static GardensPlayers plugin;
     public static Economy economy;
-    public static Chat chat;
     public static Permission permission;
     public static Config config;
     public static List<Shop> shops;
-    public static List<Crate> crates;
     public static SpawnLimits spawnLimits;
     public static ChunkyAPI chunkyAPI;
 
     @Override
     public void onLoad() {
+        // the Vault provider registered below can be called by other plugins before our onEnable
+        plugin = this;
         // load economy
         try {
             economy = new GardensEconomyProvider();
@@ -68,12 +69,12 @@ public class GardensPlayers extends JavaPlugin {
     public void onEnable() {
         plugin = this;
         saveDefaultConfig();
-        ConfigUtil.loadYamls();
+        DataFiles.loadYamls();
         config = new Config(getConfig());
         Tables.initializeClass();
         Listeners.registerListeners();
         Commands.registerCommands();
-        if (Bukkit.getPluginManager().getPlugin("PlaceHolderAPI") != null) {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new GardensPlayersPlaceholder().register();
         }
         if (Bukkit.getPluginManager().getPlugin("EnderMap") != null) {
@@ -82,10 +83,13 @@ public class GardensPlayers extends JavaPlugin {
 
         // register vault instances
         verifyVaultInstalled();
-//        economy = getServiceProvider(Economy.class);
-//        chat = getServiceProvider(Chat.class);
         permission = getServiceProvider(Permission.class);
-        loadShops();
+        try {
+            loadShops();
+        } catch (Exception e) {
+            // keep enabling: the AFK tick, RTP queue, quests and daily restart below must still be scheduled
+            getLogger().log(Level.SEVERE, "Failed to load shops/rewards - fix the config and run /gardensplayers reload", e);
+        }
         chunkyAPI = Bukkit.getServer().getServicesManager().load(ChunkyAPI.class);
 
         int tickEvery = 2;
@@ -115,6 +119,16 @@ public class GardensPlayers extends JavaPlugin {
     public void onDisable() {
         // persist quest state synchronously — async tasks won't run during shutdown
         QuestHandler.INSTANCE.save();
+        // Database writes (quit saves, money changes) run on the common pool as daemon tasks, which the JVM
+        // drops at exit - wait for them before closing the pool, or every restart loses the last writes.
+        if (!ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS)) {
+            getLogger().warning("Some database writes were still running at shutdown");
+        }
+        try {
+            DatabaseConnector.INSTANCE.close();
+        } catch (Throwable e) {
+            getLogger().log(Level.WARNING, "Failed to close the database pool", e);
+        }
     }
 
     private void tickPlayer(Player player, int ticksPassed) {
@@ -150,18 +164,18 @@ public class GardensPlayers extends JavaPlugin {
         }
         var shopFiles = shopsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
         if (shopFiles != null) {
-            shops = Arrays.stream(shopFiles)
-                    .map(YamlConfiguration::loadConfiguration)
-                    .map(Shop::new)
-                    .toList();
+            var loaded = new ArrayList<Shop>();
+            for (var shopFile : shopFiles) {
+                try {
+                    loaded.add(new Shop(YamlConfiguration.loadConfiguration(shopFile)));
+                } catch (Exception e) {
+                    GardensPlayers.plugin.getLogger().severe("Skipping shop file " + shopFile.getName() + ": " + e);
+                }
+            }
+            shops = List.copyOf(loaded);
         }
-        crates = ConfigUtil.cratesYaml.getKeys(false)
-                .stream()
-                .map(key -> new Crate(Objects.requireNonNull(ConfigUtil.cratesYaml.getConfigurationSection(key))))
-                .toList();
-        spawnLimits = new SpawnLimits(ConfigUtil.spawnLimitsYaml);
+        spawnLimits = new SpawnLimits(DataFiles.spawnLimitsYaml);
         RewardHandler.loadRewards();
         TileMenuHandler.constructShopPages();
-        TileMenuHandler.constructWardrobePages();
     }
 }

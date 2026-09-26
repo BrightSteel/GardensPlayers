@@ -1,16 +1,15 @@
 package com.gardensmc.gardensplayers.currency;
 
-import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
+import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.bukkit.entity.Player;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
+// gems: the player table's points column
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class GemsCurrencyHandler implements Currency {
+public class GemsCurrencyHandler extends StoredCurrency {
 
     public static final GemsCurrencyHandler INSTANCE = new GemsCurrencyHandler();
 
@@ -21,39 +20,31 @@ public class GemsCurrencyHandler implements Currency {
 
     @Override
     public String symbol() {
-        return "<white><font:gardens:default>\u0147</font></white>";
+        return "<white><font:gardens:default>Ň</font></white>";
     }
 
     @Override
-    public int getCurrency(UUID uuid) {
-        return PlayerEntryCache.INSTANCE.getSync(uuid).getPoints();
-    }
-
-    public CompletableFuture<Void> subtractGems(Player player, int amount) {
-        return CompletableFuture.runAsync(() -> Tables.playerTable.subtractPoints(player.getUniqueId(), amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player.getUniqueId()));
+    protected int read(PlayerEntry entry) {
+        return entry.getPoints();
     }
 
     @Override
-    public CompletableFuture<Void> addCurrency(Player player, int amount) {
-        return addCurrency(player.getUniqueId(), amount);
+    protected void adjustCached(PlayerEntry entry, int delta) {
+        entry.adjustPoints(delta);
     }
 
     @Override
-    public CompletableFuture<Void> addCurrency(UUID player, int amount) {
-        return CompletableFuture.runAsync(() -> Tables.playerTable.addPoints(player, amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player));
+    protected void addStored(UUID player, int amount) {
+        Tables.playerTable.addPoints(player, amount);
     }
 
     @Override
-    public CompletableFuture<Void> setCurrency(Player player, int amount) {
-        return setCurrency(player.getUniqueId(), amount);
+    protected boolean takeStored(UUID player, int amount) {
+        return Tables.playerTable.subtractPoints(player, amount);
     }
 
     @Override
-    public CompletableFuture<Void> setCurrency(UUID player, int amount) {
-        return CompletableFuture
-                .runAsync(() -> Tables.playerTable.setPoints(player.toString(), amount))
-                .thenRun(() -> PlayerEntryCache.INSTANCE.remove(player));
+    protected void setStored(UUID player, int amount) {
+        Tables.playerTable.setPoints(player.toString(), amount);
     }
 }

@@ -4,10 +4,8 @@ import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
-import de.tr7zw.nbtapi.NBT;
 import lombok.AllArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Clock;
@@ -36,18 +34,6 @@ public class PlayerEntryHandler {
     public void setNickname(@Nullable String nickname) {
         CompletableFuture
                 .runAsync(() -> Tables.playerTable.setNickname(uuid.toString(), nickname))
-                .thenRun(this::refreshCache);
-    }
-
-    public CompletableFuture<Void> subtractMoney(int amount) {
-        return CompletableFuture
-                .runAsync(() -> Tables.playerTable.subtractMoney(uuid, amount))
-                .thenRun(this::refreshCache);
-    }
-
-    public CompletableFuture<Void> addMoney(int amount) {
-        return CompletableFuture
-                .runAsync(() -> Tables.playerTable.addMoney(uuid, amount))
                 .thenRun(this::refreshCache);
     }
 

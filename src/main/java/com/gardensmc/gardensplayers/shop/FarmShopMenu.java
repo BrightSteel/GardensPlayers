@@ -2,6 +2,7 @@ package com.gardensmc.gardensplayers.shop;
 
 import com.gardensmc.gardenscrops.utils.ConfigUtil;
 import com.gardensmc.gardensfurniture.GardensFurniture;
+import com.gardensmc.gardensplayers.menu.Menu;
 import de.themoep.inventorygui.*;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.entity.Player;
@@ -27,7 +28,7 @@ public class FarmShopMenu extends Menu {
     private final ItemStack nextButton = GardensFurniture.itemRegistry.buildItem("shop_next_button");
 
     public FarmShopMenu(Player viewer) {
-        super(layout, "<white>\uE105 \uE106", viewer);
+        super(layout, "\uE105 \uE106" /* Menu adds <white> */, viewer);
         initElements();
     }
 

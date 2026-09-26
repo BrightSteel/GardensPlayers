@@ -1,8 +1,7 @@
 package com.gardensmc.gardensplayers.shop;
 
-import com.gardensmc.gardensfurniture.GardensFurniture;
-import com.gardensmc.gardensplayers.cache.ShopLimitKey;
 import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
+import com.gardensmc.gardensplayers.menu.Menu;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElement;
@@ -35,7 +34,7 @@ public class ShopQuantityMenu extends Menu {
     private final Consumer<InventoryGui> onCancel;
 
     public ShopQuantityMenu(Player viewer, String shopItemName, ItemStack item, int basePrice, TransactionMode mode, ShopLimitHandler shopLimitHandler, Consumer<InventoryGui> onCancel) {
-        super(layout, "<white>\uE105 \uE602", viewer);
+        super(layout, "\uE105 \uE602" /* Menu adds <white> */, viewer);
         this.shopItemName = shopItemName;
         this.item = item;
         this.basePrice = basePrice;
@@ -82,15 +81,10 @@ public class ShopQuantityMenu extends Menu {
                         if (mode == TransactionMode.BUY) {
                             transactionUtil.tryPurchase(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount);
                         } else {
-                            if (canSell(item.getAmount())) {
-                                if (transactionUtil.trySell(viewer, total, item, MiniMessage.miniMessage().deserialize(shopItemName), amount)) {
-                                    shopLimitHandler.increaseAmountTransacted(amount).thenRun(() -> onCancel.accept(gui));
-                                    return true;
-                                }
-                            } else {
-                                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<red>You cannot sell more than today's sell limit (" + shopLimitHandler.getLimit() + ")"));
-                                return true;
+                            if (transactionUtil.sell(viewer, basePrice, item, MiniMessage.miniMessage().deserialize(shopItemName), amount, shopLimitHandler) > 0) {
+                                onCancel.accept(gui);
                             }
+                            return true;
                         }
                     }
                     onCancel.accept(gui);
@@ -130,22 +124,7 @@ public class ShopQuantityMenu extends Menu {
     }
 
     private GuiElement createQuantityButton(char character, int changeAmount) {
-        boolean isPositive = changeAmount > 0;
-        return new DynamicGuiElement(character, () -> {
-            var finalAmount =  item.getAmount() + changeAmount;
-            finalAmount = Math.min(finalAmount, 64);
-            finalAmount = Math.max(finalAmount, 1);
-            int finalAmount1 = finalAmount;
-            return new StaticGuiElement(
-                character,
-                blankItem,
-                click -> {
-                    item.setAmount(finalAmount1);
-                    gui.draw();
-                    return true;
-                },
-                    (isPositive ? "<green><bold>Add " : "<#DF2E38><bold>Remove ") + Math.abs(changeAmount)
-            );
-        });
+        return buildQuantityButton(character, item, changeAmount,
+                (changeAmount > 0 ? "<green><bold>Add " : "<#DF2E38><bold>Remove ") + Math.abs(changeAmount));
     }
 }

@@ -1,8 +1,9 @@
 package com.gardensmc.gardensplayers.listener;
 
 import com.gardensmc.gardensplayers.GardensPlayers;
+import com.gardensmc.gardensplayers.util.Worlds;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldLoadEvent;
@@ -13,17 +14,17 @@ public class WorldListener implements Listener {
     public void onWorldLoad(WorldLoadEvent e) {
         var world = e.getWorld();
         // universal game rules
-        world.setGameRule(GameRule.KEEP_INVENTORY, true);
-        world.setGameRule(GameRule.LOCATOR_BAR, false);
-        world.setGameRule(GameRule.DO_INSOMNIA, false);
-        world.setGameRule(GameRule.PLAYERS_SLEEPING_PERCENTAGE, 200);
+        world.setGameRule(GameRules.KEEP_INVENTORY, true);
+        world.setGameRule(GameRules.LOCATOR_BAR, false);
+        world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
+        world.setGameRule(GameRules.PLAYERS_SLEEPING_PERCENTAGE, 200);
         if (world.getName().contains("resource")) {
             world.getWorldBorder().setSize(GardensPlayers.config.getResourceWorldRadius() * 2);
         }
 
         // sync time
-        if (!world.getName().equals("gardens")) {
-            var mainWorld = Bukkit.getWorld("gardens");
+        if (!world.getName().equals(Worlds.GARDENS)) {
+            var mainWorld = Bukkit.getWorld(Worlds.GARDENS);
             if (mainWorld != null) {
                 world.setTime(mainWorld.getTime());
             }

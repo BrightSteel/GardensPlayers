@@ -9,11 +9,13 @@ import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import de.themoep.inventorygui.GuiElement;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * A single warp rendered as a player-head tile inside the {@link TileMenu} warp view. Left-click warps to the
@@ -47,7 +49,7 @@ public class WarpTileItem extends TileItem {
             if (!isYourWarps) {
                 lore.add(warpEntry.isServerWarp()
                         ? "<blue>Server Warp"
-                        : "<gray>by " + PlayerEntryCache.INSTANCE.getSync(warpEntry.getPlayerUUID()).getUsername());
+                        : "<gray>by " + ownerName(warpEntry.getPlayerUUID()));
             }
             if (isYourWarps) {
                 lore.add("<gray>" + warpEntry.getVisits() + " Unique Visits");
@@ -70,6 +72,10 @@ public class WarpTileItem extends TileItem {
             return;
         }
         player.closeInventory();
+        if (!WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry)) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>That warp is private"));
+            return;
+        }
         player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Warping to " + warpEntry.getName()));
         WarpsHandler.INSTANCE.travel(player, warpEntry);
     }
@@ -77,5 +83,15 @@ public class WarpTileItem extends TileItem {
     @Override
     public TileColor getTileColor(Player viewer) {
         return TileColor.GRAY;
+    }
+
+    // drawn once per warp: use the cached entry or the server's name cache, never a database query per owner
+    private static String ownerName(UUID owner) {
+        var entry = PlayerEntryCache.INSTANCE.getIfLoaded(owner);
+        if (entry != null) {
+            return entry.getUsername();
+        }
+        var name = Bukkit.getOfflinePlayer(owner).getName();
+        return name != null ? name : "unknown";
     }
 }

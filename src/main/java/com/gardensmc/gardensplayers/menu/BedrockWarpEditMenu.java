@@ -4,7 +4,6 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.database.entry.WarpEntry;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.geysermc.cumulus.form.CustomForm;
@@ -22,7 +21,6 @@ import java.util.List;
 public class BedrockWarpEditMenu {
 
     private static final List<WarpEntry.Category> CATEGORIES = List.of(WarpEntry.Category.values());
-    private static final int MAX_NAME_LENGTH = 20;
 
     private BedrockWarpEditMenu() {
     }
@@ -84,22 +82,19 @@ public class BedrockWarpEditMenu {
     }
 
     private static void update(Player viewer, int warpId, String name, WarpEntry.Category category, boolean isPublic, String description) {
-        WarpsHandler.INSTANCE.updateWarpMetadata(warpId, name, category, isPublic, description).thenRun(() ->
-                viewer.sendMessage(MiniMessage.miniMessage().deserialize("<green>Updated warp " + name + "<green>!")));
+        WarpsHandler.INSTANCE.updateWarpMetadata(warpId, name, category, isPublic, description).whenComplete((ignored, error) ->
+                viewer.sendMessage(MiniMessage.miniMessage().deserialize(error == null
+                        ? "<green>Updated warp " + WarpsHandler.cleanText(name) + "<green>!"
+                        : "<red>" + rootMessage(error))));
     }
 
     /** Mirrors the {@code /warp create} command's checks (raw <= 100, rendered <= 20, non-empty). */
     private static String validateName(String name) {
-        if (name.isEmpty()) {
-            return "Warp name cannot be empty!";
-        }
-        if (name.length() > 100) {
-            return "Warp name too long!";
-        }
-        var plain = PlainTextComponentSerializer.plainText().serialize(MiniMessage.miniMessage().deserialize(name));
-        if (plain.length() > MAX_NAME_LENGTH) {
-            return "Warp name too long!";
-        }
-        return null;
+        return WarpsHandler.validateName(WarpsHandler.cleanText(name));
+    }
+
+    private static String rootMessage(Throwable error) {
+        var cause = error.getCause() != null ? error.getCause() : error;
+        return cause.getMessage() != null ? cause.getMessage() : "Couldn't update the warp";
     }
 }

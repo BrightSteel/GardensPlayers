@@ -1,11 +1,15 @@
 package com.gardensmc.gardensplayers.util;
 
+import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
+import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.database.Tables;
+import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.google.common.base.Preconditions;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.entity.CraftHumanEntity;
 import org.bukkit.craftbukkit.inventory.CraftContainer;
 import org.bukkit.craftbukkit.util.CraftChatMessage;
@@ -20,14 +24,49 @@ import java.util.stream.IntStream;
 
 public class PlayerUtil {
 
+    /**
+     * The online player with exactly this name (case-insensitive), or else exactly this display name (what tab
+     * completion offers). Never a prefix match: Bukkit.getPlayer("Al") would pick whichever name starts with "Al".
+     */
+    @Nullable
+    public static Player findOnline(String name) {
+        var exact = Bukkit.getPlayerExact(name);
+        if (exact != null) {
+            return exact;
+        }
+        var byDisplayName = Bukkit.getOnlinePlayers().stream()
+                .filter(player -> MessageUtil.toPlainText(player.displayName()).equalsIgnoreCase(name))
+                .toList();
+        return byDisplayName.size() == 1 ? byDisplayName.getFirst() : null;
+    }
+
+    // blocks on the database unless the player is online
     @Nullable
     public static UUID getUUID(String username) {
+        var online = Bukkit.getPlayerExact(username);
+        if (online != null) {
+            return online.getUniqueId();
+        }
         var promise = CompletableFuture.supplyAsync(() -> Tables.playerTable.getUUID(username));
         try {
             return promise.get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * The stored entry for a player by username. Blocks on the database, so call it off the main thread.
+     *
+     * @throws PlayerNotFoundException if no player with that name has joined
+     */
+    public static PlayerEntry loadOfflineEntry(String username) {
+        var uuid = Tables.playerTable.getUUID(username);
+        var entry = uuid == null ? null : PlayerEntryCache.INSTANCE.get(uuid).join();
+        if (entry == null) {
+            throw new PlayerNotFoundException(username);
+        }
+        return entry;
     }
 
     public static void giveItems(Player player, ItemStack itemStack, int amount) {

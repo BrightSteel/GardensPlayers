@@ -42,7 +42,7 @@ public class SpawnerCommand extends PlayerExecutorCommand {
         }
         EntityType entityType;
         try {
-            entityType = EntityType.valueOf(args[1].toLowerCase());
+            entityType = EntityType.valueOf(args[1].toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new InvalidArgumentException(args[1].toLowerCase());
         }
@@ -57,7 +57,7 @@ public class SpawnerCommand extends PlayerExecutorCommand {
         }
         EntityType entityType;
         try {
-            entityType = EntityType.valueOf(args[1].toLowerCase());
+            entityType = EntityType.valueOf(args[1].toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new InvalidArgumentException(args[1].toLowerCase());
         }
@@ -81,7 +81,7 @@ public class SpawnerCommand extends PlayerExecutorCommand {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("set", "give");
+            return List.of("set", "get");
         }
         if (args.length == 2) {
             var isSet = args[0].equalsIgnoreCase("set");

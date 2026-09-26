@@ -9,11 +9,11 @@ import com.gardensmc.gardensplayers.command.SenderMessageHandler;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.gardensmc.gardensplayers.quest.QuestHandler;
 import com.gardensmc.gardensplayers.reward.RewardHandler;
+import com.gardensmc.gardensplayers.util.Worlds;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerJoinGame;
 import com.github.retrooper.packetevents.wrapper.status.server.WrapperStatusServerResponse;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -40,11 +40,16 @@ public class PlayerListener implements Listener {
             new SenderMessageHandler(player).sendMessage("Set your flight to on");
         }
 
-        // check for rewards
-        RewardHandler.grantPendingRewards(e.getPlayer());
-        if (!PlayerRewardsCache.INSTANCE.getSync(e.getPlayer().getUniqueId()).isEmpty()) {
-            player.sendMessage(MiniMessage.miniMessage().deserialize("<green>You have pending rewards! Claim them with <gray>/rewards"));
-        }
+        // check for rewards: once the player row exists (rewards reference it), grant any new ones, then tell
+        // them - all off the main thread, which used to wait on the database here
+        PlayerEntryCache.INSTANCE.get(player.getUniqueId())
+                .thenCompose(entry -> RewardHandler.grantPendingRewards(player))
+                .thenCompose(granted -> PlayerRewardsCache.INSTANCE.get(player.getUniqueId()))
+                .thenAccept(pending -> {
+                    if (!pending.isEmpty()) {
+                        player.sendMessage(MiniMessage.miniMessage().deserialize("<green>You have pending rewards! Claim them with <gray>/rewards"));
+                    }
+                });
 
         // nudge about remaining daily quests, slightly delayed so it lands after the join clutter
         Bukkit.getScheduler().runTaskLater(
@@ -54,7 +59,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         new PlayerEntryHandler(e.getPlayer().getUniqueId()).updateLastLocation();
-        OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).resetAfkTick(e.getPlayer());
+        OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).clearAfk();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -76,19 +81,20 @@ public class PlayerListener implements Listener {
     public void onPlayerChat(AsyncChatEvent e) {
         var playerData = OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId());
         playerData.resetAfkTick(e.getPlayer());
-        if (playerData.getTextCapture() != null) {
+        var capture = playerData.getTextCapture();
+        if (capture != null) {
             e.setCancelled(true);
-            Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
-                playerData.getTextCapture().accept(PlainTextComponentSerializer.plainText().serialize(e.message()));
-                playerData.setTextCapture(null);
-            });
+            // claimed here, on the chat thread: a second message in the same tick finds no capture
+            playerData.setTextCapture(null);
+            var text = PlainTextComponentSerializer.plainText().serialize(e.message());
+            Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> capture.accept(text));
         }
     }
 
     private boolean isNewLocation(Location l1, Location l2) {
         return l1.getX() != l2.getX()
                 || l1.getY() != l2.getY()
-                || l1.getZ() != l1.getZ();
+                || l1.getZ() != l2.getZ();
     }
 
     @EventHandler
@@ -184,7 +190,7 @@ public class PlayerListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerPortalToEnd(PlayerPortalEvent e) {
         if (e.getCause() != PlayerTeleportEvent.TeleportCause.END_PORTAL) return;
-        if (!e.getFrom().getWorld().getName().equals("gardens")) return;
+        if (!e.getFrom().getWorld().getName().equals(Worlds.GARDENS)) return;
         e.setCancelled(true);
         e.getPlayer().chat("/warp tp pluto");
     }

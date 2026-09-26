@@ -8,10 +8,10 @@ import com.gardensmc.gardensplayers.shop.FurnitureShop;
 import com.gardensmc.gardensplayers.shop.FurnitureShops;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.WorldGuardUtil;
+import com.gardensmc.gardensplayers.util.Worlds;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -65,9 +65,11 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
         if (player == null) {
             return null;
         }
-        var playerEntry = PlayerEntryCache.INSTANCE.getSync(player.getUniqueId());
+        // placeholders are requested every tick by scoreboards and tab lists: use what's cached, and on a miss
+        // load in the background and show nothing for now, instead of waiting on the database
+        var playerEntry = PlayerEntryCache.INSTANCE.getIfLoaded(player.getUniqueId());
         if (playerEntry == null) {
-            return null;
+            return "";
         }
         return switch (params.toLowerCase()) {
             case "nickname" -> MessageUtil.parseIntoLegacyDisplayable(playerEntry.getNickname());
@@ -166,12 +168,12 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
 
     private static String worldDisplayName(World world) {
         return switch (world.getName()) {
-            case "gardens" -> "Gardens";
-            case "gardens_nether" -> "Nether";
-            case "gardens_the_end" -> "The End";
-            case "resource_world" -> "Resource World";
-            case "resource_nether" -> "Resource Nether";
-            case "resource_the_end" -> "Resource End";
+            case Worlds.GARDENS -> "Gardens";
+            case Worlds.GARDENS_NETHER -> "Nether";
+            case Worlds.GARDENS_END -> "The End";
+            case Worlds.RESOURCE -> "Resource World";
+            case Worlds.RESOURCE_NETHER -> "Resource Nether";
+            case Worlds.RESOURCE_END -> "Resource End";
             default -> world.getName();
         };
     }
