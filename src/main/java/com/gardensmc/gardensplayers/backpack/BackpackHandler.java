@@ -15,6 +15,7 @@ import de.tr7zw.nbtapi.NBT;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import lombok.AllArgsConstructor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -24,6 +25,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.logging.Level;
 
 @AllArgsConstructor
 public class BackpackHandler {
@@ -160,12 +162,14 @@ public class BackpackHandler {
         serializeItems(target, backpackGui.getItemContents());
         returnToPlayer(player, disallowed);
         if (backpackGui.isWardrobeBackpack()) {
-            // save changes to db
+            // save changes to db. The contents were written into the cached wardrobe stack itself, so if this fails
+            // the player still sees them and the next close saves again; the nbt is logged so staff can restore it
             var nbt = NBT.itemStackToNBT(target).toString();
             try {
                 new PlayerEntryHandler(player.getUniqueId()).updateWardrobe(CosmeticSlot.BACKPACK, nbt).get();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Failed to save wardrobe backpack of " + player.getName() + " (" + player.getUniqueId() + "): " + nbt, e);
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Your backpack could not be saved. Don't log out - reopen and close it to try again, or contact staff."));
             }
         }
         openBackpacks.remove(player.getUniqueId());
