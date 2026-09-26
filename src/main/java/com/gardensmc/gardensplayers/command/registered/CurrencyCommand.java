@@ -1,6 +1,8 @@
 package com.gardensmc.gardensplayers.command.registered;
 
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.currency.Currency;
+import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -13,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @AllArgsConstructor
@@ -45,6 +50,21 @@ public class CurrencyCommand implements TabExecutor {
         return true;
     }
 
+    // the online target's uuid right away, or an offline one looked up off the main thread (then back on it)
+    private void withTargetUUID(CommandSender sender, @Nullable Player online, String name, Consumer<UUID> action) {
+        if (online != null) {
+            action.accept(online.getUniqueId());
+            return;
+        }
+        CompletableFuture.supplyAsync(() -> Tables.playerTable.getUUID(name)).thenAccept(uuid -> Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+            if (uuid == null) {
+                sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Couldn't find player " + name));
+            } else {
+                action.accept(uuid);
+            }
+        }));
+    }
+
     private void sendNoPerms(CommandSender sender) {
         sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>You don't have permission to run this command"));
     }
@@ -58,23 +78,18 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Provide <player> and <amount> args"));
             return;
         }
-        var target = PlayerUtil.findOnline(args[1]);
-        var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
-        if (targetUUID == null) {
-            sender.sendMessage("<red>Couldn't find player " + args[1]);
-            return;
-        }
         var amount = Integer.parseInt(args[2]);
         if (amount <= 0) {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Amount must be greater than 0!"));
             return;
         }
-        currency.addCurrency(targetUUID, amount).thenRun(() -> {
+        var target = PlayerUtil.findOnline(args[1]);
+        withTargetUUID(sender, target, args[1], targetUUID -> currency.addCurrency(targetUUID, amount).thenRun(() -> {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave %s %s %s".formatted(args[1], amount, currency.symbol())));
             if (target != null) {
                 target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s gave you %s %s".formatted(sender.getName(), amount, currency.symbol())));
             }
-        });
+        }));
     }
 
     private void setCurrency(CommandSender sender, String[] args) throws NumberFormatException {
@@ -86,28 +101,23 @@ public class CurrencyCommand implements TabExecutor {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Provide <player> and <amount> args"));
             return;
         }
-        var target = PlayerUtil.findOnline(args[1]);
-        var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
-        if (targetUUID == null) {
-            sender.sendMessage("<red>Couldn't find player " + args[1]);
-            return;
-        }
         var amount = Integer.parseInt(args[2]);
         if (amount < 0) {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Amount must be positive!"));
             return;
         }
-        currency.setCurrency(targetUUID, amount).thenRun(() -> {
+        var target = PlayerUtil.findOnline(args[1]);
+        withTargetUUID(sender, target, args[1], targetUUID -> currency.setCurrency(targetUUID, amount).thenRun(() -> {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Set %s's %s to %s".formatted(args[1], currency.name(), amount)));
             if (target != null) {
                 target.sendMessage(MiniMessage.miniMessage().deserialize("<green>%s set your %s to %s".formatted(sender.getName(), currency.name(), amount)));
             }
-        });
+        }));
     }
 
     private void getCurrency(CommandSender sender, String[] args) throws NumberFormatException {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Console cannot get" + currency.name()));
+            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Console cannot get " + currency.name()));
             return;
         }
         if (!sender.hasPermission(currency.name() + ".get")) {
@@ -139,14 +149,11 @@ public class CurrencyCommand implements TabExecutor {
                 return;
             }
             var target = PlayerUtil.findOnline(args[1]);
-            var targetUUID = target != null ? target.getUniqueId() : PlayerUtil.getUUID(args[1]);
-            if (targetUUID == null) {
-                sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Couldn't find player " + args[1]));
-                return;
-            }
             var targetName = target != null ? target.getName() : args[1];
-            sender.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<green>%s has %s %s".formatted(targetName, currency.getCurrency(targetUUID), currency.symbol())));
+            // the balance of an offline player comes from the database, so read it off the main thread
+            withTargetUUID(sender, target, args[1], targetUUID -> CompletableFuture.supplyAsync(() -> currency.getCurrency(targetUUID))
+                    .thenAccept(amount -> sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<green>%s has %s %s".formatted(targetName, amount, currency.symbol())))));
         } else if (sender instanceof Player player) {
             sender.sendMessage(MiniMessage.miniMessage().deserialize(
                     "<green>You have %s %s".formatted(currency.getCurrency(player), currency.symbol())));

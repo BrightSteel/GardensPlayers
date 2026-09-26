@@ -14,6 +14,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 public class BalTopCommand implements CommandExecutor {
 
@@ -26,10 +27,33 @@ public class BalTopCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
-        var balances = getTopBalances();
+        var cached = topBalances;
+        if (cached != null) {
+            sendPage(sender, cached, args);
+            return true;
+        }
+        // load off the main thread, then answer from it
+        CompletableFuture.supplyAsync(Tables.playerTable::getTopBalances).whenComplete((balances, error) ->
+                Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+                    if (error != null) {
+                        GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Failed to load top balances", error);
+                        sender.sendMessage(MINI_MESSAGE.deserialize("<red>Couldn't load the top balances, try again later."));
+                        return;
+                    }
+                    if (topBalances == null) {
+                        topBalances = balances;
+                        // force refresh in 4 minutes
+                        Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> topBalances = null, 4800);
+                    }
+                    sendPage(sender, balances, args);
+                }));
+        return true;
+    }
+
+    private void sendPage(CommandSender sender, List<PlayerTable.PlayerBal> balances, String[] args) {
         if (balances.isEmpty()) {
             sender.sendMessage(MINI_MESSAGE.deserialize("<gray>There are no balances to show yet."));
-            return true;
+            return;
         }
 
         int totalPages = Math.min(MAX_PAGES, (int) Math.ceil(balances.size() / (double) PAGE_SIZE));
@@ -52,7 +76,6 @@ public class BalTopCommand implements CommandExecutor {
             sender.sendMessage(MINI_MESSAGE.deserialize(
                     "<dark_gray>» <gray>Use <yellow>/baltop %s</yellow> <gray>for the next page".formatted(page + 1)));
         }
-        return true;
     }
 
     private int parsePage(String[] args) {
@@ -77,19 +100,5 @@ public class BalTopCommand implements CommandExecutor {
 
     private String nameColor(int rank) {
         return rank <= 3 ? rankColor(rank) : "<white>";
-    }
-
-    private List<PlayerTable.PlayerBal> getTopBalances() {
-        if (topBalances != null) {
-            return topBalances;
-        }
-        try {
-            topBalances = CompletableFuture.supplyAsync(Tables.playerTable::getTopBalances).get();
-            // force refresh in 4 minutes
-            Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> topBalances = null, 4800);
-            return topBalances;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

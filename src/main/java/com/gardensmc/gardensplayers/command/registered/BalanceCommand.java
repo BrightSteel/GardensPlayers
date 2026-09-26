@@ -5,6 +5,7 @@ import com.gardensmc.gardensplayers.command.exception.InvalidUserException;
 import com.gardensmc.gardensplayers.command.exception.NoPermissionException;
 import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.command.type.PlayerCommand;
+import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
@@ -45,18 +46,19 @@ public class BalanceCommand extends PlayerCommand {
         if (!executor.hasPermission(permissionNodeOthers)) {
             throw new NoPermissionException(permissionNodeOthers);
         }
-        var targetUUID = PlayerUtil.getUUID(username);
-        if (targetUUID == null) {
-            throw new PlayerNotFoundException(username);
-        }
-        var balance = new PlayerEconomyHandler(targetUUID).getBalance();
-        executor.sendMessage(MessageUtil.parseIntoComponent(
-                "<green>%s's balance is %s%s".formatted(
+        runAsync(executor, () -> {
+            var targetUUID = Tables.playerTable.getUUID(username);
+            if (targetUUID == null) {
+                throw new PlayerNotFoundException(username);
+            }
+            return new PlayerEconomyHandler(targetUUID).getBalance();
+        }, balance -> executor.sendMessage(MessageUtil.parseIntoComponent(
+                "<green>%s's balance is %s%s".formatted(
                         username,
                         GardensPlayers.config.getCurrencySymbol(),
                         balance
                 )
-        ));
+        )));
     }
 
     @Override

@@ -310,7 +310,8 @@ public class GardensEconomyProvider implements Economy {
         return false;
     }
 
-    // a player row exists (unknown usernames resolve to null)
+    // a player row exists (unknown usernames resolve to null). Vault is synchronous, so for an offline player this
+    // and the conditional write in withdraw/deposit block on the database; an online player's entry is cached.
     private boolean hasEntry(@Nullable UUID uuid) {
         return uuid != null && PlayerEntryCache.INSTANCE.getSync(uuid) != null;
     }

@@ -1,15 +1,11 @@
 package com.gardensmc.gardensplayers.command.registered;
 
-import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.command.exception.InvalidStateException;
-import com.gardensmc.gardensplayers.command.exception.PlayerNotFoundException;
 import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.database.entry.PlayerEntry;
 import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import org.bukkit.entity.Player;
-
-import java.util.UUID;
 
 /**
  * /tpoffline &lt;player&gt; — teleports the executor to a player's last known location. If the target is
@@ -35,16 +31,10 @@ public class TpOfflineCommand extends PlayerExecutorCommand {
             return;
         }
 
-        UUID uuid = PlayerUtil.getUUID(username);
-        if (uuid == null) {
-            throw new PlayerNotFoundException(username);
-        }
+        runAsync(executor, () -> PlayerUtil.loadOfflineEntry(username), entry -> teleportToLastLocation(executor, entry));
+    }
 
-        PlayerEntry entry = PlayerEntryCache.INSTANCE.getSync(uuid);
-        if (entry == null) {
-            throw new PlayerNotFoundException(username);
-        }
-
+    private void teleportToLastLocation(Player executor, PlayerEntry entry) {
         var lastLocation = entry.getLastLocation();
         if (lastLocation == null) {
             throw new InvalidStateException("%s has no known last location".formatted(entry.getUsername()));
