@@ -32,6 +32,9 @@ public class BackpackGui implements InventoryHolder {
     @Getter
     private final boolean isWardrobeBackpack;
     private boolean closed;
+    // stored items that didn't fit (eg contents from a bigger container); the opener hands them back
+    @Getter
+    private final List<ItemStack> overflow = new ArrayList<>();
 
     public BackpackGui(Player viewer, RowConfig rowConfig, ItemStack backpackItem, ItemStack[] items, boolean isWardrobeBackpack) {
         this.viewer = viewer;
@@ -46,8 +49,15 @@ public class BackpackGui implements InventoryHolder {
         addEmptySlots();
         if (items != null) {
             for (int i = 0; i < items.length; i++) {
-                inventory.setItem(fillerSlots + i, items[i]);
+                var item = items[i];
+                if (fillerSlots + i < inventory.getSize()) {
+                    inventory.setItem(fillerSlots + i, item);
+                } else if (item != null && !item.getType().isAir()) {
+                    overflow.add(item);
+                }
             }
+            // anything past the end goes into free slots first
+            overflow.removeIf(item -> inventory.addItem(item).isEmpty());
         }
     }
 

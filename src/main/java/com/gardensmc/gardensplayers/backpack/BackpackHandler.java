@@ -105,7 +105,13 @@ public class BackpackHandler {
 
     public void openBackpack(Player player, boolean isWardrobeBackpack) {
         var backpackData = getOrCreateBackpackData();
-        new BackpackGui(player, BackpackGui.RowConfig.fromRows(backpackData.rows), itemStack, backpackData.items, isWardrobeBackpack).open();
+        var gui = new BackpackGui(player, BackpackGui.RowConfig.fromRows(backpackData.rows), itemStack, backpackData.items, isWardrobeBackpack);
+        if (!gui.getOverflow().isEmpty()) {
+            // stored more than it holds: hand the rest back, and store only what's in the gui so it isn't duplicated
+            serializeItems(itemStack, gui.getItemContents());
+            returnToPlayer(player, gui.getOverflow());
+        }
+        gui.open();
         openBackpacks.put(player.getUniqueId(), backpackData.id);
     }
 
