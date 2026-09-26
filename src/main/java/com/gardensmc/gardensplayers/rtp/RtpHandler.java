@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -22,6 +23,28 @@ public class RtpHandler {
 
     private final Map<UUID, Queue<Location>> worldLocationQueue = new ConcurrentHashMap<>();
 
+    // Worlds /rtp can send players to. The resource overworld is "resource" once /resetresource has run and
+    // "resource_world" before that, so both are allowed. Temporary generation worlds (resource.<uuid>) never are.
+    public static final Set<String> RTP_WORLDS = Set.of(
+            "gardens", "gardens_nether", "gardens_the_end",
+            "resource", "resource_world", "resource_nether", "resource_the_end"
+    );
+
+    // the resource overworld's current name (see RTP_WORLDS)
+    public static String resourceOverworldName() {
+        return Bukkit.getWorld("resource") != null ? "resource" : "resource_world";
+    }
+
+    // main nether/End RTP is unlocked by visiting them once (see PlayerListener.onPlayerChangeWorlds)
+    @Nullable
+    public static String requiredPermission(World world) {
+        return switch (world.getName()) {
+            case "gardens_nether" -> "gplayers.rtp.nether";
+            case "gardens_the_end" -> "gplayers.rtp.end";
+            default -> null;
+        };
+    }
+
     @Nullable
     public Location getQueuedLocation(World world) {
         return worldLocationQueue
@@ -30,7 +53,10 @@ public class RtpHandler {
     }
 
     public void queueLocations() {
-        Bukkit.getWorlds().forEach(world -> tryPopulateSafeLocations(world, 0));
+        // only worlds players can RTP to - generating spots in every loaded world wasted chunk loads
+        Bukkit.getWorlds().stream()
+                .filter(world -> RTP_WORLDS.contains(world.getName()))
+                .forEach(world -> tryPopulateSafeLocations(world, 0));
     }
 
     private void tryPopulateSafeLocations(World world, int tries) {
@@ -62,24 +88,29 @@ public class RtpHandler {
             for (int i = 0; i < 127; i++) {
                 if (isSolidBlock(chunkSnapshot.getBlockType(relX, i, relZ))) {
                     if (chunkSnapshot.getBlockType(relX, i + 1, relZ).isAir() && chunkSnapshot.getBlockType(relX, i + 2, relZ).isAir()) {
-                        return new Location(location.getWorld(), location.x(), i + 1, location.z());
+                        return new Location(location.getWorld(), location.getBlockX() + 0.5, i + 1, location.getBlockZ() + 0.5);
                     }
                 }
             }
         } else if (isSolidBlock(chunkSnapshot.getBlockType(relX, y, relZ))) {
-            return new Location(location.getWorld(), location.x(), y + 1, location.z());
+            return new Location(location.getWorld(), location.getBlockX() + 0.5, y + 1, location.getBlockZ() + 0.5);
         }
         return null;
     }
 
     private boolean isSolidBlock(Material material) {
-        return material.isSolid() && material != Material.AIR && material != Material.LAVA && material != Material.WATER && material != Material.FIRE;
+        return material.isSolid() && material != Material.AIR && material != Material.LAVA && material != Material.WATER && material != Material.FIRE
+                && material != Material.CACTUS && material != Material.MAGMA_BLOCK && material != Material.CAMPFIRE
+                && material != Material.SOUL_CAMPFIRE && material != Material.POWDER_SNOW && material != Material.SWEET_BERRY_BUSH;
     }
 
     private Location getRandomLocation(World world) {
-        var radius = (int) world.getWorldBorder().getSize() / 2;
-        var x = getRandInt(100, radius - 500);
-        var z = getRandInt(100, radius - 500);
+        var border = world.getWorldBorder();
+        var radius = (int) border.getSize() / 2;
+        // stay 500 blocks inside the border (less on small borders), around the border's centre - not 0,0
+        var bound = Math.max(101, radius - Math.min(500, radius / 2));
+        var x = border.getCenter().getBlockX() + getRandInt(100, bound);
+        var z = border.getCenter().getBlockZ() + getRandInt(100, bound);
         return new Location(world, x, 0, z);
     }
 

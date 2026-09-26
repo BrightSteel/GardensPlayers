@@ -170,7 +170,7 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
             case "gardens" -> "Gardens";
             case "gardens_nether" -> "Nether";
             case "gardens_the_end" -> "The End";
-            case "resource" -> "Resource World";
+            case "resource", "resource_world" -> "Resource World";
             case "resource_nether" -> "Resource Nether";
             case "resource_the_end" -> "Resource End";
             default -> world.getName();

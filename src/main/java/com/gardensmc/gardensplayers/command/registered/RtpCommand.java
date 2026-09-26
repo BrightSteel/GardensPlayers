@@ -37,16 +37,22 @@ public class RtpCommand extends PlayerExecutorCommand {
                         .filter(w -> w.getName().equalsIgnoreCase(args[0]))
                         .findAny()
                         .orElse(null);
-                if (world == null) {
+                if (world == null || !RtpHandler.RTP_WORLDS.contains(world.getName())) {
                     throw new InvalidArgumentException("Unknown world: " + args[0]);
                 }
-                if (!executor.hasPermission("gardens.rtp.bypass_cooldown")) {
-                    playerData.setRtpCooldown(300);
+                var permission = RtpHandler.requiredPermission(world);
+                if (permission != null && !executor.hasPermission(permission)) {
+                    sendMessage(executor, "<red>Visit that dimension once to unlock random teleports there");
+                    return;
                 }
                 var location = RtpHandler.INSTANCE.getQueuedLocation(world);
                 if (location == null) {
                     sendMessage(executor, "<red>Location queue is empty, please wait and try again");
                 } else {
+                    // the cooldown starts only once they actually teleport
+                    if (!executor.hasPermission("gardens.rtp.bypass_cooldown")) {
+                        playerData.setRtpCooldown(300);
+                    }
                     sendMessage(executor, "<green>Randomly teleporting...");
                     executor.teleport(location);
                 }
