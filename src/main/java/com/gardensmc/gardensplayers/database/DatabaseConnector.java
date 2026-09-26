@@ -5,6 +5,7 @@ import com.gardensmc.gardensplayers.database.entry.MySQLEntry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,6 +54,34 @@ public class DatabaseConnector {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement ps = getPreparedStatement(connection, string, obj)) {
             return ps.executeUpdate();
+        }
+    }
+
+    // the unchecked forms below are what the tables use: they run off the main thread, where a failed query
+    // should fail the future rather than be handled on the spot
+
+    public int update(String statement, Object... obj) {
+        try {
+            return executeUpdate(statement, obj);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Nullable
+    public <T extends MySQLEntry> T queryOne(String query, Supplier<T> supplier, Object... obj) {
+        try {
+            return querySingleton(query, supplier, obj);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public <T extends MySQLEntry> List<T> queryList(String query, Supplier<T> supplier, Object... obj) {
+        try {
+            return queryCollection(query, supplier, obj);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

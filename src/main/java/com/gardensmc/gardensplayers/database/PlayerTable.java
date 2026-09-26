@@ -46,158 +46,110 @@ public class PlayerTable implements Table {
     }
 
     public PlayerEntry getPlayerEntry(UUID uuid) {
-        try {
-            return DatabaseConnector.INSTANCE.querySingleton(
-                    "SELECT *, " +
-                            "(SELECT COUNT(*) + 1 FROM player AS ranking " +
-                            " WHERE ranking.questsCompleted > player.questsCompleted) AS questRank " +
-                            "FROM player " +
-                            "LEFT JOIN lastLocation ON player.uuid = lastLocation.playerUUID " +
-                            "LEFT JOIN wardrobes ON player.uuid = wardrobes.playerUUID " +
-                            "WHERE uuid = ?",
-                    PlayerEntry::new,
-                    uuid.toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return DatabaseConnector.INSTANCE.queryOne(
+                "SELECT *, " +
+                        "(SELECT COUNT(*) + 1 FROM player AS ranking " +
+                        " WHERE ranking.questsCompleted > player.questsCompleted) AS questRank " +
+                        "FROM player " +
+                        "LEFT JOIN lastLocation ON player.uuid = lastLocation.playerUUID " +
+                        "LEFT JOIN wardrobes ON player.uuid = wardrobes.playerUUID " +
+                        "WHERE uuid = ?",
+                PlayerEntry::new,
+                uuid.toString()
+        );
     }
 
     public void createPlayerEntry(Player player) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                "INSERT INTO player (uuid, username, joined, money) VALUES (?, ?, ?, ?)",
-                    player.getUniqueId().toString(),
-                    player.getName(),
-                    LocalDateTime.now(Clock.systemUTC()),
-                    GardensPlayers.config.getStartingBalance()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+            "INSERT INTO player (uuid, username, joined, money) VALUES (?, ?, ?, ?)",
+                player.getUniqueId().toString(),
+                player.getName(),
+                LocalDateTime.now(Clock.systemUTC()),
+                GardensPlayers.config.getStartingBalance()
+        );
     }
 
     public void updateUsername(UUID uuid, String username) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET username = ? WHERE uuid = ?",
-                    username,
-                    uuid.toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET username = ? WHERE uuid = ?",
+                username,
+                uuid.toString()
+        );
     }
 
     public void setSeen(Player player, LocalDateTime time) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET seen = ? WHERE uuid = ?",
-                    time,
-                    player.getUniqueId().toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET seen = ? WHERE uuid = ?",
+                time,
+                player.getUniqueId().toString()
+        );
     }
 
     public void addPoints(UUID uuid, int amount) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET points = points + ? WHERE uuid = ?",
-                    amount,
-                    uuid.toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET points = points + ? WHERE uuid = ?",
+                amount,
+                uuid.toString()
+        );
     }
 
     public void incrementQuestsCompleted(UUID uuid) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET questsCompleted = questsCompleted + 1 WHERE uuid = ?",
-                    uuid.toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET questsCompleted = questsCompleted + 1 WHERE uuid = ?",
+                uuid.toString()
+        );
     }
 
     public void addMoney(UUID uuid, int amount) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET money = money + ? WHERE uuid = ?",
-                    amount,
-                    uuid.toString()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET money = money + ? WHERE uuid = ?",
+                amount,
+                uuid.toString()
+        );
     }
 
     // only succeeds when the balance covers it, so two concurrent debits can't overdraw; true if taken
     public boolean subtractMoney(UUID uuid, int amount) {
-        try {
-            return DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET money = money - ? WHERE uuid = ? AND money >= ?",
-                    amount,
-                    uuid.toString(),
-                    amount
-            ) == 1;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET money = money - ? WHERE uuid = ? AND money >= ?",
+                amount,
+                uuid.toString(),
+                amount
+        ) == 1;
     }
 
     // only succeeds when the balance covers it; true if taken
     public boolean subtractPoints(UUID uuid, int amount) {
-        try {
-            return DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET points = points - ? WHERE uuid = ? AND points >= ?",
-                    amount,
-                    uuid.toString(),
-                    amount
-            ) == 1;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET points = points - ? WHERE uuid = ? AND points >= ?",
+                amount,
+                uuid.toString(),
+                amount
+        ) == 1;
     }
 
     public void setNickname(String uuid, String nickname) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET nickname = ? WHERE uuid = ?",
-                    nickname,
-                    uuid
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET nickname = ? WHERE uuid = ?",
+                nickname,
+                uuid
+        );
     }
 
     public void setPoints(String uuid, int points) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET points = ? WHERE uuid = ?",
-                    points,
-                    uuid
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET points = ? WHERE uuid = ?",
+                points,
+                uuid
+        );
     }
 
     public void setMoney(String uuid, int money) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE player SET money = ? WHERE uuid = ?",
-                    money,
-                    uuid
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE player SET money = ? WHERE uuid = ?",
+                money,
+                uuid
+        );
     }
 
     @Nullable

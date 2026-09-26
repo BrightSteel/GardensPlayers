@@ -24,15 +24,11 @@ public class RewardsTable implements Table {
 
     @Nullable
     public List<RewardEntry> getUnclaimedRewards(String playerUUID) {
-        try {
-            return DatabaseConnector.INSTANCE.queryCollection(
-                    "SELECT * FROM rewards where playerUUID = ? AND claimed = false",
-                    RewardEntry::new,
-                    playerUUID
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return DatabaseConnector.INSTANCE.queryList(
+                "SELECT * FROM rewards where playerUUID = ? AND claimed = false",
+                RewardEntry::new,
+                playerUUID
+        );
     }
 
     public boolean hasReward(String playerUUID, String rewardId) {
@@ -50,40 +46,28 @@ public class RewardsTable implements Table {
     }
 
     public void giveReward(String playerUUID, RewardEntry rewardEntry) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "INSERT IGNORE INTO rewards (id, playerUUID, reward) VALUES (?, ?, ?)", // two joins racing both insert
-                    rewardEntry.getId(),
-                    playerUUID,
-                    rewardEntry.getReward()
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "INSERT IGNORE INTO rewards (id, playerUUID, reward) VALUES (?, ?, ?)", // two joins racing both insert
+                rewardEntry.getId(),
+                playerUUID,
+                rewardEntry.getReward()
+        );
     }
 
     // true only for the one call that actually flipped it, so a reward can't be claimed twice
     public boolean markRewardClaimed(String playerUUID, String rewardId) {
-        try {
-            return DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE rewards SET claimed = true WHERE playerUUID = ? AND id = ? AND claimed = false LIMIT 1",
-                    playerUUID,
-                    rewardId
-            ) == 1;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return DatabaseConnector.INSTANCE.update(
+                "UPDATE rewards SET claimed = true WHERE playerUUID = ? AND id = ? AND claimed = false LIMIT 1",
+                playerUUID,
+                rewardId
+        ) == 1;
     }
 
     public void markRewardUnclaimed(String playerUUID, String rewardId) {
-        try {
-            DatabaseConnector.INSTANCE.executeUpdate(
-                    "UPDATE rewards SET claimed = false WHERE playerUUID = ? AND id = ? LIMIT 1",
-                    playerUUID,
-                    rewardId
-            );
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseConnector.INSTANCE.update(
+                "UPDATE rewards SET claimed = false WHERE playerUUID = ? AND id = ? LIMIT 1",
+                playerUUID,
+                rewardId
+        );
     }
 }
