@@ -22,5 +22,6 @@ softdepend:
   - EnderMap
   - PlaceholderAPI
   - MCPets
+  - GriefPrevention
 # Commands are registered at runtime via Paper's Brigadier command API.
 # See com.gardensmc.gardensplayers.command.Commands / CommandBridge.

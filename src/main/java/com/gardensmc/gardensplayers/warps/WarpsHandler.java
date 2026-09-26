@@ -10,6 +10,7 @@ import com.gardensmc.gardensplayers.menu.tile.CategoryPages;
 import com.gardensmc.gardensplayers.menu.tile.TileCategory;
 import com.gardensmc.gardensplayers.menu.tile.WarpTileItem;
 import com.gardensmc.gardensplayers.util.PermissionUtil;
+import com.gardensmc.gardensplayers.util.ProtectionUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -122,6 +123,10 @@ public class WarpsHandler {
         var error = validateName(name) != null ? validateName(name) : validateDescription(description);
         if (error != null) {
             return ActionResult.failure(error);
+        }
+        // a warp brings other players to this spot, so it must be somewhere the owner could build
+        if (!ProtectionUtil.canBuild(player, location)) {
+            return ActionResult.failure("You can only set a warp where you're allowed to build");
         }
         var maxWarps = PermissionUtil.getMaxPermission(player, "gplayers.max_warps");
         var playerWarps = getCachedWarps().warpsByPlayer().getOrDefault(player.getUniqueId(), Collections.emptyList());

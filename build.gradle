@@ -61,6 +61,7 @@ dependencies {
     compileOnly 'me.clip:placeholderapi:2.11.6'
     implementation("com.zaxxer:HikariCP:5.0.1")
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.18-SNAPSHOT'
+    compileOnly("com.github.GriefPrevention:GriefPrevention:16.18.4")
     compileOnly("com.github.retrooper:packetevents-spigot:2.11.0")
     compileOnly('com.github.brcdev-minecraft:shopgui-api:3.0.0') {
         exclude(group: "org.spigotmc")
