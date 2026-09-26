@@ -1,6 +1,5 @@
 package com.gardensmc.gardensplayers.menu;
 
-import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.menu.shop.ShopItem;
 import com.gardensmc.gardensplayers.shop.ShopLimitHandler;
 import com.gardensmc.gardensplayers.util.ShopTransactionUtil;
@@ -8,7 +7,6 @@ import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -113,16 +111,6 @@ public class TileShopPurchaseMenu extends Menu {
     }
 
     private GuiElement buildAmountModifierElement(char c, int modifier) {
-        return new DynamicGuiElement(c, () -> {
-            var finalAmount = item.getAmount() + modifier;
-            finalAmount = Math.min(finalAmount, 64);
-            finalAmount = Math.max(finalAmount, 1);
-            int finalAmount1 = finalAmount;
-            return new StaticGuiElement(c, blankItem, click -> {
-                item.setAmount(finalAmount1);
-                gui.draw();
-                return true;
-            }, (modifier > 0 ? "+" : "-") + Math.abs(modifier));
-        });
+        return buildQuantityButton(c, item, modifier, (modifier > 0 ? "+" : "-") + Math.abs(modifier));
     }
 }

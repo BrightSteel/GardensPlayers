@@ -124,22 +124,7 @@ public class ShopQuantityMenu extends Menu {
     }
 
     private GuiElement createQuantityButton(char character, int changeAmount) {
-        boolean isPositive = changeAmount > 0;
-        return new DynamicGuiElement(character, () -> {
-            var finalAmount =  item.getAmount() + changeAmount;
-            finalAmount = Math.min(finalAmount, 64);
-            finalAmount = Math.max(finalAmount, 1);
-            int finalAmount1 = finalAmount;
-            return new StaticGuiElement(
-                character,
-                blankItem,
-                click -> {
-                    item.setAmount(finalAmount1);
-                    gui.draw();
-                    return true;
-                },
-                    (isPositive ? "<green><bold>Add " : "<#DF2E38><bold>Remove ") + Math.abs(changeAmount)
-            );
-        });
+        return buildQuantityButton(character, item, changeAmount,
+                (changeAmount > 0 ? "<green><bold>Add " : "<#DF2E38><bold>Remove ") + Math.abs(changeAmount));
     }
 }

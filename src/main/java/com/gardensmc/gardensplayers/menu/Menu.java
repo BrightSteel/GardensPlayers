@@ -72,6 +72,18 @@ public class Menu {
         );
     }
 
+    // a button that changes `item`'s amount by `change`, kept between 1 and 64
+    protected final DynamicGuiElement buildQuantityButton(char character, ItemStack item, int change, String label) {
+        return new DynamicGuiElement(character, () -> {
+            var newAmount = Math.clamp(item.getAmount() + change, 1, 64);
+            return new StaticGuiElement(character, blankItem, click -> {
+                item.setAmount(newAmount);
+                gui.draw();
+                return true;
+            }, label);
+        });
+    }
+
     protected void initializeElements() {
     }
 
