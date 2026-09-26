@@ -9,12 +9,12 @@ import com.gardensmc.gardensplayers.util.MessageUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
 import de.themoep.inventorygui.GuiElement;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import org.bukkit.Bukkit;
 import java.util.UUID;
 
 /**
@@ -72,6 +72,10 @@ public class WarpTileItem extends TileItem {
             return;
         }
         player.closeInventory();
+        if (!WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry)) {
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>That warp is private"));
+            return;
+        }
         player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Warping to " + warpEntry.getName()));
         WarpsHandler.INSTANCE.travel(player, warpEntry);
     }

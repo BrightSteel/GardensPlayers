@@ -8,12 +8,11 @@ import com.gardensmc.gardensplayers.menu.BedrockWarpsMenu;
 import com.gardensmc.gardensplayers.menu.CreateWarpMenu;
 import com.gardensmc.gardensplayers.menu.UpdateWarpMenu;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
-import org.geysermc.floodgate.api.FloodgateApi;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,12 +57,10 @@ public class WarpCommand extends PlayerExecutorCommand {
         if (args.length < 2) {
             throw new InvalidStateException("Missing warp name argument");
         }
-        var name = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-        if (name.length() > 100) {
-            throw new InvalidStateException("Warp name too long!");
-        }
-        if (PlainTextComponentSerializer.plainText().serialize(MiniMessage.miniMessage().deserialize(name)).length() > 20) {
-            throw new InvalidStateException("Warp name too long!");
+        var name = WarpsHandler.cleanText(String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
+        var error = WarpsHandler.validateName(name);
+        if (error != null) {
+            throw new InvalidStateException(error);
         }
         if (FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
             BedrockWarpEditMenu.openCreate(player, name);
