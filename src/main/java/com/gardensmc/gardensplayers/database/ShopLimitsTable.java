@@ -5,7 +5,6 @@ import com.gardensmc.gardensplayers.database.entry.ShopLimitEntry;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 

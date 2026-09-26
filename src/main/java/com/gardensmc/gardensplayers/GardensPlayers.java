@@ -18,6 +18,7 @@ import com.gardensmc.gardensplayers.rtp.RtpHandler;
 import com.gardensmc.gardensplayers.spawnlimit.SpawnLimits;
 import com.gardensmc.gardensplayers.util.ConfigUtil;
 import com.gardensmc.gardensplayers.warps.WarpsHandler;
+import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
@@ -33,6 +34,9 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class GardensPlayers extends JavaPlugin {
 
@@ -115,6 +119,16 @@ public class GardensPlayers extends JavaPlugin {
     public void onDisable() {
         // persist quest state synchronously — async tasks won't run during shutdown
         QuestHandler.INSTANCE.save();
+        // Database writes (quit saves, money changes) run on the common pool as daemon tasks, which the JVM
+        // drops at exit - wait for them before closing the pool, or every restart loses the last writes.
+        if (!ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS)) {
+            getLogger().warning("Some database writes were still running at shutdown");
+        }
+        try {
+            DatabaseConnector.INSTANCE.close();
+        } catch (Throwable e) {
+            getLogger().log(Level.WARNING, "Failed to close the database pool", e);
+        }
     }
 
     private void tickPlayer(Player player, int ticksPassed) {

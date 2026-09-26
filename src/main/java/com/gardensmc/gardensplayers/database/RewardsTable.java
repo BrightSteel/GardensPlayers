@@ -52,7 +52,7 @@ public class RewardsTable implements Table {
     public void giveReward(String playerUUID, RewardEntry rewardEntry) {
         try {
             DatabaseConnector.INSTANCE.executeUpdate(
-                    "INSERT INTO rewards (id, playerUUID, reward) VALUES (?, ?, ?)",
+                    "INSERT IGNORE INTO rewards (id, playerUUID, reward) VALUES (?, ?, ?)", // two joins racing both insert
                     rewardEntry.getId(),
                     playerUUID,
                     rewardEntry.getReward()
