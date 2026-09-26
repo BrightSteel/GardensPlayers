@@ -13,7 +13,6 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerJoinGame;
 import com.github.retrooper.packetevents.wrapper.status.server.WrapperStatusServerResponse;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -59,7 +58,7 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
         new PlayerEntryHandler(e.getPlayer().getUniqueId()).updateLastLocation();
-        OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).resetAfkTick(e.getPlayer());
+        OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).clearAfk();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -81,19 +80,20 @@ public class PlayerListener implements Listener {
     public void onPlayerChat(AsyncChatEvent e) {
         var playerData = OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId());
         playerData.resetAfkTick(e.getPlayer());
-        if (playerData.getTextCapture() != null) {
+        var capture = playerData.getTextCapture();
+        if (capture != null) {
             e.setCancelled(true);
-            Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
-                playerData.getTextCapture().accept(PlainTextComponentSerializer.plainText().serialize(e.message()));
-                playerData.setTextCapture(null);
-            });
+            // claimed here, on the chat thread: a second message in the same tick finds no capture
+            playerData.setTextCapture(null);
+            var text = PlainTextComponentSerializer.plainText().serialize(e.message());
+            Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> capture.accept(text));
         }
     }
 
     private boolean isNewLocation(Location l1, Location l2) {
         return l1.getX() != l2.getX()
                 || l1.getY() != l2.getY()
-                || l1.getZ() != l1.getZ();
+                || l1.getZ() != l2.getZ();
     }
 
     @EventHandler

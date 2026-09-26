@@ -1,6 +1,5 @@
 package com.gardensmc.gardensplayers.cache;
 
-import com.gardensmc.gardensplayers.backpack.BackpackHandler;
 import com.gardensmc.gardensplayers.util.WorldGuardUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,6 +67,12 @@ public class OnlinePlayerData {
 //            backpackTicks = 0;
 //            BackpackHandler.ensureInteractAvailable(player);
 //        }
+    }
+
+    // leaving the server: stop being AFK without announcing they're back
+    public void clearAfk() {
+        AFK = false;
+        afkTick = 0;
     }
 
     public void resetAfkTick(Player player) {

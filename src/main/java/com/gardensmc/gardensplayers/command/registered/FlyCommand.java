@@ -2,6 +2,7 @@ package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.command.exception.InvalidArgumentException;
 import com.gardensmc.gardensplayers.command.type.PlayerCommand;
+import com.gardensmc.gardensplayers.util.PlayerUtil;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -38,7 +39,13 @@ public class FlyCommand extends PlayerCommand {
             try {
                 mode = Mode.valueOf(args[0].toUpperCase());
             } catch (IllegalArgumentException e) {
-                throw new InvalidArgumentException("mode");
+                // not a mode: /fly <player> toggles that player's flight
+                var target = PlayerUtil.findOnline(args[0]);
+                if (target == null) {
+                    throw new InvalidArgumentException("mode");
+                }
+                executeOnPlayer(player, target, new String[]{"toggle"});
+                return;
             }
         }
         var result = setFlight(player, mode);

@@ -7,8 +7,8 @@ import com.gardensmc.gardensplayers.death.DeathLocationTracker;
 import com.gardensmc.gardensplayers.economy.PlayerEconomyHandler;
 import com.gardensmc.gardensplayers.menu.BedrockDeathBackMenu;
 import com.gardensmc.gardensplayers.menu.DeathBackConfirmMenu;
-import org.bukkit.Location;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -79,7 +79,7 @@ public class DeathBackCommand extends PlayerExecutorCommand {
         if (location == null) {
             throw new InvalidStateException("You have no recent death location to return to");
         }
-        if (location.getWorld() == null) {
+        if (!location.isWorldLoaded()) { // getWorld() throws for a world that was unloaded (e.g. a reset resource world)
             throw new InvalidStateException("Your death location is in a world that is no longer loaded");
         }
         return location;

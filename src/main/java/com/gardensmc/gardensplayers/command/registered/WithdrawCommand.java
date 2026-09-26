@@ -36,7 +36,13 @@ public class WithdrawCommand extends PlayerExecutorCommand {
                         messageSender.sendError("You do not have enough money to make this payment");
                         return;
                     }
-                    Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount));
+                    Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
+                        if (!executor.isOnline()) {
+                            economySender.deposit(amount); // logged out before the acorns could be given
+                            return;
+                        }
+                        PlayerUtil.giveItems(executor, GardensFurniture.itemRegistry.buildItem("golden_acorn"), amount);
+                    });
                     messageSender.sendMessage("Withdrew %s %s".formatted(amount, GardensPlayers.config.getCurrencySymbol()));
                 });
             } catch (IllegalStateException | IllegalArgumentException e) {
