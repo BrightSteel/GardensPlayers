@@ -2,19 +2,21 @@ package com.gardensmc.gardensplayers.menu.wardrobe;
 
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.wrap.WrapHandler;
+import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
 import com.hibiscusmc.hmccosmetics.api.HMCCosmeticsAPI;
 import com.hibiscusmc.hmccosmetics.cosmetic.Cosmetic;
 import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
 import de.tr7zw.nbtapi.NBT;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 
 import static com.gardensmc.gardensplayers.menu.WardrobeGui.TEMPLATE_PREFIX;
 
@@ -60,7 +62,9 @@ public class CosmeticWardrobeSlot implements WardrobeSlot {
         try {
             new PlayerEntryHandler(player.getUniqueId()).updateWardrobe(cosmeticSlot, nbt).get();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Failed to save wardrobe " + cosmeticSlot + " of " + player.getName() + " (" + player.getUniqueId() + "): " + nbt, e);
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Your wardrobe could not be saved, please contact staff."));
+            return;
         }
         // update cosmetic
         var user = HMCCosmeticsAPI.getUser(player.getUniqueId());
