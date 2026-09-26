@@ -5,6 +5,7 @@ import com.gardensmc.gardensfurniture.util.ProbabilityUtil;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.data.type.Leaves;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -27,6 +28,11 @@ public class BlockListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onLeafBreak(BlockBreakEvent e) {
+        // player-placed leaves are persistent: only natural leaves drop acorns, or placing and breaking
+        // leaves would print golden acorns (money)
+        if (e.getBlock().getBlockData() instanceof Leaves leaves && leaves.isPersistent()) {
+            return;
+        }
         if (e.getBlock().getType().toString().toLowerCase().endsWith("leaves") && ProbabilityUtil.roll(2)) {
             dropAcorn(e.getBlock().getLocation(), true);
         }

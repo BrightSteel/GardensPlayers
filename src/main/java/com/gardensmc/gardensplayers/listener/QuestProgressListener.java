@@ -1,7 +1,8 @@
 package com.gardensmc.gardensplayers.listener;
 
-import com.gardensmc.gardensenchants.events.GardensEnchantItemEvent;
 import com.gardensmc.gardenscrops.event.CropHarvestEvent;
+import com.gardensmc.gardensenchants.events.GardensEnchantItemEvent;
+import com.gardensmc.gardensplayers.quest.PlacedBlocks;
 import com.gardensmc.gardensplayers.quest.QuestHandler;
 import com.gardensmc.gardensplayers.quest.TaskCategory;
 import net.momirealms.customfishing.api.event.FishingResultEvent;
@@ -38,8 +39,11 @@ public class QuestProgressListener implements Listener {
         var block = e.getBlock();
         var blockName = block.getType().name();
         // Mining and Foraging tasks only match their own material sets, so forwarding every break is harmless.
-        QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.MINING, blockName, 1);
-        QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.FORAGING, blockName, 1);
+        // Blocks a player just placed don't count, or placing and breaking stone would complete them.
+        if (!PlacedBlocks.takePlaced(block)) {
+            QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.MINING, blockName, 1);
+            QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.FORAGING, blockName, 1);
+        }
         // Farming only counts fully-grown crops.
         if (block.getBlockData() instanceof Ageable ageable && ageable.getAge() == ageable.getMaximumAge()) {
             QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.FARMING, blockName, 1);
@@ -54,6 +58,7 @@ public class QuestProgressListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
+        PlacedBlocks.markPlaced(e.getBlockPlaced());
         QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.BLOCK, e.getBlockPlaced().getType().name(), 1);
     }
 
