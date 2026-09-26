@@ -39,10 +39,14 @@ public class QuestProgressListener implements Listener {
         var block = e.getBlock();
         var blockName = block.getType().name();
         // Mining and Foraging tasks only match their own material sets, so forwarding every break is harmless.
-        // Blocks a player just placed don't count, or placing and breaking stone would complete them.
-        if (!PlacedBlocks.takePlaced(block)) {
+        // Blocks a player just placed don't count, or placing and breaking stone would complete them. Breaking your
+        // own block takes back its place progress, so place-and-break doesn't complete place tasks either.
+        var placer = PlacedBlocks.takePlacer(block);
+        if (placer == null) {
             QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.MINING, blockName, 1);
             QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.FORAGING, blockName, 1);
+        } else if (placer.equals(e.getPlayer().getUniqueId())) {
+            QuestHandler.INSTANCE.revokeProgress(e.getPlayer(), TaskCategory.BLOCK, blockName, 1);
         }
         // Farming only counts fully-grown crops.
         if (block.getBlockData() instanceof Ageable ageable && ageable.getAge() == ageable.getMaximumAge()) {
@@ -58,7 +62,7 @@ public class QuestProgressListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent e) {
-        PlacedBlocks.markPlaced(e.getBlockPlaced());
+        PlacedBlocks.markPlaced(e.getBlockPlaced(), e.getPlayer().getUniqueId());
         QuestHandler.INSTANCE.progress(e.getPlayer(), TaskCategory.BLOCK, e.getBlockPlaced().getType().name(), 1);
     }
 

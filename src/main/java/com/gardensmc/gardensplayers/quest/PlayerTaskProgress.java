@@ -38,4 +38,11 @@ public class PlayerTaskProgress {
         }
         return false;
     }
+
+    // takes progress back (never below 0); a completed task stays completed, its reward is already paid
+    public void decrement(int amount) {
+        if (!completed) {
+            count = Math.max(0, count - amount);
+        }
+    }
 }

@@ -248,6 +248,22 @@ public class QuestHandler {
         }
     }
 
+    /**
+     * Takes back progress {@link #progress} gave, eg a placed block that was broken again. Main thread only.
+     */
+    public void revokeProgress(Player player, TaskCategory category, String key, int amount) {
+        var playerProgress = progress.get(player.getUniqueId());
+        if (playerProgress == null) {
+            return;
+        }
+        for (Task task : dailyTasks) {
+            var taskProgress = playerProgress.get(task.getId());
+            if (taskProgress != null && task.getCategory() == category && task.matches(key)) {
+                taskProgress.decrement(amount);
+            }
+        }
+    }
+
     private void completeTask(Player player, Task task) {
         task.getReward().grant(player);
         new SenderMessageHandler(player).sendMessage(
