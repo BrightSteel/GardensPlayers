@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -78,7 +79,10 @@ public class WarpCommand extends PlayerExecutorCommand {
     }
 
     private void onTpWarp(Player player, String[] args) {
-        var warp = getWarpFromArgs(player, args);
+        // search every warp, not just owned ones; prefer an accessible match since names aren't unique across players
+        var warp = findWarp(args, WarpsHandler.INSTANCE.getCachedWarps().warps().stream()
+                .sorted(Comparator.comparing(warpEntry -> !WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry)))
+                .toList());
         if (!WarpsHandler.INSTANCE.canPlayerAccess(player, warp)) {
             throw new InvalidStateException("This warp is not open to the public!");
         }
@@ -94,13 +98,17 @@ public class WarpCommand extends PlayerExecutorCommand {
     }
 
     private WarpEntry getWarpFromArgs(Player player, String[] args) {
+        var warps = player.hasPermission("gplayers.warp.edit.any")
+                ? WarpsHandler.INSTANCE.getCachedWarps().warps()
+                : WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(player.getUniqueId(), Collections.emptyList());
+        return findWarp(args, warps);
+    }
+
+    private WarpEntry findWarp(String[] args, List<WarpEntry> warps) {
         if (args.length < 2) {
             throw new InvalidStateException("Missing warp name argument");
         }
         var name = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
-        var warps = player.hasPermission("gplayers.warp.edit.any")
-                ? WarpsHandler.INSTANCE.getCachedWarps().warps()
-                : WarpsHandler.INSTANCE.getCachedWarps().warpsByPlayer().getOrDefault(player.getUniqueId(), Collections.emptyList());
         return warps.stream()
                 .filter(warpEntry -> warpEntry.getReadableName().equalsIgnoreCase(name))
                 .findFirst()
