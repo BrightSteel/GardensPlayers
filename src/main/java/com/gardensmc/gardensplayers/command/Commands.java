@@ -32,7 +32,7 @@ public class Commands {
             register(registrar, new FarmShopCommand(), "Open farm shop", "/<command>");
             register(registrar, new GardensPlayersCommand(), "Gardens Players command", "/<command>");
             register(registrar, new WarpCommand(), "View warps", "/<command>", List.of("warps"));
-            register(registrar, new WithdrawCommand(), "Withdraw acorns", "/<command>");
+            register(registrar, new WithdrawCommand(), "Withdraw acorns", "/<command> <amount>");
             register(registrar, new DepositCommand(), "Deposit acorns", "/<command>");
             register(registrar, new UpgradesCommand(), "Upgrade shop", "/<command>");
             register(registrar, new ShopCommand(), "View shop", "/<command>");
@@ -47,7 +47,6 @@ public class Commands {
             register(registrar, new LoomCommand(), "Open loom", "/<command>");
             register(registrar, new GrindstoneCommand(), "Open grindstone", "/<command>");
             register(registrar, new MoreCommand(), "Get more of held item", "/<command>");
-            register(registrar, new MountCommand(), "Open mounts menu", "/<command>", List.of("mounts"));
             register(registrar, new QuestsCommand(), "View daily quests", "/<command>", List.of("quest", "q"));
             register(registrar, new QuestResetCommand(), "Reset the daily quests", "/<command>");
             register(registrar, new SeenCommand(), "See when a player was last online", "/<command> <player>");

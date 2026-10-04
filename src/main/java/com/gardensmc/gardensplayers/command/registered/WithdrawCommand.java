@@ -8,7 +8,13 @@ import com.gardensmc.gardensplayers.command.type.PlayerExecutorCommand;
 import com.gardensmc.gardensplayers.currency.AcornsCurrencyHandler;
 import com.gardensmc.gardensplayers.util.PlayerUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class WithdrawCommand extends PlayerExecutorCommand {
 
@@ -49,5 +55,10 @@ public class WithdrawCommand extends PlayerExecutorCommand {
                 messageSender.sendError(e.getMessage());
             }
         }
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        return args.length == 1 ? List.of("1", "8", "16", "32", "64") : List.of();
     }
 }
