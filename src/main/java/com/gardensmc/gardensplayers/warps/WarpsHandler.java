@@ -61,6 +61,15 @@ public class WarpsHandler {
         return null;
     }
 
+    // an error message when another warp already shows this name (compared as plain text, ignoring case), else null
+    @Nullable
+    public String validateUniqueName(String name, int ignoredWarpId) {
+        var readable = PlainTextComponentSerializer.plainText().serialize(TEXT_ONLY.deserialize(name)).strip();
+        var taken = getCachedWarps().warps().stream()
+                .anyMatch(warp -> warp.getId() != ignoredWarpId && warp.getReadableName().strip().equalsIgnoreCase(readable));
+        return taken ? "A warp named " + readable + " already exists!" : null;
+    }
+
     @Nullable
     public static String validateDescription(@Nullable String description) {
         return description != null && description.length() > MAX_DESCRIPTION_RAW ? "Warp description too long!" : null;
@@ -121,6 +130,9 @@ public class WarpsHandler {
         var name = cleanText(rawName);
         var description = cleanText(rawDescription);
         var error = validateName(name) != null ? validateName(name) : validateDescription(description);
+        if (error == null) {
+            error = validateUniqueName(name, -1);
+        }
         if (error != null) {
             return ActionResult.failure(error);
         }
@@ -153,6 +165,9 @@ public class WarpsHandler {
         var warpName = cleanText(rawName);
         var description = cleanText(rawDescription);
         var error = validateName(warpName) != null ? validateName(warpName) : validateDescription(description);
+        if (error == null) {
+            error = validateUniqueName(warpName, warpId);
+        }
         if (error != null) {
             return CompletableFuture.failedFuture(new IllegalArgumentException(error));
         }
@@ -163,8 +178,9 @@ public class WarpsHandler {
 
     public CompletableFuture<Void> updateWarpMetadata(int warpId, String rawName) {
         var name = cleanText(rawName);
-        if (validateName(name) != null) {
-            return CompletableFuture.failedFuture(new IllegalArgumentException(validateName(name)));
+        var error = validateName(name) != null ? validateName(name) : validateUniqueName(name, warpId);
+        if (error != null) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException(error));
         }
         return CompletableFuture
                 .runAsync(() -> Tables.warpTable.updateWarpName(warpId, name))

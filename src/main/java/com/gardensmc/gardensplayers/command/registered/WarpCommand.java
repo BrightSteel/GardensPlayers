@@ -59,6 +59,9 @@ public class WarpCommand extends PlayerExecutorCommand {
         }
         var name = WarpsHandler.cleanText(String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
         var error = WarpsHandler.validateName(name);
+        if (error == null) {
+            error = WarpsHandler.INSTANCE.validateUniqueName(name, -1);
+        }
         if (error != null) {
             throw new InvalidStateException(error);
         }
@@ -79,9 +82,12 @@ public class WarpCommand extends PlayerExecutorCommand {
     }
 
     private void onTpWarp(Player player, String[] args) {
-        // search every warp, not just owned ones; prefer an accessible match since names aren't unique across players
+        // search every warp, not just owned ones; names created before uniqueness was enforced may still clash, so
+        // prefer an accessible match, then one whose case matches exactly
+        var name = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
         var warp = findWarp(args, WarpsHandler.INSTANCE.getCachedWarps().warps().stream()
-                .sorted(Comparator.comparing(warpEntry -> !WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry)))
+                .sorted(Comparator.<WarpEntry, Boolean>comparing(warpEntry -> !WarpsHandler.INSTANCE.canPlayerAccess(player, warpEntry))
+                        .thenComparing(warpEntry -> !warpEntry.getReadableName().equals(name)))
                 .toList());
         if (!WarpsHandler.INSTANCE.canPlayerAccess(player, warp)) {
             throw new InvalidStateException("This warp is not open to the public!");
