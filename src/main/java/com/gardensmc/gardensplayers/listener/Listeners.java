@@ -13,7 +13,6 @@ public class Listeners {
         register(new WorldListener());
         register(new BlockListener());
         register(new DepositGuiListener());
-        register(new WardrobeGuiListener());
         register(new BackpackListener());
         register(new BackpackGuiListener());
         register(new SpawnLimitListener());

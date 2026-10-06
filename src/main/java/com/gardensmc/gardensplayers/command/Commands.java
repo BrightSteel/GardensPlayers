@@ -36,7 +36,6 @@ public class Commands {
             register(registrar, new DepositCommand(), "Deposit acorns", "/<command>");
             register(registrar, new UpgradesCommand(), "Upgrade shop", "/<command>");
             register(registrar, new ShopCommand(), "View shop", "/<command>");
-            register(registrar, new WardrobeCommand(), "View wardrobe", "/<command>");
             register(registrar, new RewardsCommand(), "View rewards", "/<command>", List.of("reward"));
             register(registrar, new SpawnerCommand(), "Change spawner", "/<command>", List.of("ss"));
             register(registrar, new TpposCommand(), "Teleport to a position", "/<command>");

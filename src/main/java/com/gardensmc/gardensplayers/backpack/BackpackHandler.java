@@ -5,12 +5,11 @@ import com.gardensmc.gardensfurniture.custom.item.CustomBackpackItem;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.cache.PlayerEntryCache;
 import com.gardensmc.gardensplayers.menu.BackpackGui;
-import com.gardensmc.gardensplayers.player.PlayerEntryHandler;
+import com.gardensmc.gardensplayers.wardrobe.WardrobeBridge;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import com.hibiscusmc.hmccosmetics.cosmetic.CosmeticSlot;
 import de.tr7zw.nbtapi.NBT;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
@@ -168,13 +167,10 @@ public class BackpackHandler {
         serializeItems(target, backpackGui.getItemContents());
         returnToPlayer(player, disallowed);
         if (backpackGui.isWardrobeBackpack()) {
-            // save changes to db. The contents were written into the cached wardrobe stack itself, so if this fails
-            // the player still sees them and the next close saves again; the nbt is logged so staff can restore it
-            var nbt = NBT.itemStackToNBT(target).toString();
-            try {
-                new PlayerEntryHandler(player.getUniqueId()).updateWardrobe(CosmeticSlot.BACKPACK, nbt).get();
-            } catch (Exception e) {
-                GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Failed to save wardrobe backpack of " + player.getName() + " (" + player.getUniqueId() + "): " + nbt, e);
+            // The worn backpack is EnderWardrobe's: hand it back with its new contents. If that fails the contents
+            // are logged so staff can restore them; EnderWardrobe still holds the backpack as it was opened.
+            if (!WardrobeBridge.saveBackpack(player, target)) {
+                GardensPlayers.plugin.getLogger().severe("Failed to save the worn backpack of " + player.getName() + " (" + player.getUniqueId() + "): " + NBT.itemStackToNBT(target));
                 player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Your backpack could not be saved. Don't log out - reopen and close it to try again, or contact staff."));
             }
         }
@@ -225,7 +221,7 @@ public class BackpackHandler {
                                     openedBackpack = interactBackpack(player, offhand, false);
                                 }
                                 if (!openedBackpack) {
-                                    var wardrobeBackpack = PlayerEntryCache.INSTANCE.getSync(player.getUniqueId()).getWardrobe().getBackpack();
+                                    var wardrobeBackpack = WardrobeBridge.wornBackpack(player);
                                     if (wardrobeBackpack != null) {
                                         interactBackpack(player, wardrobeBackpack, true);
                                     }

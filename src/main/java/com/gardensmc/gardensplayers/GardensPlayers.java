@@ -1,5 +1,7 @@
 package com.gardensmc.gardensplayers;
 
+import com.gardensmc.gardensplayers.wardrobe.WardrobeBridge;
+
 import com.gardensmc.gardensplayers.cache.OnlinePlayerCache;
 import com.gardensmc.gardensplayers.command.Commands;
 import com.gardensmc.gardensplayers.config.Config;
@@ -73,6 +75,7 @@ public class GardensPlayers extends JavaPlugin {
         config = new Config(getConfig());
         Tables.initializeClass();
         Listeners.registerListeners();
+        WardrobeBridge.enable(this);
         Commands.registerCommands();
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new GardensPlayersPlaceholder().register();

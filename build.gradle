@@ -39,9 +39,6 @@ repositories {
         url = 'https://repo.extendedclip.com/releases/'
     }
     maven {
-        url "https://repo.hibiscusmc.com/releases"
-    }
-    maven {
         url = uri("https://repo.opencollab.dev/main/")
     }
     maven {
@@ -67,7 +64,6 @@ dependencies {
     compileOnly('com.github.brcdev-minecraft:shopgui-api:3.0.0') {
         exclude(group: "org.spigotmc")
     }
-    compileOnly "com.hibiscusmc:HMCCosmetics:2.8.1-937f66e8"
     compileOnly("org.popcraft:chunky-common:1.3.38")
     compileOnly('org.geysermc.floodgate:api:2.2.4-SNAPSHOT')
     compileOnly("net.momirealms:custom-fishing:2.3.7")
