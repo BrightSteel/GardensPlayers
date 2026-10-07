@@ -31,6 +31,12 @@ public class GenResourceHandler {
     @Nullable
     private String generating;
     private int finished;
+    // whether Chunky said the world in progress is fully done (it also reports "complete" for a run that was stopped)
+    private boolean filled;
+    private boolean listening;
+    // ticks waited since Chunky stopped for its last chunks to report in (it stops before they all have)
+    private int settling;
+    private static final int SETTLE_TICKS = 15; // 30 seconds at a tick every 2
     private int total;
     private Audience requestor;
 
@@ -72,15 +78,25 @@ public class GenResourceHandler {
             fail();
             return;
         }
+        if (!listening) {
+            chunky.onGenerationProgress(event -> {
+                if (event.world().equals(generating) && (event.complete() || event.progress() >= 100f)) filled = true;
+            });
+            listening = true;
+        }
         if (generating == null) {
             var world = queue.poll();
             generating = uniqueName(world);
+            filled = false;
+            settling = 0;
             var created = new WorldCreator(generating).environment(WORLDS.get(world)).createWorld();
             if (created == null) {
                 GardensPlayers.plugin.getLogger().severe("Failed to create resource world " + generating + ", stopping generation");
                 fail();
                 return;
             }
+            // until it's finished, a reset mustn't take it (a crash or restart would leave it half made)
+            ResourceWorlds.markUnfinished(created.getWorldPath(), true);
             var radius = GardensPlayers.config.getResourceWorldRadius() + 250;
             if (!chunky.startTask(generating, "square", 0, 0, radius, radius, "concentric")) {
                 GardensPlayers.plugin.getLogger().severe("Chunky wouldn't start on " + generating + ", stopping generation");
@@ -89,13 +105,24 @@ public class GenResourceHandler {
                 return;
             }
             GardensPlayers.plugin.getLogger().info("Pregenerating " + generating + " (" + (finished + 1) + "/" + total + ")");
+        } else if (!chunky.isRunning(generating) && !filled && settling++ < SETTLE_TICKS) {
+            // Chunky's task ends a moment before its last chunks finish and the 100% report arrives
         } else if (!chunky.isRunning(generating)) {
             // saved on the way out: Chunky's chunks may not all be on disk yet
             var done = generating;
+            var world = Bukkit.getWorld(done);
+            var folder = world == null ? ResourceWorlds.dimensions().resolve(done) : world.getWorldPath();
             if (!Bukkit.unloadWorld(done, true)) {
                 GardensPlayers.plugin.getLogger().severe("Failed to unload " + done + " after generating it");
             }
             generating = null;
+            if (!filled) {
+                // stopped before it was done (chunky cancel, an error): keep it out of resets
+                GardensPlayers.plugin.getLogger().severe("Chunky stopped before " + done + " was finished; it's left marked unfinished and won't be used");
+                fail();
+                return;
+            }
+            ResourceWorlds.markUnfinished(folder, false);
             finished++;
             GardensPlayers.plugin.getLogger().info("Pregenerated " + done + " (" + finished + "/" + total + ")");
             if (queue.isEmpty()) {

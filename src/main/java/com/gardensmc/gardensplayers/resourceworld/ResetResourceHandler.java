@@ -134,6 +134,10 @@ public class ResetResourceHandler {
 
     /** Warns the console and online staff when few resets are left. */
     public void checkSupply() {
+        var unfinished = ResourceWorlds.unfinished();
+        if (!unfinished.isEmpty() && GenResourceHandler.INSTANCE.describe().startsWith("Not generating")) {
+            GardensPlayers.plugin.getLogger().warning("Half-made pregenerated resource worlds (skipped by resets, safe to delete): " + unfinished);
+        }
         int left = ResourceWorlds.resetsLeft();
         if (left >= WARN_AT) return;
         var message = left == 0
@@ -160,6 +164,10 @@ public class ResetResourceHandler {
         for (var name : WORLDS.keySet()) {
             var available = ResourceWorlds.available(name);
             tell(sender, " <gray>" + name + ": <white>" + available.size() + (available.isEmpty() ? "" : " <gray>next: " + available.getFirst().name()));
+        }
+        var unfinished = ResourceWorlds.unfinished();
+        if (!unfinished.isEmpty()) {
+            tell(sender, " <red>Half-made (skipped, safe to delete): <white>" + String.join(", ", unfinished));
         }
         tell(sender, " <gray>" + GenResourceHandler.INSTANCE.describe());
     }
