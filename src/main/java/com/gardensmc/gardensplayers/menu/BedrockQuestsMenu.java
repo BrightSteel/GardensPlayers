@@ -65,6 +65,10 @@ public class BedrockQuestsMenu {
         int completedToday = handler.getCompletedToday(uuid);
         String footer = "§fCompleted: §a" + completedToday + "§7/§f" + tasks.size()
                 + "  §7·  §fResets in §e" + handler.getFormattedTimeUntilReset();
+        var streak = com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.cached(uuid);
+        if (streak != null) {
+            footer += "  §7·  §6Streak §f" + streak.current();
+        }
         if (totalPages > 1) {
             footer += "  §7·  §fPage §e" + (p + 1) + "§7/§f" + totalPages;
         }

@@ -1,0 +1,28 @@
+# Login streaks. A day counts once a player finishes this many of the day's quest tasks (or the starter quest, through
+# /streak credit <player>). Days reset at midnight America/Los_Angeles, with the quest board.
+tasks-per-day: 2
+
+# Streak savers cover a missed day each, used automatically. Earn one every `every` days in a row, holding up to `max`.
+savers:
+  every: 7
+  max: 2
+
+# What reaching each streak day gives. Each reward is one of:
+#   acorns <amount> | gems <amount> | item <ItemEdit server item> [amount] | skin <wardrobe skin id> | title <titles.yml id>
+rewards:
+  1: ["acorns 50"]
+  2: ["acorns 100"]
+  3: ["acorns 150"]
+  5: ["gems 1"]
+  7: ["item furniture_key 1"]
+  14: ["gems 2"]
+  21: ["item furniture_key 1"]
+  # day 30 should also give an exclusive wardrobe skin: add "skin <id>" once one is chosen
+  30: ["title rooted"]
+  100: ["title evergreen"]
+
+# Past `after` days, every `every` days in a row gives these too.
+repeat:
+  after: 30
+  every: 7
+  rewards: ["acorns 250"]

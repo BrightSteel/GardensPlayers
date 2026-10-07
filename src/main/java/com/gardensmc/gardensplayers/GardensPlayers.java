@@ -72,6 +72,8 @@ public class GardensPlayers extends JavaPlugin {
         plugin = this;
         saveDefaultConfig();
         DataFiles.loadYamls();
+        com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.reload();
+        com.gardensmc.gardensplayers.title.Titles.INSTANCE.reload();
         config = new Config(getConfig());
         Tables.initializeClass();
         Listeners.registerListeners();
@@ -116,6 +118,12 @@ public class GardensPlayers extends JavaPlugin {
 
         // schedule the daily server restart at midnight (America/Los_Angeles) with countdown warnings
         RestartHandler.INSTANCE.scheduleNextRestart();
+
+        // players already online (a plugin reload): load their streaks and titles as if they'd just joined
+        for (var player : Bukkit.getOnlinePlayers()) {
+            com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onJoin(player);
+            com.gardensmc.gardensplayers.title.Titles.INSTANCE.load(player.getUniqueId());
+        }
     }
 
     @Override

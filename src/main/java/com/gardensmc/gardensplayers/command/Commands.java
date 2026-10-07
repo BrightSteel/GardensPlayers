@@ -48,6 +48,8 @@ public class Commands {
             register(registrar, new MoreCommand(), "Get more of held item", "/<command>");
             register(registrar, new QuestsCommand(), "View daily quests", "/<command>", List.of("quest", "q"));
             register(registrar, new QuestResetCommand(), "Reset the daily quests", "/<command>");
+            register(registrar, new StreakCommand(), "View your login streak", "/<command>", List.of("streaks"));
+            register(registrar, new TitlesCommand(), "Choose the title shown before your name", "/<command> [title|none]", List.of("title"));
             register(registrar, new SeenCommand(), "See when a player was last online", "/<command> <player>");
             register(registrar, new TpOfflineCommand(), "Teleport to a player's last known location", "/<command> <player>");
             register(registrar, new LookupCommand(), "Find players by partial username", "/<command> <partial-username>");

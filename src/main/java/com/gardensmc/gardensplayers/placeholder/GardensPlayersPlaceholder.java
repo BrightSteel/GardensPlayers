@@ -73,6 +73,19 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
         }
         return switch (params.toLowerCase()) {
             case "nickname" -> MessageUtil.parseIntoLegacyDisplayable(playerEntry.getNickname());
+            case "streak" -> {
+                var streak = com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.cached(player.getUniqueId());
+                yield streak == null ? "0" : String.valueOf(streak.current());
+            }
+            case "streak_best" -> {
+                var streak = com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.cached(player.getUniqueId());
+                yield streak == null ? "0" : String.valueOf(streak.best());
+            }
+            case "title" -> {
+                // with a trailing space, so a format can put it straight before the name
+                var shown = com.gardensmc.gardensplayers.title.Titles.INSTANCE.shown(player.getUniqueId());
+                yield shown.isEmpty() ? "" : MessageUtil.parseIntoLegacyDisplayable(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(shown)) + " ";
+            }
             case "balance" -> String.valueOf(playerEntry.getMoney());
             case "gems" -> String.valueOf(playerEntry.getPoints());
             case "afk" -> {

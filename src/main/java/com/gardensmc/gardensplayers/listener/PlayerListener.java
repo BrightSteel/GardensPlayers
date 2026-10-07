@@ -51,6 +51,9 @@ public class PlayerListener implements Listener {
                     }
                 });
 
+        com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onJoin(player);
+        com.gardensmc.gardensplayers.title.Titles.INSTANCE.load(player.getUniqueId());
+
         // nudge about remaining daily quests, slightly delayed so it lands after the join clutter
         Bukkit.getScheduler().runTaskLater(
                 GardensPlayers.plugin, () -> QuestHandler.INSTANCE.alertRemaining(player), 40);
@@ -60,6 +63,8 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent e) {
         new PlayerEntryHandler(e.getPlayer().getUniqueId()).updateLastLocation();
         OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).clearAfk();
+        com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onQuit(e.getPlayer().getUniqueId());
+        com.gardensmc.gardensplayers.title.Titles.INSTANCE.unload(e.getPlayer().getUniqueId());
     }
 
     @EventHandler(ignoreCancelled = true)

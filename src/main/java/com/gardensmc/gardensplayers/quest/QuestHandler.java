@@ -270,6 +270,7 @@ public class QuestHandler {
                 "<green>Quest complete: <white>" + task.getDescription()
                         + " <gray>(+" + task.getReward().describe() + "<gray>)"
         );
+        com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onTaskCompleted(player);
         // save now rather than at the next 5-minute autosave: after a crash the task would be completable (and
         // paid out) again
         saveAsync();

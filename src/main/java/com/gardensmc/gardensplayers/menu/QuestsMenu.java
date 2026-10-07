@@ -60,7 +60,9 @@ public class QuestsMenu extends Menu {
                 "<gray>" + viewer.getName(),
                 " ",
                 "<yellow>Total tasks completed: <white>" + entry.getQuestsCompleted(),
-                "<gray>Tasks completed today: <white>" + completedToday + "/" + dailyTaskCount
+                "<gray>Tasks completed today: <white>" + completedToday + "/" + dailyTaskCount,
+                " ",
+                streakLine()
         ));
 
         gui.addElement(new StaticGuiElement('i', blankItem,
@@ -110,6 +112,18 @@ public class QuestsMenu extends Menu {
             // fall through to the vanilla icon
         }
         return new ItemStack(task.getCategory().getIcon());
+    }
+
+    // the login streak: days in a row, and what today still needs
+    private String streakLine() {
+        var handler = com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE;
+        var streak = handler.cached(viewer.getUniqueId());
+        if (streak == null) return "<gray>Streak: loading";
+        if (streak.countedOn(com.gardensmc.gardensplayers.streak.StreakHandler.today())) {
+            return "<gold>Streak: <white>" + streak.current() + " days <green>✔ today";
+        }
+        int left = Math.max(0, handler.config().tasksPerDay() - QuestHandler.INSTANCE.getCompletedToday(viewer.getUniqueId()));
+        return "<gold>Streak: <white>" + streak.current() + " days <gray>· " + left + " more task" + (left == 1 ? "" : "s") + " today";
     }
 
     private static String timeUntilReset() {

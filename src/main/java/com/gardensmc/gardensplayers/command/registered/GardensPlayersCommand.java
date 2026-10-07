@@ -23,6 +23,8 @@ public class GardensPlayersCommand extends GardensCommand {
             GardensPlayers.plugin.reloadConfig();
             GardensPlayers.config = new Config(GardensPlayers.plugin.getConfig());
             DataFiles.loadYamls();
+            com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.reload();
+            com.gardensmc.gardensplayers.title.Titles.INSTANCE.reload();
             try {
                 GardensPlayers.loadShops();
                 executor.sendMessage("Reloaded GardensPlayers");

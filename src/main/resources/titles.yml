@@ -1,0 +1,5 @@
+# Titles players can earn and show before their name (/titles). Shown through %gardensplayers_title% in chat and tab.
+# id: how it looks (MiniMessage)
+titles:
+  rooted: "<#7bbf6a>[Rooted]"
+  evergreen: "<#2e8b57>[Evergreen]"
