@@ -108,6 +108,9 @@ public class GardensPlayers extends JavaPlugin {
         // update cache periodically to update visits in case cache hasn't updated for other reasons
         Bukkit.getScheduler().runTaskTimer(this, WarpsHandler.INSTANCE::clearCachedWarps, 20, 6000);
         Bukkit.getScheduler().runTaskTimer(this, GenResourceHandler.INSTANCE::tick, 20, 40);
+        // the resource worlds are ours to load (not Multiverse's), and staff should hear early if replacements run low
+        com.gardensmc.gardensplayers.resourceworld.ResetResourceHandler.INSTANCE.loadWorlds();
+        Bukkit.getScheduler().runTaskLater(this, com.gardensmc.gardensplayers.resourceworld.ResetResourceHandler.INSTANCE::checkSupply, 200);
 
         // load persisted quest state on startup, then regenerate at each midnight (America/Los_Angeles) and autosave every 5 minutes
         if (!QuestHandler.INSTANCE.loadFromFile()) {

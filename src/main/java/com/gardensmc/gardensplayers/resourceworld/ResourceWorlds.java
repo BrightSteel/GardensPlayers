@@ -1,0 +1,118 @@
+package com.gardensmc.gardensplayers.resourceworld;
+
+import com.gardensmc.gardensplayers.util.Worlds;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+/**
+ * The resource worlds and their pregenerated replacements. Since 26.1 every world is a dimension inside the main
+ * level's folder ({@code <level>/dimensions/minecraft/<name>}), not a folder of its own beside it.
+ *
+ * <p>A pregenerated world is named {@code <name>.<yyyyMMdd-HHmmss>}, when its generation started, so names sort
+ * oldest first. Older ones named {@code <name>.<uuid>} (and {@code resource.<uuid>} for the overworld, from before it
+ * was called resource_world) still count, dated by their folder.
+ */
+public final class ResourceWorlds {
+
+    /** The live resource worlds, by name. */
+    public static final Map<String, World.Environment> WORLDS;
+
+    static {
+        var worlds = new LinkedHashMap<String, World.Environment>();
+        worlds.put(Worlds.RESOURCE, World.Environment.NORMAL);
+        worlds.put(Worlds.RESOURCE_NETHER, World.Environment.NETHER);
+        worlds.put(Worlds.RESOURCE_END, World.Environment.THE_END);
+        WORLDS = Map.copyOf(worlds);
+    }
+
+    static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+    private static final ZoneId ZONE = ZoneId.of("America/Los_Angeles");
+    private static final String UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+    // the overworld's old name, before it was resource_world
+    private static final Map<String, String> LEGACY_PREFIX = Map.of(Worlds.RESOURCE, "resource");
+
+    /** A pregenerated world: its folder and when it was made (epoch millis). */
+    public record Pregenerated(String name, Path folder, long createdAt) {
+    }
+
+    private ResourceWorlds() {
+    }
+
+    /** Where every world's folder lives: {@code <level>/dimensions/minecraft}. */
+    public static Path dimensions() {
+        return Bukkit.getServer().getLevelDirectory().resolve("dimensions").resolve("minecraft");
+    }
+
+    /** A new pregenerated world's name: the live world's, and when it's made. */
+    public static String newName(String world, LocalDateTime now) {
+        return world + "." + STAMP.format(now);
+    }
+
+    public static String newName(String world) {
+        return newName(world, LocalDateTime.now(ZONE));
+    }
+
+    /**
+     * When a folder named as a pregenerated world for {@code world} was made, from its name; empty for an old uuid
+     * name (dated by the folder instead); null if it isn't one at all.
+     */
+    static OptionalLong createdAt(String folderName, String world) {
+        var stamped = Pattern.compile(Pattern.quote(world) + "\\.(\\d{8}-\\d{6})(?:-\\d+)?").matcher(folderName);
+        if (stamped.matches()) {
+            try {
+                return OptionalLong.of(LocalDateTime.parse(stamped.group(1), STAMP).atZone(ZONE).toInstant().toEpochMilli());
+            } catch (DateTimeParseException e) {
+                return null;
+            }
+        }
+        var prefixes = new ArrayList<>(List.of(world));
+        if (LEGACY_PREFIX.containsKey(world)) prefixes.add(LEGACY_PREFIX.get(world));
+        for (var prefix : prefixes) {
+            if (folderName.matches(Pattern.quote(prefix) + "\\." + UUID)) return OptionalLong.empty();
+        }
+        return null;
+    }
+
+    /** The pregenerated worlds waiting to replace {@code world}, oldest first, leaving out any that are loaded. */
+    public static List<Pregenerated> available(String world) {
+        var dir = dimensions();
+        if (!Files.isDirectory(dir)) return List.of();
+        var found = new ArrayList<Pregenerated>();
+        try (Stream<Path> paths = Files.list(dir)) {
+            paths.filter(Files::isDirectory).forEach(path -> {
+                var name = path.getFileName().toString();
+                var created = createdAt(name, world);
+                // a loaded one is still being generated
+                if (created == null || Bukkit.getWorld(name) != null) return;
+                long when = created.isPresent() ? created.getAsLong() : path.toFile().lastModified();
+                found.add(new Pregenerated(name, path, when));
+            });
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        found.sort(Comparator.comparingLong(Pregenerated::createdAt).thenComparing(Pregenerated::name));
+        return found;
+    }
+
+    /** How many full sets (one of each resource world) are waiting: the resets left. */
+    public static int resetsLeft() {
+        return WORLDS.keySet().stream().mapToInt(world -> available(world).size()).min().orElse(0);
+    }
+}

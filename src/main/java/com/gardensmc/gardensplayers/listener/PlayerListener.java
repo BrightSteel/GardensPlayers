@@ -51,6 +51,8 @@ public class PlayerListener implements Listener {
                     }
                 });
 
+        com.gardensmc.gardensplayers.resourceworld.ResetResourceHandler.INSTANCE.onJoin(player);
+        com.gardensmc.gardensplayers.resourceworld.ResetResourceHandler.INSTANCE.warnOnJoin(player);
         com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onJoin(player);
         com.gardensmc.gardensplayers.title.Titles.INSTANCE.load(player.getUniqueId());
 
@@ -63,6 +65,7 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent e) {
         new PlayerEntryHandler(e.getPlayer().getUniqueId()).updateLastLocation();
         OnlinePlayerCache.INSTANCE.getOnlinePlayerData(e.getPlayer().getUniqueId()).clearAfk();
+        com.gardensmc.gardensplayers.resourceworld.ResetResourceHandler.INSTANCE.onQuit(e.getPlayer());
         com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE.onQuit(e.getPlayer().getUniqueId());
         com.gardensmc.gardensplayers.title.Titles.INSTANCE.unload(e.getPlayer().getUniqueId());
     }

@@ -14,13 +14,17 @@ public class GenResourceCommand implements CommandExecutor {
         if (!sender.hasPermission("gplayers.genresource")) {
             return false;
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("status")) {
+            sender.sendMessage(GenResourceHandler.INSTANCE.describe());
+            return true;
+        }
         int count;
         World.Environment env;
         try {
             count = (args.length > 0) ? Integer.parseInt(args[0]) : 1;
             env = (args.length > 1) ? World.Environment.valueOf(args[1].toUpperCase()) : null;
         } catch (IllegalArgumentException e) {
-            sender.sendMessage("Usage: /genresource [count] [normal|nether|the_end]");
+            sender.sendMessage("Usage: /genresource [count] [normal|nether|the_end] | status");
             return true;
         }
         if (count < 1) {
