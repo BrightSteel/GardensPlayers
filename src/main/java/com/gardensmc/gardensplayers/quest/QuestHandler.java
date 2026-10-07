@@ -66,11 +66,11 @@ public class QuestHandler {
         for (int i = 0; i < DAILY_TASK_COUNT; i++) {
             // wrap around the shuffled pool if there are fewer templates than needed (categories may repeat)
             var template = pool.get(i % pool.size());
-            var reward = rollReward(gemBudget);
-            if (reward.type() == RewardType.GEMS) {
-                gemBudget -= reward.amount();
+            var task = template.generate(rollReward(gemBudget));
+            if (task.getReward().type() == RewardType.GEMS) {
+                gemBudget -= task.getReward().amount();
             }
-            tasks.add(template.generate(reward));
+            tasks.add(task);
         }
 
         dailyTasks = List.copyOf(tasks);
@@ -80,8 +80,8 @@ public class QuestHandler {
 
     /**
      * Rolls a reward for a task, respecting the remaining daily gem budget. If gems come up but the budget is
-     * exhausted, a non-gem reward is chosen instead; if only a little budget remains, the gem reward is capped to
-     * it (so the last gem or two can still be awarded).
+     * exhausted, a non-gem reward is chosen instead. A gem reward here is the most the task may pay (the budget left,
+     * up to the usual most); the task pays less if it asks little (see {@link TaskTemplate#generate}).
      */
     private TaskReward rollReward(int gemBudget) {
         var random = ThreadLocalRandom.current();
@@ -94,7 +94,7 @@ public class QuestHandler {
             return TaskReward.random(random.nextBoolean() ? RewardType.XP : RewardType.ACORNS);
         }
         // don't let a single gem reward exceed the remaining daily budget
-        return new TaskReward(RewardType.GEMS, Math.min(RewardType.GEMS.randomAmount(), gemBudget));
+        return new TaskReward(RewardType.GEMS, Math.min(RewardType.GEMS.getMax(), gemBudget));
     }
 
     // ---- persistence ----

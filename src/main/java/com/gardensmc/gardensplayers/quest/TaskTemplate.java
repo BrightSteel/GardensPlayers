@@ -36,10 +36,14 @@ public class TaskTemplate {
         var random = ThreadLocalRandom.current();
         var target = targets.get(random.nextInt(targets.size()));
         var amount = random.nextInt(minAmount, maxAmount + 1);
+        // acorns and gems pay by how much the task asks, from the bottom of its range to the top
+        double difficulty = maxAmount > minAmount ? (amount - minAmount) / (double) (maxAmount - minAmount) : 0.5;
         if (reward.type() == RewardType.ACORNS) {
-            // acorns pay by how much the task asks, from the bottom of its range to the top
-            double difficulty = maxAmount > minAmount ? (amount - minAmount) / (double) (maxAmount - minAmount) : 0.5;
             reward = new TaskReward(RewardType.ACORNS, RewardType.ACORNS.amountFor(difficulty));
+        } else if (reward.type() == RewardType.GEMS) {
+            // the easiest third pays 1, the middle 2, the hardest 3; never more than the reward allows (the budget)
+            int gems = 1 + (int) Math.min(2, Math.floor(difficulty * 3));
+            reward = new TaskReward(RewardType.GEMS, Math.min(gems, reward.amount()));
         }
 
         var description = descriptionFormat
