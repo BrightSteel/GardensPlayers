@@ -18,6 +18,10 @@ public class RtpCommand extends PlayerExecutorCommand {
     @Override
     public void execute(Player executor, String[] args) {
         super.execute(executor, args);
+        if (!com.gardensmc.gardensplayers.GardensPlayers.config.isRtpEnabled()) {
+            sendMessage(executor, "<red>Random teleport is turned off on this server.");
+            return;
+        }
         if (args.length == 0) {
             if (BedrockUtil.isBedrock(executor)) {
                 BedrockRtpMenu.open(executor);

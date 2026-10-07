@@ -14,3 +14,6 @@ messages:
   mainColor: '<green>'
   errorColor: '<red>'
 resourceWorldRadius: 8000
+# /rtp. Finding safe spots ahead of time generates chunks, so a dev server can turn it off.
+rtp:
+  enabled: true

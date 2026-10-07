@@ -13,6 +13,8 @@ public class Config {
     private final String errorColor;
     private final String mainColor;
     private final int resourceWorldRadius;
+    /** Whether /rtp works and spots are found ahead of time (which generates chunks; off on a dev server). */
+    private final boolean rtpEnabled;
 
     public Config(FileConfiguration configuration) {
         var economy = configuration.getConfigurationSection("economy");
@@ -24,5 +26,6 @@ public class Config {
         errorColor = messages.getString("errorColor");
         mainColor = messages.getString("mainColor");
         resourceWorldRadius = configuration.getInt("resourceWorldRadius");
+        rtpEnabled = configuration.getBoolean("rtp.enabled", true);
     }
 }

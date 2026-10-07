@@ -48,6 +48,9 @@ public class RtpHandler {
     }
 
     public void queueLocations() {
+        if (!GardensPlayers.config.isRtpEnabled()) {
+            return;
+        }
         // only worlds players can RTP to - generating spots in every loaded world wasted chunk loads
         Bukkit.getWorlds().stream()
                 .filter(world -> RTP_WORLDS.contains(world.getName()))

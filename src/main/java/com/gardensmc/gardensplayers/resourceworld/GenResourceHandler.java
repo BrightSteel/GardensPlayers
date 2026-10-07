@@ -37,6 +37,8 @@ public class GenResourceHandler {
     // ticks waited since Chunky stopped for its last chunks to report in (it stops before they all have)
     private int settling;
     private static final int SETTLE_TICKS = 15; // 30 seconds at a tick every 2
+    // checks in a row GardensFurniture had nothing left to place in the world (scans can still be starting up)
+    private int furnitureIdle;
     private int total;
     private Audience requestor;
 
@@ -65,7 +67,9 @@ public class GenResourceHandler {
         }
         var line = "Generating " + (finished + 1) + " of " + total + ": " + generating;
         var chunky = GardensPlayers.chunkyAPI;
-        return line + (generating != null && chunky != null && chunky.isRunning(generating) ? " (Chunky is filling it)" : "");
+        if (generating != null && chunky != null && chunky.isRunning(generating)) return line + " (Chunky is filling it)";
+        int furniture = generating == null ? 0 : furniturePending(generating);
+        return line + (furniture > 0 ? " (placing furniture: " + furniture + " left)" : "");
     }
 
     public void tick() {
@@ -89,6 +93,7 @@ public class GenResourceHandler {
             generating = uniqueName(world);
             filled = false;
             settling = 0;
+            furnitureIdle = 0;
             var created = new WorldCreator(generating).environment(WORLDS.get(world)).createWorld();
             if (created == null) {
                 GardensPlayers.plugin.getLogger().severe("Failed to create resource world " + generating + ", stopping generation");
@@ -107,6 +112,10 @@ public class GenResourceHandler {
             GardensPlayers.plugin.getLogger().info("Pregenerating " + generating + " (" + (finished + 1) + "/" + total + ")");
         } else if (!chunky.isRunning(generating) && !filled && settling++ < SETTLE_TICKS) {
             // Chunky's task ends a moment before its last chunks finish and the 100% report arrives
+        } else if (!chunky.isRunning(generating) && filled && furnitureIdle < 3) {
+            // GardensFurniture swaps world-gen marker blocks for furniture as chunks generate; anything still queued
+            // when the world unloads would be dropped for good, so wait until it's had nothing to do a few times
+            furnitureIdle = furniturePending(generating) == 0 ? furnitureIdle + 1 : 0;
         } else if (!chunky.isRunning(generating)) {
             // saved on the way out: Chunky's chunks may not all be on disk yet
             var done = generating;
@@ -132,6 +141,10 @@ public class GenResourceHandler {
                 tick();
             }
         }
+    }
+
+    private static int furniturePending(String world) {
+        return com.gardensmc.gardensfurniture.loader.ChunkFurnitureLoader.INSTANCE.pending(world);
     }
 
     // when, to the second; two in the same second (not in practice: each takes minutes) get a suffix
