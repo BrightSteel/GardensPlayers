@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 public class OnlinePlayerData {
 
     private static final int AUTO_AFK_IN_TICKS = 6000;
-    private static final int AFK_KICK_IN_TICKS = 18000;
+    private static final int AFK_KICK_IN_TICKS = 36000; // 30 minutes without moving
 
     private boolean AFK;
     private int afkTick;
