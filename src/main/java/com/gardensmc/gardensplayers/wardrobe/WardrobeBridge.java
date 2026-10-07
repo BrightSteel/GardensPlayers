@@ -28,6 +28,12 @@ public final class WardrobeBridge {
     private WardrobeBridge() {
     }
 
+    /** A new item of an EnderWardrobe skin (skins.yml id), for the shop; null without EnderWardrobe or such a skin. */
+    @org.jetbrains.annotations.Nullable
+    public static org.bukkit.inventory.ItemStack skinItem(String id) {
+        return api == null ? null : api.skinItem(id);
+    }
+
     public static void enable(Plugin plugin) {
         api = Bukkit.getServicesManager().load(WardrobeApi.class);
         if (api == null) {

@@ -17,6 +17,8 @@ public class ShopItem {
     private final Material material;
     private final String furnitureId;
     private final String serverItem;
+    /** An EnderWardrobe skin, by its skins.yml id. */
+    private final String wardrobeSkin;
     private final int buyPrice;
     private final int sellPrice;
     private final ShopCurrency currency;
@@ -28,6 +30,7 @@ public class ShopItem {
         this.material = materialStr == null ? null : Material.valueOf(materialStr.toUpperCase());
         this.furnitureId = shopItemSection.getString("furniture_id");
         this.serverItem = shopItemSection.getString("server_item");
+        this.wardrobeSkin = shopItemSection.getString("wardrobe_skin");
         this.buyPrice = shopItemSection.getInt("buy_price", -1);
         this.sellPrice = shopItemSection.getInt("sell_price", -1);
         var currencyStr = shopItemSection.getString("currency");
@@ -45,6 +48,9 @@ public class ShopItem {
         }
         if (serverItem != null) {
             return ItemEdit.get().getServerStorage().getItem(serverItem);
+        }
+        if (wardrobeSkin != null) {
+            return com.gardensmc.gardensplayers.wardrobe.WardrobeBridge.skinItem(wardrobeSkin);
         }
         return null;
     }
