@@ -23,9 +23,9 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots: tells it which Gardens items go in
- * them, opens and saves the worn backpack through it, keeps the worn backpack on while it's open, and once moves the
- * old wardrobes (this plugin's wardrobes table) over to it.
+ * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots and skins: tells it which Gardens items
+ * go in the slots and how GardensFurniture's old skins were made, opens and saves the worn backpack through it, keeps
+ * the worn backpack on while it's open, and once moves the old wardrobes (this plugin's wardrobes table) over to it.
  */
 public final class WardrobeBridge implements Listener {
 
@@ -41,6 +41,7 @@ public final class WardrobeBridge implements Listener {
             return;
         }
         api.addProvider(WardrobeBridge::slotOf);
+        api.addLegacyReader(new OldSkins());
         Bukkit.getPluginManager().registerEvents(new WardrobeBridge(), plugin);
         importOldWardrobes(plugin);
     }
