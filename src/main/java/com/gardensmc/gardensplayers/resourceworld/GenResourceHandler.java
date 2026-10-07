@@ -39,6 +39,15 @@ public class GenResourceHandler {
     private static final int SETTLE_TICKS = 15; // 30 seconds at a tick every 2
     // checks in a row GardensFurniture had nothing left to place in the world (scans can still be starting up)
     private int furnitureIdle;
+    /**
+     * A fail-safe: Chunky is paused while this many world-gen furniture blocks wait to be placed in the world, and
+     * resumed once they're down to {@link #FURNITURE_RESUME}, so a backlog can't grow until the server runs out of
+     * memory. (Normally GardensFurniture keeps up: its tick_budget_ms_empty is set high on a generating machine.)
+     */
+    static final int FURNITURE_PAUSE = 2_000_000;
+    static final int FURNITURE_RESUME = 200_000;
+    // we paused Chunky (isRunning is false while paused, which mustn't read as finished)
+    private boolean paused;
     private int total;
     private Audience requestor;
 
@@ -67,6 +76,7 @@ public class GenResourceHandler {
         }
         var line = "Generating " + (finished + 1) + " of " + total + ": " + generating;
         var chunky = GardensPlayers.chunkyAPI;
+        if (paused) return line + " (Chunky paused while " + furniturePending(generating) + " furniture blocks are placed)";
         if (generating != null && chunky != null && chunky.isRunning(generating)) return line + " (Chunky is filling it)";
         int furniture = generating == null ? 0 : furniturePending(generating);
         return line + (furniture > 0 ? " (placing furniture: " + furniture + " left)" : "");
@@ -94,6 +104,7 @@ public class GenResourceHandler {
             filled = false;
             settling = 0;
             furnitureIdle = 0;
+            paused = false;
             var created = new WorldCreator(generating).environment(WORLDS.get(world)).createWorld();
             if (created == null) {
                 GardensPlayers.plugin.getLogger().severe("Failed to create resource world " + generating + ", stopping generation");
@@ -110,6 +121,22 @@ public class GenResourceHandler {
                 return;
             }
             GardensPlayers.plugin.getLogger().info("Pregenerating " + generating + " (" + (finished + 1) + "/" + total + ")");
+        } else if (paused) {
+            if (furniturePending(generating) <= FURNITURE_RESUME) {
+                if (chunky.continueTask(generating)) {
+                    paused = false;
+                    GardensPlayers.plugin.getLogger().info("Resuming Chunky on " + generating + ": the furniture backlog has cleared");
+                } else {
+                    GardensPlayers.plugin.getLogger().severe("Chunky wouldn't resume " + generating + ", stopping generation");
+                    fail();
+                }
+            }
+        } else if (chunky.isRunning(generating) && furniturePending(generating) >= FURNITURE_PAUSE) {
+            if (chunky.pauseTask(generating)) {
+                paused = true;
+                GardensPlayers.plugin.getLogger().warning("Pausing Chunky on " + generating + ": " + furniturePending(generating)
+                        + " world-gen furniture blocks are waiting (raise GardensFurniture's tick_budget_ms_empty to keep up)");
+            }
         } else if (!chunky.isRunning(generating) && !filled && settling++ < SETTLE_TICKS) {
             // Chunky's task ends a moment before its last chunks finish and the 100% report arrives
         } else if (!chunky.isRunning(generating) && filled && furnitureIdle < 3) {
