@@ -36,6 +36,11 @@ public class TaskTemplate {
         var random = ThreadLocalRandom.current();
         var target = targets.get(random.nextInt(targets.size()));
         var amount = random.nextInt(minAmount, maxAmount + 1);
+        if (reward.type() == RewardType.ACORNS) {
+            // acorns pay by how much the task asks, from the bottom of its range to the top
+            double difficulty = maxAmount > minAmount ? (amount - minAmount) / (double) (maxAmount - minAmount) : 0.5;
+            reward = new TaskReward(RewardType.ACORNS, RewardType.ACORNS.amountFor(difficulty));
+        }
 
         var description = descriptionFormat
                 .replace("{amount}", String.valueOf(amount))

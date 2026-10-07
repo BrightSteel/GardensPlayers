@@ -23,7 +23,7 @@ public class FarmShopMenu extends Menu {
             " aaaa    ",
             "         "
     };
-    public static final int DAILY_SELL_LIMIT = 64;
+    public static final int DAILY_SELL_LIMIT = 192;
     private final ItemStack backButton = GardensFurniture.itemRegistry.buildItem("shop_back_button");
     private final ItemStack nextButton = GardensFurniture.itemRegistry.buildItem("shop_next_button");
 

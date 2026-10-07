@@ -26,7 +26,7 @@ public enum RewardType {
             GemsCurrencyHandler.INSTANCE.addCurrency(player, amount);
         }
     },
-    ACORNS(100, 1000, AcornsCurrencyHandler.INSTANCE.symbol()) {
+    ACORNS(50, 300, AcornsCurrencyHandler.INSTANCE.symbol()) {
         @Override
         public void grant(Player player, int amount) {
             AcornsCurrencyHandler.INSTANCE.addCurrency(player, amount);
@@ -48,6 +48,12 @@ public enum RewardType {
 
     public int randomAmount() {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
+    }
+
+    /** The amount for a task this hard (0 the easiest its kind asks, 1 the hardest), to the nearest 5. */
+    public int amountFor(double difficulty) {
+        double clamped = Math.max(0, Math.min(1, difficulty));
+        return (int) Math.round((min + (max - min) * clamped) / 5) * 5;
     }
 
     /**
