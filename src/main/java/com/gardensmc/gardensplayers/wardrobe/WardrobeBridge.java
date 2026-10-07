@@ -1,18 +1,12 @@
 package com.gardensmc.gardensplayers.wardrobe;
 
 import com.enderbeam.enderwardrobe.api.WardrobeApi;
-import com.enderbeam.enderwardrobe.api.WardrobeChangeEvent;
 import com.gardensmc.gardensfurniture.GardensFurniture;
 import com.gardensmc.gardensfurniture.custom.item.CustomBackpackItem;
 import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import com.gardensmc.gardensplayers.database.entry.MySQLEntry;
-import com.gardensmc.gardensplayers.menu.BackpackGui;
 import de.tr7zw.nbtapi.NBT;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +17,11 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots and skins: tells it which Gardens items
- * go in the slots and how GardensFurniture's old skins were made, opens and saves the worn backpack through it, keeps
- * the worn backpack on while it's open, and once moves the old wardrobes (this plugin's wardrobes table) over to it.
+ * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots, skins and backpack storage: tells it
+ * which Gardens items go in the slots, which are backpacks and how many rows they hold, and how GardensFurniture's old
+ * skins were made, and once moves the old wardrobes (this plugin's wardrobes table) over to it.
  */
-public final class WardrobeBridge implements Listener {
+public final class WardrobeBridge {
 
     private static WardrobeApi api;
 
@@ -42,7 +36,7 @@ public final class WardrobeBridge implements Listener {
         }
         api.addProvider(WardrobeBridge::slotOf);
         api.addLegacyReader(new OldSkins());
-        Bukkit.getPluginManager().registerEvents(new WardrobeBridge(), plugin);
+        api.addBackpackProvider(WardrobeBridge::rowsOf);
         importOldWardrobes(plugin);
     }
 
@@ -58,25 +52,27 @@ public final class WardrobeBridge implements Listener {
         return custom.getWardrobeSlot();
     }
 
-    @Nullable
-    public static ItemStack wornBackpack(Player player) {
-        return api == null ? null : api.worn(player, "backpack");
-    }
-
-    public static boolean saveBackpack(Player player, ItemStack backpack) {
-        return api != null && api.setWorn(player, "backpack", backpack);
-    }
-
     /**
-     * While the worn backpack is open its contents are being edited: it stays on until it's closed.
+     * GardensFurniture's backpacks hold their item config's rows, or as many as an Expansion Rune gave them back when
+     * this plugin stored their contents (GardensBackpack.Rows).
      */
-    @EventHandler(ignoreCancelled = true)
-    public void onChange(WardrobeChangeEvent e) {
-        if (!"backpack".equals(e.getSlot())) return;
-        if (e.getPlayer().getOpenInventory().getTopInventory().getHolder() instanceof BackpackGui gui && gui.isWardrobeBackpack()) {
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(MiniMessage.miniMessage().deserialize("<red>Close your backpack first."));
-        }
+    private static int rowsOf(ItemStack item) {
+        if (!(GardensFurniture.itemRegistry.getCustomItem(item) instanceof CustomBackpackItem backpack)) return 0;
+        Integer upgraded = NBT.get(item, nbt -> {
+            var compound = nbt.getCompound("GardensBackpack");
+            return compound != null && compound.hasTag("Rows") ? compound.getInteger("Rows") : null;
+        });
+        return upgraded != null && upgraded > 0 ? upgraded : backpack.getRows();
+    }
+
+    /** How many rows a backpack holds now, or 0 for anything else. */
+    public static int backpackRows(ItemStack item) {
+        return api == null ? 0 : api.backpackRows(item);
+    }
+
+    @Nullable
+    public static ItemStack withBackpackRows(ItemStack backpack, int rows) {
+        return api == null ? null : api.withBackpackRows(backpack, rows);
     }
 
     // ---- Moving the old wardrobes over ----
