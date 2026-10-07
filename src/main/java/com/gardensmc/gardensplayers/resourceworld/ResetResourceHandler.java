@@ -75,6 +75,7 @@ public class ResetResourceHandler {
             }
             replacements.put(name, available.getFirst().folder());
         }
+        var used = replacements.values().stream().map(p -> p.getFileName().toString()).toList();
         resetting = true;
         GardensPlayers.plugin.getLogger().info("Resetting resource worlds with " + replacements.values().stream().map(p -> p.getFileName().toString()).toList());
         Bukkit.getServer().broadcast(MiniMessage.miniMessage().deserialize("Resource worlds are resetting, they will be temporarily unavailable"));
@@ -116,6 +117,8 @@ public class ResetResourceHandler {
                 GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Resource world reset failed while swapping folders", error);
             } else {
                 recordReset();
+                // the used worlds are gone from disk: drop them from storage and download the next set
+                ResourceWorldStorage.INSTANCE.afterReset(used);
             }
             WORLDS.keySet().forEach(this::createWorld);
             renderMap();
@@ -123,7 +126,7 @@ public class ResetResourceHandler {
             Bukkit.getServer().broadcast(MiniMessage.miniMessage().deserialize(error == null
                     ? "Resource worlds have been reset."
                     : "<red>Resource world reset ran into a problem, staff have been notified."));
-            int left = ResourceWorlds.resetsLeft();
+            int left = setsLeft();
             tell(sender, (error == null ? "<green>Reset done." : "<red>Reset failed while swapping folders, see the console.") + " <gray>Resets left: <white>" + left);
             GardensPlayers.plugin.getLogger().info("Resource world resets left: " + left);
             checkSupply();
@@ -132,13 +135,27 @@ public class ResetResourceHandler {
 
     // ---- running out ----
 
-    /** Warns the console and online staff when few resets are left. */
+    /** Resets left: full sets on disk or in storage (a downloaded set still in storage counts once). */
+    public static int setsLeft() {
+        var storage = ResourceWorldStorage.INSTANCE;
+        int least = Integer.MAX_VALUE;
+        for (var world : WORLDS.keySet()) {
+            var names = new java.util.HashSet<String>();
+            ResourceWorlds.available(world).forEach(p -> names.add(p.name()));
+            names.addAll(storage.remote(world));
+            least = Math.min(least, names.size());
+        }
+        return least == Integer.MAX_VALUE ? 0 : least;
+    }
+
+    /** Warns the console and online staff when few resets are left (on a server that resets). */
     public void checkSupply() {
+        if (!GardensPlayers.config.isResourceResetEnabled()) return;
         var unfinished = ResourceWorlds.unfinished();
         if (!unfinished.isEmpty() && GenResourceHandler.INSTANCE.describe().startsWith("Not generating")) {
             GardensPlayers.plugin.getLogger().warning("Half-made pregenerated resource worlds (skipped by resets, safe to delete): " + unfinished);
         }
-        int left = ResourceWorlds.resetsLeft();
+        int left = setsLeft();
         if (left >= WARN_AT) return;
         var message = left == 0
                 ? "No pregenerated resource worlds left: the next reset will fail. Run /genresource 3 (or more)."
@@ -149,8 +166,8 @@ public class ResetResourceHandler {
 
     /** For a joining staff member: the same warning, just to them. */
     public void warnOnJoin(Player player) {
-        if (!player.hasPermission(PERMISSION)) return;
-        int left = ResourceWorlds.resetsLeft();
+        if (!player.hasPermission(PERMISSION) || !GardensPlayers.config.isResourceResetEnabled()) return;
+        int left = setsLeft();
         if (left < WARN_AT) {
             tell(player, "<gold>" + (left == 0 ? "No pregenerated resource worlds left: the next reset will fail."
                     : "Only " + left + " resource world reset" + (left == 1 ? "" : "s") + " left.") + " <gray>Run /genresource.");
@@ -159,12 +176,17 @@ public class ResetResourceHandler {
 
     /** /resetresource status: the pregenerated worlds waiting, oldest (next) first. */
     public void status(CommandSender sender) {
-        tell(sender, "<gold>Resource world resets left: <white>" + ResourceWorlds.resetsLeft()
-                + " <gray>(last reset: " + lastReset() + ")");
+        var config = GardensPlayers.config;
+        tell(sender, "<gold>Resource world resets left: <white>" + setsLeft() + " <gray>(ready on disk: " + ResourceWorlds.resetsLeft()
+                + ", last reset: " + lastReset() + ")");
+        tell(sender, " <gray>Monthly reset: " + (config.isResourceResetEnabled() ? "on, day " + config.getResourceResetDay() + " (Los Angeles)" : "off"));
         for (var name : WORLDS.keySet()) {
             var available = ResourceWorlds.available(name);
-            tell(sender, " <gray>" + name + ": <white>" + available.size() + (available.isEmpty() ? "" : " <gray>next: " + available.getFirst().name()));
+            tell(sender, " <gray>" + name + ": <white>" + available.size() + " on disk"
+                    + (ResourceWorldStorage.INSTANCE.enabled() ? ", " + ResourceWorldStorage.INSTANCE.remote(name).size() + " in storage" : "")
+                    + (available.isEmpty() ? "" : " <gray>next: " + available.getFirst().name()));
         }
+        tell(sender, " <gray>" + ResourceWorldStorage.INSTANCE.describe());
         var unfinished = ResourceWorlds.unfinished();
         if (!unfinished.isEmpty()) {
             tell(sender, " <red>Half-made (skipped, safe to delete): <white>" + String.join(", ", unfinished));
@@ -176,6 +198,34 @@ public class ResetResourceHandler {
         for (var player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission(PERMISSION)) tell(player, message);
         }
+    }
+
+    // ---- once a month ----
+
+    /**
+     * Resets if this month's reset is due: it's on or after the reset day (Los Angeles) and there's been no reset
+     * this month. Run at startup (just after the midnight restart, with nobody online) and hourly. With no reset on
+     * record (a new install), this month counts as done, so deploying mid-month doesn't reset straight away.
+     */
+    public void checkMonthly() {
+        var config = GardensPlayers.config;
+        if (!config.isResourceResetEnabled() || resetting) return;
+        var zone = java.time.ZoneId.of("America/Los_Angeles");
+        var today = java.time.LocalDate.now(zone);
+        var last = lastResetAt();
+        if (last == null) {
+            recordBaseline();
+            GardensPlayers.plugin.getLogger().info("Monthly resource world resets start on day " + config.getResourceResetDay() + " of next month");
+            return;
+        }
+        if (!isDue(today, java.time.YearMonth.from(last.atZone(zone)), config.getResourceResetDay())) return;
+        GardensPlayers.plugin.getLogger().info("Monthly resource world reset is due (last: " + last + ")");
+        triggerReset(Bukkit.getConsoleSender());
+    }
+
+    /** Whether a monthly reset is due: on or after the reset day, in a later month than the last reset. */
+    static boolean isDue(java.time.LocalDate today, java.time.YearMonth lastReset, int day) {
+        return today.getDayOfMonth() >= day && java.time.YearMonth.from(today).isAfter(lastReset);
     }
 
     // ---- players left inside a reset world ----
@@ -209,6 +259,27 @@ public class ResetResourceHandler {
 
     private String lastReset() {
         return YamlConfiguration.loadConfiguration(stateFile()).getString("last", "never");
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private Instant lastResetAt() {
+        var last = YamlConfiguration.loadConfiguration(stateFile()).getString("last");
+        try {
+            return last == null ? null : Instant.parse(last);
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    // a reset time with no reset behind it: counts this month as done
+    private void recordBaseline() {
+        var yaml = YamlConfiguration.loadConfiguration(stateFile());
+        yaml.set("last", Instant.now().toString());
+        try {
+            yaml.save(stateFile());
+        } catch (IOException e) {
+            GardensPlayers.plugin.getLogger().log(Level.WARNING, "Couldn't save resource-resets.yml", e);
+        }
     }
 
     private void recordReset() {

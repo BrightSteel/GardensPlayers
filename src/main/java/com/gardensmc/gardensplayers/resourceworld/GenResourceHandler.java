@@ -132,11 +132,14 @@ public class GenResourceHandler {
                 return;
             }
             ResourceWorlds.markUnfinished(folder, false);
+            // the generating machine sends it to storage (and frees the disk) while the next one generates
+            ResourceWorldStorage.INSTANCE.uploadFinished();
             finished++;
             GardensPlayers.plugin.getLogger().info("Pregenerated " + done + " (" + finished + "/" + total + ")");
             if (queue.isEmpty()) {
                 status = GenResourceStatus.AVAILABLE;
-                tell("<green>Finished generating " + total + " resource worlds. Resets ready: " + ResourceWorlds.resetsLeft());
+                tell("<green>Finished generating " + total + " resource worlds."
+                        + (ResourceWorldStorage.INSTANCE.enabled() && GardensPlayers.config.isStorageUploadGenerated() ? " They're uploading to storage (/resetresource status)." : ""));
             } else {
                 tick();
             }

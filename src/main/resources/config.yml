@@ -17,3 +17,22 @@ resourceWorldRadius: 8000
 # /rtp. Finding safe spots ahead of time generates chunks, so a dev server can turn it off.
 rtp:
   enabled: true
+resourceWorlds:
+  # Swap in fresh resource worlds once a month (the first startup or hourly check on/after this day, Los Angeles time).
+  reset:
+    enabled: true
+    day-of-month: 1
+  # Pregenerated worlds kept in Cloudflare R2 (or any S3-compatible storage) instead of on this server's disk.
+  storage:
+    enabled: false
+    # https://<account id>.r2.cloudflarestorage.com
+    endpoint: ''
+    bucket: ''
+    access-key: ''
+    secret-key: ''
+    region: auto
+    prefix: 'resource-worlds/'
+    # The machine that runs /genresource: upload each finished world, then delete it here.
+    upload-generated: false
+    # A server that resets: keep this many sets downloaded ahead of the next reset (each set ~17 GB at radius 8000).
+    keep-local: 1
