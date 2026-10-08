@@ -200,7 +200,18 @@ public class GenResourceHandler {
         return loaded == null ? 0 : loaded.getChunkCount();
     }
 
+    /**
+     * How full memory is with what's actually still in use: the long-lived heap as the last collection left it.
+     * (Used-right-now counts garbage not yet collected, which routinely reaches 80% with nothing wrong.)
+     */
     private static double memoryUsed() {
+        for (var pool : java.lang.management.ManagementFactory.getMemoryPoolMXBeans()) {
+            var afterGc = pool.getCollectionUsage();
+            if (pool.getType() == java.lang.management.MemoryType.HEAP && afterGc != null && pool.getName().contains("Old")) {
+                long max = pool.getUsage().getMax() > 0 ? pool.getUsage().getMax() : Runtime.getRuntime().maxMemory();
+                return afterGc.getUsed() / (double) max;
+            }
+        }
         var runtime = Runtime.getRuntime();
         return (runtime.totalMemory() - runtime.freeMemory()) / (double) runtime.maxMemory();
     }
