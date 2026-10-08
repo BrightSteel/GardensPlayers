@@ -302,11 +302,17 @@ public class ResetResourceHandler {
         }
     }
 
+    // the new worlds have the old ones' names, so the web map would go on showing the old ground: clear and redraw it
     private void renderMap() {
-        if (Bukkit.getPluginManager().getPlugin("squaremap") == null) return;
+        var plugins = Bukkit.getPluginManager();
         WORLDS.keySet().forEach(worldName -> {
-            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "squaremap resetmap " + worldName);
-            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "squaremap fullrender " + worldName);
+            if (plugins.getPlugin("EnderMap") != null) {
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "emap resetmap " + worldName);
+            }
+            if (plugins.getPlugin("squaremap") != null) {
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "squaremap resetmap " + worldName);
+                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "squaremap fullrender " + worldName);
+            }
         });
     }
 
