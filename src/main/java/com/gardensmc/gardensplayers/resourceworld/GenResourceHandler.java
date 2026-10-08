@@ -40,12 +40,13 @@ public class GenResourceHandler {
     // checks in a row GardensFurniture had nothing left to place in the world (scans can still be starting up)
     private int furnitureIdle;
     /**
-     * A fail-safe: Chunky is paused while this many world-gen furniture blocks wait to be placed in the world, and
-     * resumed once they're down to {@link #FURNITURE_RESUME}, so a backlog can't grow until the server runs out of
-     * memory. (Normally GardensFurniture keeps up: its tick_budget_ms_empty is set high on a generating machine.)
+     * Chunky is paused while this many world-gen furniture blocks wait to be placed in the world, and resumed once
+     * they're down to {@link #FURNITURE_RESUME}: in the End, generation is far faster than furniture placement, so this
+     * is what paces it, and keeps the chunks waiting for furniture (held in memory) to a couple of thousand.
      */
-    static final int FURNITURE_PAUSE = 2_000_000;
-    static final int FURNITURE_RESUME = 200_000;
+    // about 2,000 End chunks' worth (the End has ~140 a chunk), which GardensFurniture holds loaded while it places
+    static final int FURNITURE_PAUSE = 300_000;
+    static final int FURNITURE_RESUME = 50_000;
     /**
      * The same for the server keeping up at all: paused while the world has this many chunks loaded (Chunky only keeps
      * a few hundred in flight, so a pile-up means the main thread isn't getting to unload them) or memory is this full,
