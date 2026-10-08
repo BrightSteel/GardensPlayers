@@ -17,6 +17,8 @@ public class Config {
     private final java.util.Map<String, Integer> resourceRadii;
     /** Whether /rtp works and spots are found ahead of time (which generates chunks; off on a dev server). */
     private final boolean rtpEnabled;
+    /** Whether the server restarts itself at midnight (off on a dev server, where it would cut long jobs short). */
+    private final boolean dailyRestartEnabled;
     /** Reset the resource worlds once a month, on this day (Los Angeles time), or never if disabled. */
     private final boolean resourceResetEnabled;
     private final int resourceResetDay;
@@ -63,6 +65,7 @@ public class Config {
         }
         resourceRadii = java.util.Map.copyOf(radii);
         rtpEnabled = configuration.getBoolean("rtp.enabled", true);
+        dailyRestartEnabled = configuration.getBoolean("daily-restart.enabled", true);
         resourceResetEnabled = configuration.getBoolean("resourceWorlds.reset.enabled", true);
         resourceResetDay = Math.max(1, Math.min(28, configuration.getInt("resourceWorlds.reset.day-of-month", 1)));
         storageEnabled = configuration.getBoolean("resourceWorlds.storage.enabled", false);

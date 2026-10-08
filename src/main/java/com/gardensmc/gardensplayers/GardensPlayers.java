@@ -135,7 +135,9 @@ public class GardensPlayers extends JavaPlugin {
         QuestHandler.INSTANCE.scheduleAutoSave();
 
         // schedule the daily server restart at midnight (America/Los_Angeles) with countdown warnings
-        RestartHandler.INSTANCE.scheduleNextRestart();
+        if (config.isDailyRestartEnabled()) {
+            RestartHandler.INSTANCE.scheduleNextRestart();
+        }
 
         // players already online (a plugin reload): load their streaks and titles as if they'd just joined
         for (var player : Bukkit.getOnlinePlayers()) {
