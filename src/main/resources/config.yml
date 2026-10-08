@@ -18,6 +18,12 @@ resourceWorldRadius: 8000
 rtp:
   enabled: true
 resourceWorlds:
+  # Border radius (blocks) of each resource world; pregenerated a further 250 out so the border never generates chunks.
+  # From prod's usage over 4 months: RTP spreads players over the whole overworld, while the Nether and End see far less.
+  radius:
+    resource_world: 6000
+    resource_nether: 4000
+    resource_the_end: 4000
   # Swap in fresh resource worlds once a month (the first startup or hourly check on/after this day, Los Angeles time).
   reset:
     enabled: true
@@ -34,5 +40,5 @@ resourceWorlds:
     prefix: 'resource-worlds/'
     # The machine that runs /genresource: upload each finished world, then delete it here.
     upload-generated: false
-    # A server that resets: keep this many sets downloaded ahead of the next reset (each set ~17 GB at radius 8000).
+    # A server that resets: keep this many sets downloaded ahead of the next reset (each set ~7-8 GB at the radii above).
     keep-local: 1

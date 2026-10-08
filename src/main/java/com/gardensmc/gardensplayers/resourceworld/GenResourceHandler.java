@@ -113,7 +113,7 @@ public class GenResourceHandler {
             }
             // until it's finished, a reset mustn't take it (a crash or restart would leave it half made)
             ResourceWorlds.markUnfinished(created.getWorldPath(), true);
-            var radius = GardensPlayers.config.getResourceWorldRadius() + 250;
+            var radius = GardensPlayers.config.resourceRadius(generating) + 250;
             if (!chunky.startTask(generating, "square", 0, 0, radius, radius, "concentric")) {
                 GardensPlayers.plugin.getLogger().severe("Chunky wouldn't start on " + generating + ", stopping generation");
                 Bukkit.unloadWorld(created, true);

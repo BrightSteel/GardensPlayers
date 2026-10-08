@@ -19,7 +19,9 @@ public class WorldListener implements Listener {
         world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
         world.setGameRule(GameRules.PLAYERS_SLEEPING_PERCENTAGE, 200);
         if (world.getName().contains("resource")) {
-            world.getWorldBorder().setSize(GardensPlayers.config.getResourceWorldRadius() * 2);
+            // centered on 0,0, so RTP (which keeps inside the border) and pregeneration agree
+            world.getWorldBorder().setCenter(0, 0);
+            world.getWorldBorder().setSize(GardensPlayers.config.resourceRadius(world.getName()) * 2);
         }
 
         // sync time

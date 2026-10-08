@@ -13,6 +13,8 @@ public class Config {
     private final String errorColor;
     private final String mainColor;
     private final int resourceWorldRadius;
+    // per resource world (resourceWorlds.radius), falling back to resourceWorldRadius
+    private final java.util.Map<String, Integer> resourceRadii;
     /** Whether /rtp works and spots are found ahead of time (which generates chunks; off on a dev server). */
     private final boolean rtpEnabled;
     /** Reset the resource worlds once a month, on this day (Los Angeles time), or never if disabled. */
@@ -31,6 +33,16 @@ public class Config {
     /** A server that resets: keep this many sets downloaded ahead. */
     private final int storageKeepLocal;
 
+    /**
+     * A resource world's border radius in blocks: for the live world or any pregenerated copy of it
+     * ({@code resource_world.<date>}; the old overworld name {@code resource.<uuid>} counts as resource_world).
+     */
+    public int resourceRadius(String worldName) {
+        var base = worldName.contains(".") ? worldName.substring(0, worldName.indexOf('.')) : worldName;
+        if (base.equals("resource")) base = "resource_world";
+        return resourceRadii.getOrDefault(base, resourceWorldRadius);
+    }
+
     public Config(FileConfiguration configuration) {
         var economy = configuration.getConfigurationSection("economy");
         currencySymbol = economy.getString("currencySymbol");
@@ -41,6 +53,12 @@ public class Config {
         errorColor = messages.getString("errorColor");
         mainColor = messages.getString("mainColor");
         resourceWorldRadius = configuration.getInt("resourceWorldRadius");
+        var radii = new java.util.HashMap<String, Integer>();
+        var radiusSection = configuration.getConfigurationSection("resourceWorlds.radius");
+        if (radiusSection != null) {
+            for (var key : radiusSection.getKeys(false)) radii.put(key, radiusSection.getInt(key));
+        }
+        resourceRadii = java.util.Map.copyOf(radii);
         rtpEnabled = configuration.getBoolean("rtp.enabled", true);
         resourceResetEnabled = configuration.getBoolean("resourceWorlds.reset.enabled", true);
         resourceResetDay = Math.max(1, Math.min(28, configuration.getInt("resourceWorlds.reset.day-of-month", 1)));
