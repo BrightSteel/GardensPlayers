@@ -53,10 +53,13 @@ public class Config {
         errorColor = messages.getString("errorColor");
         mainColor = messages.getString("mainColor");
         resourceWorldRadius = configuration.getInt("resourceWorldRadius");
+        // read key by key, and without a fallback argument: getConfigurationSection on a section the file only partly
+        // has comes back empty, and getInt(path, fallback) skips the plugin's defaults, so either way a server config
+        // with its own resourceWorlds: lost the radii (and generated at resourceWorldRadius, 8000)
         var radii = new java.util.HashMap<String, Integer>();
-        var radiusSection = configuration.getConfigurationSection("resourceWorlds.radius");
-        if (radiusSection != null) {
-            for (var key : radiusSection.getKeys(false)) radii.put(key, radiusSection.getInt(key));
+        for (var world : com.gardensmc.gardensplayers.resourceworld.ResourceWorlds.WORLDS.keySet()) {
+            int radius = configuration.getInt("resourceWorlds.radius." + world);
+            radii.put(world, radius > 0 ? radius : resourceWorldRadius);
         }
         resourceRadii = java.util.Map.copyOf(radii);
         rtpEnabled = configuration.getBoolean("rtp.enabled", true);

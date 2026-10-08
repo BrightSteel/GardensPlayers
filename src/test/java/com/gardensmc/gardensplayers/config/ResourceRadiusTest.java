@@ -25,6 +25,20 @@ class ResourceRadiusTest {
     }
 
     @Test
+    void aServerConfigWithItsOwnResourceWorldsSectionStillGetsTheDefaults() {
+        // like dev's: resourceWorlds.reset and .storage set, no .radius; the jar's config.yml is the defaults
+        var defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(
+                Objects.requireNonNull(ResourceRadiusTest.class.getResourceAsStream("/config.yml"))));
+        var server = new YamlConfiguration();
+        server.setDefaults(defaults);
+        server.set("resourceWorlds.reset.enabled", false);
+        server.set("resourceWorlds.storage.upload-generated", true);
+        var config = new Config(server);
+        assertEquals(6000, config.resourceRadius("resource_world"));
+        assertEquals(4000, config.resourceRadius("resource_the_end.20261008-090000"));
+    }
+
+    @Test
     void pregeneratedCopiesUseTheirWorldsRadius() {
         var config = defaults();
         assertEquals(6000, config.resourceRadius("resource_world.20261008-090000"));
