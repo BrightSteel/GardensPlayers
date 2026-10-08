@@ -1,6 +1,7 @@
 package com.gardensmc.gardensplayers.command.registered;
 
 import com.gardensmc.gardensplayers.resourceworld.GenResourceHandler;
+import com.gardensmc.gardensplayers.resourceworld.ResourceWorldStorage;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,11 +32,26 @@ public class GenResourceCommand implements CommandExecutor {
             sender.sendMessage("Count must be greater than 0");
             return true;
         }
-        if (GenResourceHandler.INSTANCE.triggerGeneration(sender, count, env)) {
-            sender.sendMessage("Started resource world generation");
-        } else {
+        if (GenResourceHandler.INSTANCE.isGenerating()) {
             sender.sendMessage("Generation already in progress!");
+            return true;
         }
+        // what's in storage counts toward the sets, so list it fresh first
+        var storage = ResourceWorldStorage.INSTANCE;
+        storage.refresh();
+        storage.afterQueued(() -> {
+            var make = GenResourceHandler.INSTANCE.triggerGeneration(sender, count, env);
+            if (make == null) {
+                sender.sendMessage("Generation already in progress!");
+                return;
+            }
+            var parts = new java.util.ArrayList<String>();
+            make.forEach((world, n) -> {
+                if (n > 0) parts.add(n + " " + world);
+            });
+            sender.sendMessage(parts.isEmpty() ? "Nothing to generate"
+                    : "Started resource world generation: " + String.join(", ", parts));
+        });
         return true;
     }
 }

@@ -62,22 +62,50 @@ public class GenResourceHandler {
     private int total;
     private Audience requestor;
 
-    /** Queues {@code count} sets: each of the three resource worlds, or only those of {@code environment}. */
-    public boolean triggerGeneration(Audience requestor, int count, @Nullable World.Environment environment) {
+    public boolean isGenerating() {
+        return status == GenResourceStatus.GENERATING;
+    }
+
+    /**
+     * Queues {@code count} of each world of {@code environment}; or, with none, enough to make {@code count} more full
+     * sets than there are now, counting what's waiting on disk and in storage. A run stopped partway (say after the
+     * End) left some worlds ahead of the others: those are topped up first, and nothing is made that has no set to go
+     * in. Returns how many of each world were queued (in order), or null if a run is already going.
+     */
+    @Nullable
+    public Map<String, Integer> triggerGeneration(Audience requestor, int count, @Nullable World.Environment environment) {
         if (status == GenResourceStatus.GENERATING) {
-            return false;
+            return null;
         }
-        this.requestor = requestor;
-        status = GenResourceStatus.GENERATING;
-        finished = 0;
-        for (int i = 0; i < count; i++) {
-            for (var world : WORLDS.entrySet()) {
-                if (environment == null || world.getValue() == environment) queue.add(world.getKey());
+        var have = new java.util.LinkedHashMap<String, Integer>();
+        for (var world : WORLDS.entrySet()) {
+            if (environment == null || world.getValue() == environment) {
+                have.put(world.getKey(), environment == null ? ResetResourceHandler.waiting(world.getKey()) : 0);
+            }
+        }
+        var make = toMake(have, count);
+        // set by set, so the first sets are whole before later ones start
+        int most = make.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        for (int i = 0; i < most; i++) {
+            for (var world : make.entrySet()) {
+                if (world.getValue() > i) queue.add(world.getKey());
             }
         }
         total = queue.size();
+        if (total == 0) return make;
+        this.requestor = requestor;
+        status = GenResourceStatus.GENERATING;
+        finished = 0;
         tick();
-        return true;
+        return make;
+    }
+
+    /** How many of each world make {@code sets} more full sets than the fewest of them make now. */
+    static Map<String, Integer> toMake(Map<String, Integer> have, int sets) {
+        int target = have.values().stream().mapToInt(Integer::intValue).min().orElse(0) + sets;
+        var make = new java.util.LinkedHashMap<String, Integer>();
+        have.forEach((world, n) -> make.put(world, Math.max(0, target - n)));
+        return make;
     }
 
     /** What's happening, for /genresource status. */

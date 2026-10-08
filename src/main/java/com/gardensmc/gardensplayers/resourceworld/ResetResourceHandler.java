@@ -137,15 +137,15 @@ public class ResetResourceHandler {
 
     /** Resets left: full sets on disk or in storage (a downloaded set still in storage counts once). */
     public static int setsLeft() {
-        var storage = ResourceWorldStorage.INSTANCE;
-        int least = Integer.MAX_VALUE;
-        for (var world : WORLDS.keySet()) {
-            var names = new java.util.HashSet<String>();
-            ResourceWorlds.available(world).forEach(p -> names.add(p.name()));
-            names.addAll(storage.remote(world));
-            least = Math.min(least, names.size());
-        }
-        return least == Integer.MAX_VALUE ? 0 : least;
+        return WORLDS.keySet().stream().mapToInt(ResetResourceHandler::waiting).min().orElse(0);
+    }
+
+    /** Finished replacements for one world, on disk or in storage (as of its last listing). */
+    public static int waiting(String world) {
+        var names = new java.util.HashSet<String>();
+        ResourceWorlds.available(world).forEach(p -> names.add(p.name()));
+        names.addAll(ResourceWorldStorage.INSTANCE.remote(world));
+        return names.size();
     }
 
     /** Warns the console and online staff when few resets are left (on a server that resets). */
