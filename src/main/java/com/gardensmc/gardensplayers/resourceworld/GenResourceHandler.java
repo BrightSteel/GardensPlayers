@@ -46,6 +46,15 @@ public class GenResourceHandler {
      */
     static final int FURNITURE_PAUSE = 2_000_000;
     static final int FURNITURE_RESUME = 200_000;
+    /**
+     * The same for the server keeping up at all: paused while the world has this many chunks loaded (Chunky only keeps
+     * a few hundred in flight, so a pile-up means the main thread isn't getting to unload them) or memory is this full,
+     * resumed once both are back down.
+     */
+    static final int CHUNKS_PAUSE = 20_000;
+    static final int CHUNKS_RESUME = 4_000;
+    static final double MEMORY_PAUSE = 0.80;
+    static final double MEMORY_RESUME = 0.60;
     // we paused Chunky (isRunning is false while paused, which mustn't read as finished)
     private boolean paused;
     private int total;
@@ -76,7 +85,8 @@ public class GenResourceHandler {
         }
         var line = "Generating " + (finished + 1) + " of " + total + ": " + generating;
         var chunky = GardensPlayers.chunkyAPI;
-        if (paused) return line + " (Chunky paused while " + furniturePending(generating) + " furniture blocks are placed)";
+        if (paused) return line + " (Chunky paused for the server to catch up: " + furniturePending(generating) + " furniture blocks, "
+                + loadedChunks(generating) + " chunks loaded, " + Math.round(memoryUsed() * 100) + "% memory)";
         if (generating != null && chunky != null && chunky.isRunning(generating)) return line + " (Chunky is filling it)";
         int furniture = generating == null ? 0 : furniturePending(generating);
         return line + (furniture > 0 ? " (placing furniture: " + furniture + " left)" : "");
@@ -122,20 +132,20 @@ public class GenResourceHandler {
             }
             GardensPlayers.plugin.getLogger().info("Pregenerating " + generating + " (" + (finished + 1) + "/" + total + ")");
         } else if (paused) {
-            if (furniturePending(generating) <= FURNITURE_RESUME) {
+            if (furniturePending(generating) <= FURNITURE_RESUME && loadedChunks(generating) <= CHUNKS_RESUME && memoryUsed() <= MEMORY_RESUME) {
                 if (chunky.continueTask(generating)) {
                     paused = false;
-                    GardensPlayers.plugin.getLogger().info("Resuming Chunky on " + generating + ": the furniture backlog has cleared");
+                    GardensPlayers.plugin.getLogger().info("Resuming Chunky on " + generating + ": the server has caught up");
                 } else {
                     GardensPlayers.plugin.getLogger().severe("Chunky wouldn't resume " + generating + ", stopping generation");
                     fail();
                 }
             }
-        } else if (chunky.isRunning(generating) && furniturePending(generating) >= FURNITURE_PAUSE) {
+        } else if (chunky.isRunning(generating) && overloaded(generating) != null) {
+            var why = overloaded(generating);
             if (chunky.pauseTask(generating)) {
                 paused = true;
-                GardensPlayers.plugin.getLogger().warning("Pausing Chunky on " + generating + ": " + furniturePending(generating)
-                        + " world-gen furniture blocks are waiting (raise GardensFurniture's tick_budget_ms_empty to keep up)");
+                GardensPlayers.plugin.getLogger().warning("Pausing Chunky on " + generating + ": " + why);
             }
         } else if (!chunky.isRunning(generating) && !filled && settling++ < SETTLE_TICKS) {
             // Chunky's task ends a moment before its last chunks finish and the 100% report arrives
@@ -171,6 +181,28 @@ public class GenResourceHandler {
                 tick();
             }
         }
+    }
+
+    // why generation should wait for the server to catch up, or null if it needn't
+    @Nullable
+    private static String overloaded(String world) {
+        int furniture = furniturePending(world);
+        if (furniture >= FURNITURE_PAUSE) return furniture + " world-gen furniture blocks are waiting to be placed";
+        int chunks = loadedChunks(world);
+        if (chunks >= CHUNKS_PAUSE) return chunks + " chunks are loaded (unloading is falling behind)";
+        double memory = memoryUsed();
+        if (memory >= MEMORY_PAUSE) return Math.round(memory * 100) + "% of memory is in use";
+        return null;
+    }
+
+    private static int loadedChunks(String world) {
+        var loaded = Bukkit.getWorld(world);
+        return loaded == null ? 0 : loaded.getChunkCount();
+    }
+
+    private static double memoryUsed() {
+        var runtime = Runtime.getRuntime();
+        return (runtime.totalMemory() - runtime.freeMemory()) / (double) runtime.maxMemory();
     }
 
     private static int furniturePending(String world) {
