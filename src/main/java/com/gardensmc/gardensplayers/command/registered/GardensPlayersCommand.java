@@ -27,6 +27,11 @@ public class GardensPlayersCommand extends GardensCommand {
             com.gardensmc.gardensplayers.title.Titles.INSTANCE.reload();
             try {
                 GardensPlayers.loadShops();
+                // storage settings may have just been filled in: list, upload and download as at startup
+                var storage = com.gardensmc.gardensplayers.resourceworld.ResourceWorldStorage.INSTANCE;
+                storage.refresh();
+                storage.uploadFinished();
+                storage.fillLocal();
                 executor.sendMessage("Reloaded GardensPlayers");
             } catch (Exception e) {
                 GardensPlayers.plugin.getLogger().log(Level.SEVERE, "Reload failed", e);
