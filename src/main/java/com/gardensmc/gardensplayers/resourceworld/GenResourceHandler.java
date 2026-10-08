@@ -44,9 +44,10 @@ public class GenResourceHandler {
      * they're down to {@link #FURNITURE_RESUME}: in the End, generation is far faster than furniture placement, so this
      * is what paces it, and keeps the chunks waiting for furniture (held in memory) to a couple of thousand.
      */
-    // about 2,000 End chunks' worth (the End has ~140 a chunk), which GardensFurniture holds loaded while it places
-    static final int FURNITURE_PAUSE = 300_000;
-    static final int FURNITURE_RESUME = 50_000;
+    // Resumed well before the queue is empty, so generation and placement overlap instead of taking turns. Memory stays
+    // bounded regardless: GardensFurniture holds at most 2,000 chunks for their blocks, and the memory check below.
+    static final int FURNITURE_PAUSE = 1_000_000;
+    static final int FURNITURE_RESUME = 500_000;
     /**
      * The same for the server keeping up at all: paused while the world has this many chunks loaded (Chunky only keeps
      * a few hundred in flight, so a pile-up means the main thread isn't getting to unload them) or memory is this full,
