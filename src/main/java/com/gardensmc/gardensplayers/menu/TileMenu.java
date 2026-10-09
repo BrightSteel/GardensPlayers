@@ -172,7 +172,7 @@ public class TileMenu extends Menu {
             var prevPage = page - 1;
             categoryGrp.addElement(new StaticGuiElement(
                     'b',
-                    blankItem,
+                    pageArrow("icon_page_left"),
                     click -> {
                         open(() -> copyWith(categoryPages, prevPage,
                                 categoryPages.getPage(prevPage).getCategories().size() - 1, 0));
@@ -202,7 +202,7 @@ public class TileMenu extends Menu {
         if (categoryPage.isHasNextPage()) {
             categoryGrp.addElement(new StaticGuiElement(
                     'b',
-                    blankItem,
+                    pageArrow("icon_page_right"),
                     click -> {
                         open(() -> copyWith(categoryPages, page + 1, 0, 0));
                         return true;
@@ -238,6 +238,15 @@ public class TileMenu extends Menu {
             }
             return true;
         }, "Next")));
+    }
+
+    /**
+     * An arrow for paging through the categories, which sit in a row of their own slots (the background draws none
+     * there, unlike the item pages' arrows): GardensFurniture's page icon, or a plain arrow should it be missing.
+     */
+    private static ItemStack pageArrow(String iconId) {
+        var icon = GardensFurniture.itemRegistry.buildItem(iconId);
+        return icon != null ? icon : new ItemStack(Material.ARROW);
     }
 
     // opens a new menu with same page, etc; mainly for opening with re-built title
