@@ -87,6 +87,11 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
                 yield shown.isEmpty() ? "" : MessageUtil.parseIntoLegacyDisplayable(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(shown)) + " ";
             }
             case "balance" -> String.valueOf(playerEntry.getMoney());
+            // the wallet HUD's shift past the slots right of the hotbar (CustomNameplates' wallet_shift)
+            case "wallet_shift" -> {
+                var online = player.getPlayer();
+                yield online == null ? "0" : String.valueOf(com.gardensmc.gardensplayers.wardrobe.WardrobeBridge.walletShift(online));
+            }
             case "gems" -> String.valueOf(playerEntry.getPoints());
             case "afk" -> {
                 if (!player.isOnline()) {

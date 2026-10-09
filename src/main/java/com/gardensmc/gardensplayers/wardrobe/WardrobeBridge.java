@@ -55,6 +55,19 @@ public final class WardrobeBridge {
         return custom == null ? null : custom.getWardrobeSlot();
     }
 
+    /**
+     * How far right of the hotbar the wallet HUD must start, past the slots beside it: the offhand's when it's on the
+     * right (a left-handed player holding something there), then GardensCompanion's for a worn balloon or backpack.
+     * 29 (a slot's width) for each.
+     */
+    public static int walletShift(org.bukkit.entity.Player player) {
+        int shift = 0;
+        if (player.getMainHand() == org.bukkit.inventory.MainHand.LEFT && !player.getInventory().getItemInOffHand().isEmpty()) shift += 29;
+        if (api != null && api.hasCompanion(player)
+                && (api.worn(player, "balloon") != null || api.worn(player, "backpack") != null)) shift += 29;
+        return shift;
+    }
+
     /** How many rows a backpack holds now, or 0 for anything else. */
     public static int backpackRows(ItemStack item) {
         return api == null ? 0 : api.backpackRows(item);
