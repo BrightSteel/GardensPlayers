@@ -4,7 +4,6 @@ import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.menu.TileMenu;
 import org.bukkit.entity.Player;
 
-import java.util.Comparator;
 
 public class TileMenuHandler {
 
@@ -17,8 +16,7 @@ public class TileMenuHandler {
                 shop.getFurnitureId(),
                 shop.getShopItems().stream().map(ShopTileItem::new).toList()
             ))
-            .sorted(Comparator.comparing(TileCategory::getId))
-            .toList();
+            .toList();   // in GardensPlayers.shops' order (shops/order.yml)
         shopPages = new CategoryPages(tileCategories);
     }
 

@@ -10,6 +10,7 @@ import com.gardensmc.gardensplayers.database.Tables;
 import com.gardensmc.gardensplayers.economy.GardensEconomyProvider;
 import com.gardensmc.gardensplayers.listener.Listeners;
 import com.gardensmc.gardensplayers.menu.shop.Shop;
+import com.gardensmc.gardensplayers.menu.shop.ShopOrder;
 import com.gardensmc.gardensplayers.menu.tile.TileMenuHandler;
 import com.gardensmc.gardensplayers.placeholder.GardensPlayersPlaceholder;
 import com.gardensmc.gardensplayers.quest.QuestHandler;
@@ -193,17 +194,21 @@ public class GardensPlayers extends JavaPlugin {
         if (!shopsDir.exists()) {
             shopsDir.mkdir();
         }
-        var shopFiles = shopsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+        var orderFile = new File(shopsDir, ShopOrder.FILE);
+        var shopFiles = shopsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml") && !name.equalsIgnoreCase(ShopOrder.FILE));
         if (shopFiles != null) {
             var loaded = new ArrayList<Shop>();
             for (var shopFile : shopFiles) {
                 try {
-                    loaded.add(new Shop(YamlConfiguration.loadConfiguration(shopFile)));
+                    var id = shopFile.getName().substring(0, shopFile.getName().length() - ".yml".length());
+                    loaded.add(new Shop(id, YamlConfiguration.loadConfiguration(shopFile)));
                 } catch (Exception e) {
                     GardensPlayers.plugin.getLogger().severe("Skipping shop file " + shopFile.getName() + ": " + e);
                 }
             }
-            shops = List.copyOf(loaded);
+            // in shops/order.yml's order; any it doesn't list after, by name
+            var wanted = orderFile.exists() ? YamlConfiguration.loadConfiguration(orderFile).getStringList("order") : List.<String>of();
+            shops = ShopOrder.sort(loaded, Shop::getId, Shop::getName, wanted);
         }
         spawnLimits = new SpawnLimits(DataFiles.spawnLimitsYaml);
         RewardHandler.loadRewards();

@@ -69,9 +69,7 @@ public class BedrockShopMenu {
     // 1. Category grid. Categories are plain "view" buttons (no buy block / nav), so the pack hides the
     // Buy strips for these cells automatically.
     private static void sendShopSelectForm(Player viewer) {
-        var shops = GardensPlayers.shops.stream()
-                .sorted(Comparator.comparing(Shop::getName))
-                .toList();
+        var shops = GardensPlayers.shops;   // in shops/order.yml's order
         var builder = SimpleForm.builder().title(CAT_TOKEN + "Shops");
         shops.forEach(shop -> builder.button(plain(shop.getName()), FormImage.Type.PATH, categoryIcon(shop.getName())));
         builder.validResultHandler(response -> {

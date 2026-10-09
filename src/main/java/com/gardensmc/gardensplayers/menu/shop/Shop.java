@@ -11,11 +11,14 @@ import java.util.Objects;
 @Getter
 public class Shop {
 
+    /** Its file's name, without .yml: what shops/order.yml lists. */
+    private final String id;
     private final String name;
     private final String furnitureId;
     private final List<ShopItem> shopItems;
 
-    public Shop(YamlConfiguration shopConfiguration) {
+    public Shop(String fileId, YamlConfiguration shopConfiguration) {
+        this.id = fileId;
         this.name = shopConfiguration.getString("name");
         this.furnitureId = shopConfiguration.getString("furniture_id");
         var itemSection = shopConfiguration.getConfigurationSection("items");
