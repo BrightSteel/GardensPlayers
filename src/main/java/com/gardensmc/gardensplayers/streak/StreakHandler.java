@@ -39,6 +39,11 @@ public final class StreakHandler {
         config = StreakConfig.load();
     }
 
+    /** Whether streaks are on (streaks.yml enabled): off, nothing counts, pays or shows; staff commands still work. */
+    public boolean enabled() {
+        return config != null && config.enabled();
+    }
+
     public StreakConfig config() {
         return config;
     }
@@ -57,6 +62,7 @@ public final class StreakHandler {
 
     /** Loads the player's streak, catches it up to today and tells them where they stand. */
     public void onJoin(Player player) {
+        if (!enabled()) return;
         var uuid = player.getUniqueId();
         PlayerEntryCache.INSTANCE.get(uuid)
                 .thenApplyAsync(entry -> Tables.streakTable.get(uuid))
@@ -91,6 +97,7 @@ public final class StreakHandler {
 
     /** A daily task was finished: count today once enough of them are. Main thread. */
     public void onTaskCompleted(Player player) {
+        if (!enabled()) return;
         if (QuestHandler.INSTANCE.getCompletedToday(player.getUniqueId()) >= config.tasksPerDay()) {
             credit(player, "daily tasks");
         }
@@ -98,6 +105,7 @@ public final class StreakHandler {
 
     /** Counts today for the player, if it hasn't already. Main thread. False if it didn't count. */
     public boolean credit(Player player, String why) {
+        if (!enabled()) return false;
         var uuid = player.getUniqueId();
         var streak = streaks.get(uuid);
         if (streak == null) return false;

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /** streaks.yml: how many tasks make a day, savers, and the reward ladder. */
-public record StreakConfig(int tasksPerDay, int saverEvery, int maxSavers,
+public record StreakConfig(boolean enabled, int tasksPerDay, int saverEvery, int maxSavers,
                            TreeMap<Integer, List<StreakReward>> ladder,
                            int repeatAfter, int repeatEvery, List<StreakReward> repeatRewards) {
 
@@ -32,6 +32,7 @@ public record StreakConfig(int tasksPerDay, int saverEvery, int maxSavers,
             }
         }
         return new StreakConfig(
+                yaml.getBoolean("enabled", true),
                 Math.max(1, yaml.getInt("tasks-per-day", 2)),
                 yaml.getInt("savers.every", 7),
                 yaml.getInt("savers.max", 2),

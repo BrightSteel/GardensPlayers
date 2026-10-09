@@ -117,6 +117,7 @@ public class QuestsMenu extends Menu {
     // the login streak: days in a row, and what today still needs
     private String streakLine() {
         var handler = com.gardensmc.gardensplayers.streak.StreakHandler.INSTANCE;
+        if (!handler.enabled()) return "";
         var streak = handler.cached(viewer.getUniqueId());
         if (streak == null) return "<gray>Streak: loading";
         if (streak.countedOn(com.gardensmc.gardensplayers.streak.StreakHandler.today())) {

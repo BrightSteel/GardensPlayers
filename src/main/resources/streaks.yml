@@ -1,5 +1,9 @@
 # Login streaks. A day counts once a player finishes this many of the day's quest tasks (or the starter quest, through
 # /streak credit <player>). Days reset at midnight America/Los_Angeles, with the quest board.
+# Login streaks on or off. Off: no day counts, no rewards, nothing shown (join message, quest menu, /streak says
+# they're coming soon); staff's /streak set, credit and reload still work, and streaks already earned are kept.
+enabled: false
+
 tasks-per-day: 2
 
 # Streak savers cover a missed day each, used automatically. Earn one every `every` days in a row, holding up to `max`.

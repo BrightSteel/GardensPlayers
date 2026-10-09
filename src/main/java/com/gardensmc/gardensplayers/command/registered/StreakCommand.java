@@ -69,6 +69,10 @@ public class StreakCommand extends GardensCommand {
                 }
             }
         }
+        if (!handler.enabled()) {
+            send(sender, "<gray>Login streaks are coming soon.");
+            return;
+        }
         if (sender instanceof Player player) {
             show(sender, player);
         } else {
