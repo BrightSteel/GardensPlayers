@@ -32,6 +32,8 @@ public class TileMenu extends Menu {
 
     private static final char CURRENT_TAB = '\u0139';
     private static final char TAB = '\u013A';
+    /** The tabs at either end of the category row when there are more categories that way (the pack's shop_ui arrows). */
+    private static final char PREV_CATEGORIES = '\uE300', NEXT_CATEGORIES = '\uE301';
     private static final NumberFormat CURRENCY_FORMATTER = NumberFormat.getCompactNumberInstance(
             Locale.US, NumberFormat.Style.SHORT);
 
@@ -117,7 +119,7 @@ public class TileMenu extends Menu {
         // assemble category backgrounds
         int categoryWidth = 0;
         if (page > 0) {
-            titleBuilder.append(getShift(18));
+            titleBuilder.append(PREV_CATEGORIES).append(getShift(-1));
             categoryWidth += 18;
         }
 
@@ -128,6 +130,10 @@ public class TileMenu extends Menu {
                 titleBuilder.append(TAB);
             }
             titleBuilder.append(getShift(-1));
+            categoryWidth += 18;
+        }
+        if (categoryPage.isHasNextPage()) {
+            titleBuilder.append(NEXT_CATEGORIES).append(getShift(-1));
             categoryWidth += 18;
         }
         titleBuilder.append(getShift(-categoryWidth));
@@ -172,7 +178,7 @@ public class TileMenu extends Menu {
             var prevPage = page - 1;
             categoryGrp.addElement(new StaticGuiElement(
                     'b',
-                    pageArrow("icon_page_left"),
+                    blankItem,
                     click -> {
                         open(() -> copyWith(categoryPages, prevPage,
                                 categoryPages.getPage(prevPage).getCategories().size() - 1, 0));
@@ -202,7 +208,7 @@ public class TileMenu extends Menu {
         if (categoryPage.isHasNextPage()) {
             categoryGrp.addElement(new StaticGuiElement(
                     'b',
-                    pageArrow("icon_page_right"),
+                    blankItem,
                     click -> {
                         open(() -> copyWith(categoryPages, page + 1, 0, 0));
                         return true;
@@ -238,15 +244,6 @@ public class TileMenu extends Menu {
             }
             return true;
         }, "Next")));
-    }
-
-    /**
-     * An arrow for paging through the categories, which sit in a row of their own slots (the background draws none
-     * there, unlike the item pages' arrows): GardensFurniture's page icon, or a plain arrow should it be missing.
-     */
-    private static ItemStack pageArrow(String iconId) {
-        var icon = GardensFurniture.itemRegistry.buildItem(iconId);
-        return icon != null ? icon : new ItemStack(Material.ARROW);
     }
 
     // opens a new menu with same page, etc; mainly for opening with re-built title
