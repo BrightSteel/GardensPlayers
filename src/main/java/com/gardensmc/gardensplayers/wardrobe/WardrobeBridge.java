@@ -17,9 +17,9 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots, skins and backpack storage: tells it
- * which Gardens items go in the slots, which are backpacks and how many rows they hold, and how GardensFurniture's old
- * skins were made, and once moves the old wardrobes (this plugin's wardrobes table) over to it.
+ * GardensMC's side of EnderWardrobe, which owns the backpack and balloon slots and items, skins and backpack storage:
+ * tells it which Gardens items go in the slots, how GardensFurniture's old skins, backpacks and balloons were made (for
+ * it to make them its own), and once moves the old wardrobes (this plugin's wardrobes table) over to it.
  */
 public final class WardrobeBridge {
 
@@ -42,6 +42,7 @@ public final class WardrobeBridge {
         }
         api.addProvider(WardrobeBridge::slotOf);
         api.addLegacyReader(new OldSkins());
+        api.addLegacyItemReader(new OldWearables());
         api.addBackpackProvider(WardrobeBridge::rowsOf);
         importOldWardrobes(plugin);
     }
