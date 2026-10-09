@@ -17,4 +17,7 @@ public class TileCategory {
 
     private final List<? extends TileItem> items;
 
+    /** Lines under its name on its tab (MiniMessage); none unless set. */
+    private List<String> lore = List.of();
+
 }

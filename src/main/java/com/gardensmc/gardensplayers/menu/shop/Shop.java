@@ -15,12 +15,15 @@ public class Shop {
     private final String id;
     private final String name;
     private final String furnitureId;
+    /** Lines under the tab's name (MiniMessage): shop files' {@code lore:}. */
+    private final List<String> lore;
     private final List<ShopItem> shopItems;
 
     public Shop(String fileId, YamlConfiguration shopConfiguration) {
         this.id = fileId;
         this.name = shopConfiguration.getString("name");
         this.furnitureId = shopConfiguration.getString("furniture_id");
+        this.lore = List.copyOf(shopConfiguration.getStringList("lore"));
         var itemSection = shopConfiguration.getConfigurationSection("items");
         var items = new ArrayList<ShopItem>();
         if (itemSection == null) {

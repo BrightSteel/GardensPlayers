@@ -202,7 +202,7 @@ public class TileMenu extends Menu {
                             }
                             return true;
                         },
-                        category.getDisplayName())
+                        tabText(category))
                 );
         }
         if (categoryPage.isHasNextPage()) {
@@ -315,6 +315,17 @@ public class TileMenu extends Menu {
         public void open() {
             build().open();
         }
+    }
+
+
+    /** A tab's tooltip: its name, then its lore lines (MiniMessage, in the legacy codes the menu library takes). */
+    private static String[] tabText(com.gardensmc.gardensplayers.menu.tile.TileCategory category) {
+        var lines = new java.util.ArrayList<String>();
+        lines.add(category.getDisplayName());
+        var mm = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage();
+        var legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
+        for (var line : category.getLore()) lines.add(legacy.serialize(mm.deserialize(line)));
+        return lines.toArray(String[]::new);
     }
 
 }
