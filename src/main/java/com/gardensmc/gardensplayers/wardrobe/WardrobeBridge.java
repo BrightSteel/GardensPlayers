@@ -2,7 +2,6 @@ package com.gardensmc.gardensplayers.wardrobe;
 
 import com.enderbeam.enderwardrobe.api.WardrobeApi;
 import com.gardensmc.gardensfurniture.GardensFurniture;
-import com.gardensmc.gardensfurniture.custom.item.CustomBackpackItem;
 import com.gardensmc.gardensplayers.database.DatabaseConnector;
 import com.gardensmc.gardensplayers.database.entry.MySQLEntry;
 import de.tr7zw.nbtapi.NBT;
@@ -43,33 +42,17 @@ public final class WardrobeBridge {
         api.addProvider(WardrobeBridge::slotOf);
         api.addLegacyReader(new OldSkins());
         api.addLegacyItemReader(new OldWearables());
-        api.addBackpackProvider(WardrobeBridge::rowsOf);
         importOldWardrobes(plugin);
     }
 
     /**
-     * Storage backpacks (skinned or not) go in the backpack slot; other items where their item config's
-     * {@code wardrobe_slot} says.
+     * GardensFurniture items go where their item config's {@code wardrobe_slot} says. (Backpacks and balloons are
+     * EnderWardrobe's own; its old ones it turns into those, through {@link OldWearables}.)
      */
     @Nullable
     private static String slotOf(ItemStack item) {
         var custom = GardensFurniture.itemRegistry.getCustomItem(item);
-        if (custom == null) return null;
-        if (custom instanceof CustomBackpackItem) return "backpack";
-        return custom.getWardrobeSlot();
-    }
-
-    /**
-     * GardensFurniture's backpacks hold their item config's rows, or as many as an Expansion Rune gave them back when
-     * this plugin stored their contents (GardensBackpack.Rows).
-     */
-    private static int rowsOf(ItemStack item) {
-        if (!(GardensFurniture.itemRegistry.getCustomItem(item) instanceof CustomBackpackItem backpack)) return 0;
-        Integer upgraded = NBT.get(item, nbt -> {
-            var compound = nbt.getCompound("GardensBackpack");
-            return compound != null && compound.hasTag("Rows") ? compound.getInteger("Rows") : null;
-        });
-        return upgraded != null && upgraded > 0 ? upgraded : backpack.getRows();
+        return custom == null ? null : custom.getWardrobeSlot();
     }
 
     /** How many rows a backpack holds now, or 0 for anything else. */
