@@ -318,13 +318,11 @@ public class TileMenu extends Menu {
     }
 
 
-    /** A tab's tooltip: its name, then its lore lines (MiniMessage, in the legacy codes the menu library takes). */
+    /** A tab's tooltip: its name, then its lore lines, MiniMessage as the menu reads every line (not italic, white). */
     private static String[] tabText(com.gardensmc.gardensplayers.menu.tile.TileCategory category) {
         var lines = new java.util.ArrayList<String>();
         lines.add(category.getDisplayName());
-        var mm = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage();
-        var legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
-        for (var line : category.getLore()) lines.add(legacy.serialize(mm.deserialize(line)));
+        lines.addAll(category.getLore());
         return lines.toArray(String[]::new);
     }
 
