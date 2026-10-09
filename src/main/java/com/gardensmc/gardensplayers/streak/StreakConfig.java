@@ -32,7 +32,7 @@ public record StreakConfig(boolean enabled, int tasksPerDay, int saverEvery, int
             }
         }
         return new StreakConfig(
-                yaml.getBoolean("enabled", true),
+                yaml.getBoolean("enabled", false),
                 Math.max(1, yaml.getInt("tasks-per-day", 2)),
                 yaml.getInt("savers.every", 7),
                 yaml.getInt("savers.max", 2),
