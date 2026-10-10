@@ -24,8 +24,8 @@ public class WorldListener implements Listener {
             world.getWorldBorder().setSize(GardensPlayers.config.resourceRadius(world.getName()) * 2);
         }
 
-        // sync time
-        if (!world.getName().equals(Worlds.GARDENS)) {
+        // sync time: only overworlds have a clock (the nether's and end's time is fixed, and setting it throws)
+        if (!world.getName().equals(Worlds.GARDENS) && world.getEnvironment() == org.bukkit.World.Environment.NORMAL) {
             var mainWorld = Bukkit.getWorld(Worlds.GARDENS);
             if (mainWorld != null) {
                 world.setTime(mainWorld.getTime());
