@@ -20,6 +20,10 @@ rtp:
 # Restart the server at midnight Pacific, with countdown warnings. A dev server can turn it off.
 daily-restart:
   enabled: true
+# Kick Java players for flying, as vanilla does with allow-flight off (it's on for Bedrock players' sake), through
+# LiteBans so it's on their record. Bedrock players and our enchants that hold you up (Lift, Drift, Grapple...) are left alone.
+flight-kick:
+  enabled: true
 resourceWorlds:
   # Border radius (blocks) of each resource world; pregenerated a further 250 out so the border never generates chunks.
   # From prod's usage over 4 months: RTP spreads players over the whole overworld, while the Nether and End see far less.

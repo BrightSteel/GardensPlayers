@@ -10,6 +10,9 @@ public class Listeners {
         register(new FurnitureListener());
         register(new CropsListener());
         register(new WorldListener());
+        var flyCheck = new FlyCheck();
+        register(flyCheck);
+        flyCheck.start();
         register(new BlockListener());
         register(new DepositGuiListener());
         register(new BackpackListener());
