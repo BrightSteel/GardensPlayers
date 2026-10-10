@@ -1,5 +1,6 @@
 package com.gardensmc.gardensplayers.shop;
 
+import com.gardensmc.gardenscrops.GardensCrops;
 import com.gardensmc.gardensplayers.cache.ShopLimitKey;
 import com.gardensmc.gardensplayers.cache.ShopLimitsCache;
 import com.gardensmc.gardensplayers.database.Tables;
@@ -21,7 +22,7 @@ public class ShopLimitHandler {
     // today's amount only: a cached entry from an earlier day no longer counts
     private int getAmountUsed() {
         var shopLimitEntry = ShopLimitsCache.INSTANCE.getSync(playerUUID).get(shopItem);
-        if (shopLimitEntry == null || shopLimitEntry.getDay() != ShopDay.today()) {
+        if (shopLimitEntry == null || shopLimitEntry.getDay() != GardensCrops.getCurrentDay()) {
             return 0;
         }
         return shopLimitEntry.getAmount();
@@ -45,7 +46,7 @@ public class ShopLimitHandler {
      * version only refreshed the cache after the async write, so two quick sells both passed the limit check.
      */
     public CompletableFuture<Void> increaseAmountTransacted(int increase) {
-        var currentDay = ShopDay.today();
+        var currentDay = GardensCrops.getCurrentDay();
         var cached = ShopLimitsCache.INSTANCE.getSync(playerUUID);
         cached.put(shopItem, new ShopLimitEntry(shopItem, getAmountUsed() + increase, currentDay));
         var shopLimitKey = new ShopLimitKey(playerUUID, shopItem);
