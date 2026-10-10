@@ -54,6 +54,7 @@ dependencies {
     compileOnly(fileTree("${project.rootDir}/dependencies") { include("*.jar") })
     implementation("de.themoep:inventorygui:1.6.5-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
+    compileOnly('com.ticxo.modelengine:ModelEngine:R4.1.1') { transitive = false }
     compileOnly 'org.projectlombok:lombok:1.18.46'
     compileOnly 'me.clip:placeholderapi:2.11.6'
     // Caffeine and HikariCP are downloaded by Paper at startup via plugin.yml `libraries:` (keep versions in sync)

@@ -39,6 +39,9 @@ public class FlyCheck implements Listener {
     private static final int BASE_TICKS = 80;
     private static final double BASE_GRAVITY = 0.08;
 
+    // EnderPets and MCPets mounts seat riders through ModelEngine, which doesn't always make them a vanilla passenger
+    private static final boolean MODEL_ENGINE = Bukkit.getPluginManager().getPlugin("ModelEngine") != null;
+
     private final Map<UUID, Double> lastY = new HashMap<>();
     private final Map<UUID, Integer> floatingTicks = new HashMap<>();
     private final Set<UUID> kicked = new HashSet<>();
@@ -77,7 +80,8 @@ public class FlyCheck implements Listener {
                 || player.getAllowFlight() || player.isFlying() || player.isGliding() || player.isRiptiding()
                 || player.isInsideVehicle() || player.isSleeping() || player.isDead()
                 || player.hasPotionEffect(PotionEffectType.LEVITATION)
-                || AirTime.isAllowed(player) || BedrockUtil.isBedrock(player);
+                || AirTime.isAllowed(player) || BedrockUtil.isBedrock(player)
+                || MODEL_ENGINE && ModelMounts.isMounted(player);
     }
 
     // vanilla's: 80 ticks at normal gravity, longer as gravity drops (Featherweight), never at none
