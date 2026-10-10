@@ -33,7 +33,7 @@ public class Shop {
                 var section = itemSection.getConfigurationSection(id);
                 if (section == null) continue;
                 try {
-                    items.add(new ShopItem(id, section));
+                    items.add(new ShopItem(id, section, fileId));
                 } catch (Exception e) {
                     // one typo (an unknown material or currency) shouldn't take the whole shop down
                     GardensPlayers.plugin.getLogger().severe("Skipping shop item '" + id + "' in shop '" + name + "': " + e);

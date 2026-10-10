@@ -31,7 +31,7 @@ public class TileShopPurchaseMenu extends Menu {
 
     public TileShopPurchaseMenu(Player viewer, ShopItem shopItem, ItemStack shopItemStack, TileMenu tileMenu, int prevPageNumber, boolean isBuy, boolean hasQuantityButtons) {
         super(layout, buildTitle(hasQuantityButtons, isBuy), viewer);
-        this.transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler());
+        this.transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler(), "shop", shopItem.getShop(), shopItem.itemKey());
         this.shopItem = shopItem;
         this.item = shopItemStack;
         this.prevMenu = tileMenu;

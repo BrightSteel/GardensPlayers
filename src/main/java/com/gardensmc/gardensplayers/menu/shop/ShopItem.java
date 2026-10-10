@@ -23,9 +23,12 @@ public class ShopItem {
     private final int sellPrice;
     private final ShopCurrency currency;
     private final int sellLimit;
+    /** The shop (tab) it's in, by file name. */
+    private final String shop;
 
-    public ShopItem(String id, ConfigurationSection shopItemSection) {
+    public ShopItem(String id, ConfigurationSection shopItemSection, String shop) {
         this.id = id;
+        this.shop = shop;
         var materialStr = shopItemSection.getString("material");
         this.material = materialStr == null ? null : Material.valueOf(materialStr.toUpperCase());
         this.furnitureId = shopItemSection.getString("furniture_id");
@@ -53,6 +56,15 @@ public class ShopItem {
             return com.gardensmc.gardensplayers.wardrobe.WardrobeBridge.skinItem(wardrobeSkin);
         }
         return null;
+    }
+
+    /** What it is, for the transaction log: its material, furniture id, server item or skin:id. */
+    public String itemKey() {
+        if (material != null) return material.getKey().getKey();
+        if (furnitureId != null) return furnitureId.toLowerCase();
+        if (serverItem != null) return "server:" + serverItem;
+        if (wardrobeSkin != null) return "skin:" + wardrobeSkin;
+        return id;
     }
 
     public boolean hasSellLimit() {

@@ -151,6 +151,7 @@ public class GardensPlayers extends JavaPlugin {
     public void onDisable() {
         // persist quest state synchronously — async tasks won't run during shutdown
         QuestHandler.INSTANCE.save();
+        com.gardensmc.gardensplayers.util.TransactionLog.flush();
         // Database writes (quit saves, money changes) run on the common pool as daemon tasks, which the JVM
         // drops at exit - wait for them before closing the pool, or every restart loses the last writes.
         if (!ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS)) {

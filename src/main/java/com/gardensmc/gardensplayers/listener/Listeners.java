@@ -10,6 +10,7 @@ public class Listeners {
         register(new FurnitureListener());
         register(new CropsListener());
         register(new WorldListener());
+        register(new TableSpendListener());
         var flyCheck = new FlyCheck();
         register(flyCheck);
         flyCheck.start();

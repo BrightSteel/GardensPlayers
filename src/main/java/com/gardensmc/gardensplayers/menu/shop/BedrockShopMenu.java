@@ -203,7 +203,7 @@ public class BedrockShopMenu {
         Bukkit.getScheduler().runTask(GardensPlayers.plugin, () -> {
             var itemStack = shopItem.getItemStack();
             var itemName = itemStack.displayName();
-            var transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler());
+            var transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler(), "shop", shopItem.getShop(), shopItem.itemKey());
             if (isBuy) {
                 var cost = shopItem.getBuyPrice() * quantity;
                 transactionUtil.tryPurchase(viewer, cost, itemStack, itemName, quantity);

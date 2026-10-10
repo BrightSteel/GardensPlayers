@@ -5,7 +5,6 @@ import com.gardensmc.gardensfurniture.custom.item.CustomItem;
 import com.gardensmc.gardensplayers.GardensPlayers;
 import com.gardensmc.gardensplayers.currency.Currency;
 import com.gardensmc.gardensplayers.shop.ShopLimitHandler;
-import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -18,10 +17,32 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-@AllArgsConstructor
 public class ShopTransactionUtil {
 
     private final Currency currency;
+    // for the transaction log (see TransactionLog)
+    private final String source;
+    @Nullable
+    private final String category;
+    @Nullable
+    private final String itemKey;
+
+    /**
+     * @param source   where it happens, for the log: shop, farm_shop, furniture_shop
+     * @param category the shop tab, or null
+     * @param itemKey  what's traded, for the log; null for the item's own id or material
+     */
+    public ShopTransactionUtil(Currency currency, String source, @Nullable String category, @Nullable String itemKey) {
+        this.currency = currency;
+        this.source = source;
+        this.category = category;
+        this.itemKey = itemKey;
+    }
+
+    private void log(Player player, ItemStack item, String action, int amount, int unitPrice, int total) {
+        TransactionLog.log(player, source, category, itemKey != null ? itemKey : TransactionLog.itemKey(item), action,
+                amount, unitPrice, total, currency.name(), 0);
+    }
 
     public boolean tryPurchase(Player player, int cost, ItemStack item, Component itemName, int amount) {
         if (currency.getCurrency(player) >= cost) {
@@ -47,6 +68,7 @@ public class ShopTransactionUtil {
                 stack.setAmount(remainder);
                 player.give(stack);
             }
+            log(player, item, "buy", amount, amount > 0 ? cost / amount : cost, cost);
             player.sendMessage(MiniMessage.miniMessage()
                     .deserialize("You bought <red>%s x ".formatted(amount))
                     .append(itemName)
@@ -95,6 +117,7 @@ public class ShopTransactionUtil {
         if (limit != null) {
             limit.increaseAmountTransacted(amount);
         }
+        log(player, item, "sell", amount, unitPrice, price);
         player.sendMessage(MiniMessage.miniMessage()
                 .deserialize("You sold <green>%s x ".formatted(amount))
                 .append(itemName)

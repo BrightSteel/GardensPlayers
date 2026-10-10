@@ -54,7 +54,7 @@ public class ShopTileItem extends TileItem {
             new TileShopPurchaseMenu(player, shopItem, itemStack, tileMenu, click.getGui().getPageNumber(player), clickType.isLeftClick(), itemStack.getMaxStackSize() > 1).open();
         } else if (clickType == ClickType.DROP && shopItem.getSellPrice() != -1) {
             var itemStack = shopItem.getItemStack();
-            var transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler());
+            var transactionUtil = new ShopTransactionUtil(shopItem.getCurrency().getCurrencyHandler(), "shop", shopItem.getShop(), shopItem.itemKey());
             var items = transactionUtil.getItemCount(player, itemStack);
             if (items > 0) {
                 // sell everything held, up to the limit left

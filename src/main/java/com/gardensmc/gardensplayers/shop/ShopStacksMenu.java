@@ -26,7 +26,7 @@ public class ShopStacksMenu extends Menu {
             "         "
     };
 
-    private final ShopTransactionUtil transactionUtil = new ShopTransactionUtil(AcornsCurrencyHandler.INSTANCE);
+    private final ShopTransactionUtil transactionUtil;
     private final String shopItemName;
     private final ItemStack item;
     private final int basePrice;
@@ -41,6 +41,9 @@ public class ShopStacksMenu extends Menu {
         this.basePrice = basePrice;
         this.mode = mode;
         this.shopLimitHandler = shopLimitHandler;
+        // the farm shop always counts a limit; the region furniture shops (FurnitureListener) have none
+        this.transactionUtil = new ShopTransactionUtil(AcornsCurrencyHandler.INSTANCE,
+                shopLimitHandler == null ? "furniture_shop" : "farm_shop", null, null);
         this.quantityMenuOnCancel = quantityMenuOnCancel;
         initElements();
     }
