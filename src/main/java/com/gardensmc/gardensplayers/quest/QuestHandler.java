@@ -123,6 +123,8 @@ public class QuestHandler {
      */
     // synchronized: completions now save right away, so saves can overlap and must not interleave writes
     public synchronized void save() {
+        // nothing loaded or made yet (a startup that failed before quests loaded): keep what's on disk
+        if (dailyTasks.isEmpty()) return;
         var yaml = new YamlConfiguration();
         yaml.set("lastGenerated", lastGenerated.toString());
         for (Task task : dailyTasks) {
@@ -156,22 +158,28 @@ public class QuestHandler {
     public boolean loadFromFile() {
         var file = dataFile();
         if (!file.exists()) {
+            GardensPlayers.plugin.getLogger().info("Quests: no saved quest-data.yml, making new ones");
             return false;
         }
         try {
             var yaml = YamlConfiguration.loadConfiguration(file);
             var lastGenStr = yaml.getString("lastGenerated");
             if (lastGenStr == null) {
+                GardensPlayers.plugin.getLogger().info("Quests: quest-data.yml has no lastGenerated, making new ones");
                 return false;
             }
             var savedLastGenerated = Instant.parse(lastGenStr);
             var periodStart = ZonedDateTime.now(RESET_ZONE).toLocalDate().atStartOfDay(RESET_ZONE).toInstant();
             if (savedLastGenerated.isBefore(periodStart)) {
-                return false; // expired — saved data is from a previous day
+                // expired — saved data is from a previous day
+                GardensPlayers.plugin.getLogger().info("Quests: saved ones were made " + savedLastGenerated.atZone(RESET_ZONE)
+                        + ", before today's reset, making new ones");
+                return false;
             }
 
             var tasksSection = yaml.getConfigurationSection("tasks");
             if (tasksSection == null) {
+                GardensPlayers.plugin.getLogger().info("Quests: quest-data.yml has no tasks, making new ones");
                 return false;
             }
             var loadedTasks = new ArrayList<Task>();
@@ -191,6 +199,7 @@ public class QuestHandler {
                 ));
             }
             if (loadedTasks.isEmpty()) {
+                GardensPlayers.plugin.getLogger().info("Quests: quest-data.yml has no tasks, making new ones");
                 return false;
             }
 
@@ -219,6 +228,8 @@ public class QuestHandler {
             lastGenerated = savedLastGenerated;
             progress.clear();
             progress.putAll(loadedProgress);
+            GardensPlayers.plugin.getLogger().info("Quests: restored today's " + dailyTasks.size() + " (made " + lastGenerated.atZone(RESET_ZONE)
+                    + "), with progress for " + progress.size() + " players");
             return true;
         } catch (Exception e) {
             GardensPlayers.plugin.getLogger().log(Level.WARNING, "Failed to load quest data, regenerating", e);
@@ -315,20 +326,17 @@ public class QuestHandler {
     }
 
     /**
-     * Schedules the next regeneration at the upcoming midnight in {@link #RESET_ZONE}, then re-schedules itself.
-     * Recomputing each time keeps it correct across DST changes.
+     * Regenerates the tasks once the clock passes midnight in {@link #RESET_ZONE}, checked every 10 seconds by the
+     * wall clock. (A single delay counted in ticks ran late by however much the server lagged: 22 minutes one night.)
      */
     public void scheduleNextReset() {
-        // round up (whole seconds truncated, so it could fire just before midnight and then again right after)
-        long delayTicks = Math.max(1, (getTimeUntilReset().toMillis() + 49) / 50);
-        Bukkit.getScheduler().runTaskLater(GardensPlayers.plugin, () -> {
-            // a late tick or an early fire must not generate the same day's tasks twice
+        Bukkit.getScheduler().runTaskTimer(GardensPlayers.plugin, () -> {
             if (lastGenerated.isBefore(startOfToday())) {
                 generateDailyTasks();
                 saveAsync();
+                GardensPlayers.plugin.getLogger().info("Quests: new day, made new ones");
             }
-            scheduleNextReset();
-        }, delayTicks);
+        }, 200, 200);
     }
 
     private static Instant startOfToday() {
