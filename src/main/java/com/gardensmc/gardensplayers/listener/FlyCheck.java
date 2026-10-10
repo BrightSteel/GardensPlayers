@@ -48,7 +48,12 @@ public class FlyCheck implements Listener {
     }
 
     private void tick() {
-        if (!GardensPlayers.config.isFlightKickEnabled()) return;
+        // read every tick, so /gardensplayers reload turns it on or off; while off, nothing carries over to when it's on
+        if (!GardensPlayers.config.isFlightKickEnabled()) {
+            lastY.clear();
+            floatingTicks.clear();
+            return;
+        }
         for (Player player : Bukkit.getOnlinePlayers()) {
             var id = player.getUniqueId();
             double y = player.getLocation().getY();
