@@ -7,7 +7,11 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Boat;
+import org.bukkit.entity.HappyGhast;
+import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Shulker;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -65,7 +69,7 @@ public class FlyCheck implements Listener {
                 floatingTicks.remove(id);
                 continue;
             }
-            if (y - previous < FLOATING_DROP || !noBlocksAround(player)) {
+            if (y - previous < FLOATING_DROP || !noBlocksAround(player) || onEntity(player)) {
                 floatingTicks.remove(id);
                 continue;
             }
@@ -105,6 +109,16 @@ public class FlyCheck implements Listener {
             }
         }
         return true;
+    }
+
+    // vanilla's: standing on something solid that isn't a block (a boat, a minecart, a shulker, a happy ghast)
+    private static boolean onEntity(Player player) {
+        var feet = player.getBoundingBox().expand(0.0625, 0, 0.0625).expandDirectional(0, -0.0625, 0);
+        for (var entity : player.getWorld().getNearbyEntities(feet)) {
+            if (entity != player && (entity instanceof Boat || entity instanceof Minecart || entity instanceof Shulker
+                    || entity instanceof HappyGhast)) return true;
+        }
+        return false;
     }
 
     private static void kick(Player player) {
