@@ -30,6 +30,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
+        backfillRtpUnlocks(e.getPlayer());
         var player = e.getPlayer();
         // create playerEntry to trigger join message if applicable
         PlayerEntryCache.INSTANCE.get(player.getUniqueId());
@@ -110,6 +111,23 @@ public class PlayerListener implements Listener {
         var player = e.getPlayer();
         var permission = getWorldRtpPermission(player.getWorld().getEnvironment());
         if (permission != null && !player.hasPermission(permission)) {
+            GardensPlayers.permission.playerAdd(player, permission);
+        }
+    }
+
+    /**
+     * The Nether and End RTP unlocks for players who visited before they were given on arrival: the vanilla "We Need to
+     * Go Deeper" and "The End?" advancements say they've been.
+     */
+    private static void backfillRtpUnlocks(Player player) {
+        backfill(player, "story/enter_the_nether", "gplayers.rtp.nether");
+        backfill(player, "story/enter_the_end", "gplayers.rtp.end");
+    }
+
+    private static void backfill(Player player, String advancementKey, String permission) {
+        if (player.hasPermission(permission)) return;
+        var advancement = Bukkit.getAdvancement(NamespacedKey.minecraft(advancementKey));
+        if (advancement != null && player.getAdvancementProgress(advancement).isDone()) {
             GardensPlayers.permission.playerAdd(player, permission);
         }
     }
