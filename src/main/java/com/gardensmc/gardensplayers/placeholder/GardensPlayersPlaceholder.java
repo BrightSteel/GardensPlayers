@@ -185,15 +185,7 @@ public class GardensPlayersPlaceholder extends PlaceholderExpansion {
     }
 
     private static String worldDisplayName(World world) {
-        return switch (world.getName()) {
-            case Worlds.GARDENS -> "Gardens";
-            case Worlds.GARDENS_NETHER -> "Nether";
-            case Worlds.GARDENS_END -> "The End";
-            case Worlds.RESOURCE -> "Resource World";
-            case Worlds.RESOURCE_NETHER -> "Resource Nether";
-            case Worlds.RESOURCE_END -> "Resource End";
-            default -> world.getName();
-        };
+        return Worlds.displayName(world.getName());
     }
 
     public static FurnitureShop getFurnitureShopLookingAt(Player player) {

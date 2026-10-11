@@ -80,6 +80,7 @@ public class WarpsHandler {
      * (ĸ shop, ...); Ş must map to a "Warps" header there.
      */
     private static final char TILE_BACKGROUND = '\u0162';
+    private static final String YOUR_WARPS = "your_warps";
 
     private CachedWarps cachedWarps;
 
@@ -100,7 +101,25 @@ public class WarpsHandler {
 
     /** Opens the tile-based warp menu, one tab per {@link WarpEntry.Category} plus a trailing "Your Warps" tab. */
     public void openMenu(Player player) {
-        TileMenu.builder(player, buildCategoryPages(player), TILE_BACKGROUND).open();
+        TileMenu.builder(player, buildCategoryPages(player), TILE_BACKGROUND).back(TileMenu::close).open();
+    }
+
+    /** The warps menu on the player's own warps ("Your Warps"), as /warp mine and /profile's Warps button open it. */
+    public void openYourWarps(Player player) {
+        var pages = buildCategoryPages(player);
+        // opened from /profile: its back button goes back there
+        var builder = TileMenu.builder(player, pages, TILE_BACKGROUND).back(menu -> {
+            if (!com.gardensmc.gardensplayers.menu.Menu.openProfile(player)) menu.close();
+        });
+        for (int page = 0; page < pages.getPages().size(); page++) {
+            var categories = pages.getPage(page).getCategories();
+            for (int i = 0; i < categories.size(); i++) {
+                if (categories.get(i).getId().equals(YOUR_WARPS)) {
+                    builder.page(page).selectedCategory(i);
+                }
+            }
+        }
+        builder.open();
     }
 
     private CategoryPages buildCategoryPages(Player viewer) {
@@ -117,7 +136,7 @@ public class WarpsHandler {
         }
         var yourWarps = cached.warpsByPlayer().getOrDefault(viewer.getUniqueId(), Collections.emptyList());
         categories.add(new TileCategory(
-                "your_warps",
+                YOUR_WARPS,
                 "Your Warps",
                 "icon_profile",
                 yourWarps.stream().map(warp -> new WarpTileItem(warp, true)).toList()

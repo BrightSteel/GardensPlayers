@@ -95,6 +95,23 @@ public class Menu {
         return true;
     }
 
+    /**
+     * EnderWardrobe's /profile (the viewer's own), opened straight over this (no closing it first, so nothing flickers;
+     * the menu history cleared, so this doesn't come back when it closes): for popups drawn over the profile. Just
+     * closed when EnderWardrobe isn't there.
+     */
+    protected void backToProfile() {
+        if (!openProfile(viewer)) gui.close();
+    }
+
+    /** EnderWardrobe's /profile (the player's own), over what they have open, its menu history cleared; false without it. */
+    public static boolean openProfile(Player player) {
+        InventoryGui.clearHistory(player);
+        if (!org.bukkit.Bukkit.getPluginManager().isPluginEnabled("EnderWardrobe")) return false;
+        player.performCommand("enderwardrobe:profile");
+        return true;
+    }
+
     protected static String getShift(int shift) {
         return FontShift.INSTANCE.getShift(shift);
     }

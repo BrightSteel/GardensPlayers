@@ -16,4 +16,17 @@ public final class Worlds {
 
     private Worlds() {
     }
+
+    /** What players call a world: "Gardens", "Nether", "Resource World", ...; any other by its own name. */
+    public static String displayName(String world) {
+        return switch (world) {
+            case GARDENS -> "Gardens";
+            case GARDENS_NETHER -> "Nether";
+            case GARDENS_END -> "The End";
+            case RESOURCE -> "Resource World";
+            case RESOURCE_NETHER -> "Resource Nether";
+            case RESOURCE_END -> "Resource End";
+            default -> world;
+        };
+    }
 }

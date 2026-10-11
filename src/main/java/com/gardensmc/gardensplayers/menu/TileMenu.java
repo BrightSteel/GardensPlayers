@@ -46,6 +46,8 @@ public class TileMenu extends Menu {
     private final char bg;
     private final String extraTitleChars;
     private int guiMaxPages;
+    /** What the back button (the top left, 'a') does; none when null (the menu has no back button). */
+    private java.util.function.Consumer<TileMenu> back;
 
     protected TileMenu(String[] layout, Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg, String extraTitleChars) {
         super(layout, buildTitle(viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars), viewer);
@@ -74,7 +76,26 @@ public class TileMenu extends Menu {
 
     /** Re-renders this menu with the given navigation state, carrying over its layout, balances and title. */
     private TileMenu copyWith(CategoryPages pages, int page, int selectedCategory, int guiPageNumber) {
-        return create(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+        var copy = create(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+        copy.setBack(back);
+        return copy;
+    }
+
+    /** Gives this menu a back button (the top left, 'a'), doing this; none when null. */
+    public void setBack(java.util.function.Consumer<TileMenu> back) {
+        this.back = back;
+        gui.removeElement('a');
+        if (back != null) {
+            gui.addElement(new StaticGuiElement('a', blankItem, click -> {
+                this.back.accept(this);
+                return true;
+            }, "<white>Back"));
+        }
+    }
+
+    /** Closes it (for a back button). */
+    public void close() {
+        gui.close();
     }
 
     private static String buildTitle(Player viewer, CategoryPages pages, int page, int selectedCategory, int guiPageNumber, boolean showBalances, char bg, String extraTitleChars) {
@@ -266,6 +287,7 @@ public class TileMenu extends Menu {
         private final CategoryPages pages;
         private final char bg;
         private String[] layout = DEFAULT_LAYOUT;
+        private java.util.function.Consumer<TileMenu> back;
         private int page;
         private int selectedCategory;
         private int guiPageNumber;
@@ -309,7 +331,15 @@ public class TileMenu extends Menu {
         }
 
         public TileMenu build() {
-            return new TileMenu(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+            var menu = new TileMenu(layout, viewer, pages, page, selectedCategory, guiPageNumber, showBalances, bg, extraTitleChars);
+            menu.setBack(back);
+            return menu;
+        }
+
+        /** A back button (the top left), doing this. */
+        public Builder back(java.util.function.Consumer<TileMenu> back) {
+            this.back = back;
+            return this;
         }
 
         public void open() {

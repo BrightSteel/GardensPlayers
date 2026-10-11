@@ -32,6 +32,8 @@ public class Commands {
             register(registrar, new FarmShopCommand(), "Open farm shop", "/<command>");
             register(registrar, new GardensPlayersCommand(), "Gardens Players command", "/<command>");
             register(registrar, new WarpCommand(), "View warps", "/<command>", List.of("warps"));
+            register(registrar, new HomesCommand(), "View your homes", "/<command>", List.of("homelist"));
+            register(registrar, new SettingsCommand(), "Change your settings", "/<command>");
             register(registrar, new WithdrawCommand(), "Withdraw acorns", "/<command> <amount>");
             register(registrar, new DepositCommand(), "Deposit acorns", "/<command>");
             register(registrar, new UpgradesCommand(), "Upgrade shop", "/<command>");

@@ -34,6 +34,7 @@ public class WarpCommand extends PlayerExecutorCommand {
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
                 case "list" -> onListWarps(player);
+                case "mine" -> onYourWarps(player);
                 case "create" -> onCreateWarp(player, args);
                 case "edit" -> onEditWarp(player, args);
                 case "delete" -> onDelete(player, args);
@@ -51,6 +52,15 @@ public class WarpCommand extends PlayerExecutorCommand {
             return;
         }
         WarpsHandler.INSTANCE.openMenu(player);
+    }
+
+    // the warps menu on your own warps (Bedrock: its warps form, which has them)
+    private void onYourWarps(Player player) {
+        if (BedrockUtil.isBedrock(player)) {
+            BedrockWarpsMenu.open(player);
+            return;
+        }
+        WarpsHandler.INSTANCE.openYourWarps(player);
     }
 
     private void onCreateWarp(Player player, String[] args) {
@@ -128,7 +138,7 @@ public class WarpCommand extends PlayerExecutorCommand {
         }
         String filter = args[args.length - 1].toLowerCase();
         if (args.length == 1) {
-            return Stream.of("list", "create", "edit", "delete", "tp").filter(s1 -> s1.contains(filter)).toList();
+            return Stream.of("list", "mine", "create", "edit", "delete", "tp").filter(s1 -> s1.contains(filter)).toList();
         }
         List<WarpEntry> warps;
         if (args[0].equals("tp")) {
