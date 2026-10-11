@@ -30,12 +30,12 @@ public class RtpHandler {
             Worlds.RESOURCE, Worlds.RESOURCE_NETHER, Worlds.RESOURCE_END
     );
 
-    // main nether RTP, and RTP to either End, is unlocked by visiting that dimension once (see
-    // PlayerListener.onPlayerChangeWorlds): the resource End too, so it isn't a way into the End without a portal
+    // RTP to the Nether or the End, main or resource, is unlocked by visiting that dimension once (see
+    // PlayerListener.onPlayerChangeWorlds): so the resource ones aren't a way in without a portal
     @Nullable
     public static String requiredPermission(World world) {
         return switch (world.getName()) {
-            case Worlds.GARDENS_NETHER -> "gplayers.rtp.nether";
+            case Worlds.GARDENS_NETHER, Worlds.RESOURCE_NETHER -> "gplayers.rtp.nether";
             case Worlds.GARDENS_END, Worlds.RESOURCE_END -> "gplayers.rtp.end";
             default -> null;
         };
