@@ -37,8 +37,8 @@ The Gardens suite is a set of Paper plugins that run [GardensMC](https://gardens
 | Plugin | Role |
 |---|---|
 | [GardensPlayers](https://github.com/BrightSteel/GardensPlayers) | Core platform: economy, quests, shops, warps, resource worlds, player data |
-| [GardensEnchants](https://github.com/BrightSteel/gardens-enchants) | Custom enchanting system that replaces vanilla enchanting |
-| [GardensFurniture](https://github.com/BrightSteel/gardens-furniture) | Framework for persistent, interactive custom blocks and furniture |
+| [GardensEnchants](https://github.com/BrightSteel/GardensEnchants) | Custom enchanting system that replaces vanilla enchanting |
+| [GardensFurniture](https://github.com/BrightSteel/GardensFurniture) | Framework for persistent, interactive custom blocks and furniture |
 | [GardensCrops](https://github.com/BrightSteel/GardensCrops) | Farming: planters, sprinklers, watering cans, harvest golems |
 
 ```
