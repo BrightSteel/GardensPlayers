@@ -21,3 +21,14 @@ buildNumber.properties
 build
 .gradle
 logs/
+
+# Never commit these
+.gradle/
+build/
+target/
+*.class
+*.iml
+.idea/
+.DS_Store
+dependencies/*.jar
+*.mcpack
